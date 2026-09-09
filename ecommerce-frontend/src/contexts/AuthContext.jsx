@@ -9,7 +9,8 @@ export function AuthProvider({ children }) {
     return user ? JSON.parse(user) : null;
   });
 
-  const apiUrl = 'http://localhost:8080/api/auth';
+  // Same origin as the rest of the API; set VITE_API_URL when deploying.
+  const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth`;
 
   const login = async (username, password) => {
     const res = await axios.post(`${apiUrl}/signin`, { username, password });
