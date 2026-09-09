@@ -126,11 +126,11 @@ export function Home() {
       <section className="hero">
         <div>
           <p className="eyebrow">InfinityStore deals</p>
-          <h1>Everything you need, at great prices.</h1>
-          <p>Discover everyday essentials and more, all in one place with great value on every order.</p>
+          <h1>Handwoven sarees, woven to be worn for years.</h1>
+          <p>Explore Kanchipuram silks, Bengal handlooms, Kerala kasavu and contemporary designer drapes, sourced directly from weavers.</p>
           <button className="primary" onClick={loadDeals}>View deals</button>
         </div>
-        <img src="https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=1200&q=80" alt="Shopping display" />
+        <img src="/images/sarees/hero-sarees.jpg" alt="Handwoven saree collection" />
       </section>
 
       <section id="products" className="toolbar">

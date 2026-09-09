@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+// Set VITE_API_URL in the deployment environment (e.g. Railway) to point at the
+// backend, for example https://your-backend.up.railway.app/api
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
 });
 
 // Interceptor to add JWT token
