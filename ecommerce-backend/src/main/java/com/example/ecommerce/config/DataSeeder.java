@@ -106,6 +106,18 @@ public class DataSeeder implements CommandLineRunner {
             }
         }
 
+        // 2b. Keep the admin password in step with ADMIN_PASSWORD.
+        // The seeding block above only runs on an empty database, and an admin cannot
+        // change their own password through /api/user/profile, so this is what lets an
+        // existing deployment have its credentials rotated.
+        userRepository.findByUsername(adminUsername).ifPresent(existingAdmin -> {
+            if (!passwordEncoder.matches(adminPassword, existingAdmin.getPassword())) {
+                existingAdmin.setPassword(passwordEncoder.encode(adminPassword));
+                userRepository.save(existingAdmin);
+                System.out.println("Updated the admin password to match ADMIN_PASSWORD.");
+            }
+        });
+
         // 3. Seed Categories & Products
         if (categoryRepository.count() == 0) {
             Category silk = categoryRepository.save(new Category("Silk Sarees", "Traditional handwoven silk sarees for weddings and festive occasions"));
