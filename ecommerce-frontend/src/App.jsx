@@ -16,7 +16,7 @@ import { StaticPage } from './components/StaticPage';
 import { ResetPassword } from './components/ResetPassword';
 import { ApiService } from './services/api';
 import './styles.css';
-import './app.css';
+import './App.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function Header() {
