@@ -6,6 +6,7 @@ import com.example.ecommerce.repository.ProductRepository;
 import com.example.ecommerce.repository.RoleRepository;
 import com.example.ecommerce.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,26 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    // Seed account credentials. Override with the ADMIN_* / CUSTOMER_* environment
+    // variables when deploying; the defaults exist only for local development.
+    @Value("${app.seed.admin.username}")
+    private String adminUsername;
+
+    @Value("${app.seed.admin.email}")
+    private String adminEmail;
+
+    @Value("${app.seed.admin.password}")
+    private String adminPassword;
+
+    @Value("${app.seed.customer.username}")
+    private String customerUsername;
+
+    @Value("${app.seed.customer.email}")
+    private String customerEmail;
+
+    @Value("${app.seed.customer.password}")
+    private String customerPassword;
+
     @Override
     public void run(String... args) throws Exception {
         // 1. Seed Roles
@@ -49,9 +70,9 @@ public class DataSeeder implements CommandLineRunner {
         if (userRepository.count() == 0) {
             // Seed Admin User
             User admin = new User(
-                    "admin",
-                    "admin@infinitystore.com",
-                    passwordEncoder.encode("admin123"),
+                    adminUsername,
+                    adminEmail,
+                    passwordEncoder.encode(adminPassword),
                     "InfinityStore",
                     "Administrator"
             );
@@ -65,9 +86,9 @@ public class DataSeeder implements CommandLineRunner {
 
             // Seed Customer User
             User customer = new User(
-                    "customer",
-                    "customer@store.com",
-                    passwordEncoder.encode("customer123"),
+                    customerUsername,
+                    customerEmail,
+                    passwordEncoder.encode(customerPassword),
                     "John",
                     "Doe"
             );
@@ -79,6 +100,10 @@ public class DataSeeder implements CommandLineRunner {
             userRepository.save(customer);
 
             System.out.println("Seeded admin and customer accounts.");
+            if ("admin123".equals(adminPassword)) {
+                System.out.println("WARNING: the admin account is using the built-in development password. "
+                        + "Set the ADMIN_PASSWORD environment variable before exposing this deployment.");
+            }
         }
 
         // 3. Seed Categories & Products
