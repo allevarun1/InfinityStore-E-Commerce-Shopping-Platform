@@ -1,5 +1,4 @@
-/* Google Fonts — Outfit for premium typography */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+/* Fonts are loaded once from index.html (no render-blocking @import). */
 
 /* Minimal Reset — Design system tokens live in styles.css */
 *,

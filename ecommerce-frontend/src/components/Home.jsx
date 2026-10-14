@@ -1,220 +1,229 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Loader } from './Loader';
+import { useStore } from '../contexts/StoreContext';
 import { EmptyState } from './EmptyState';
-import { StarRating } from './StarRating';
+import { ProductCard, ProductCardSkeleton } from './ProductCard';
+import { inrCompact, isOnDeal, activePrice, discountPercent } from '../lib/format';
+
+const SORTS = {
+  featured: { label: 'Featured', fn: (a, b) => (b.stockQuantity > 0) - (a.stockQuantity > 0) || isOnDeal(b) - isOnDeal(a) || a.id - b.id },
+  'price-asc': { label: 'Price: low to high', fn: (a, b) => activePrice(a) - activePrice(b) },
+  'price-desc': { label: 'Price: high to low', fn: (a, b) => activePrice(b) - activePrice(a) },
+  discount: { label: 'Biggest discount', fn: (a, b) => discountPercent(b) - discountPercent(a) },
+  name: { label: 'Name A–Z', fn: (a, b) => a.name.localeCompare(b.name) },
+};
 
 export function Home() {
   const [products, setProducts] = useState([]);
-  const [filtered, setFiltered] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [masterProductCatalog, setMasterProductCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  const [categoryId, setCategoryId] = useState('');
-  const [sort, setSort] = useState('name');
-  const [searchParams] = useSearchParams();
-  const query = searchParams.get('q') || '';
+  const [failed, setFailed] = useState(false);
+  const [busyId, setBusyId] = useState(null);
 
-  const { isCustomer, isAdmin, isLoggedIn } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const query = params.get('q') || '';
+  const categoryId = params.get('category') || '';
+  const view = params.get('view') || '';
+  const sort = SORTS[params.get('sort')] ? params.get('sort') : 'featured';
+
+  const { isAdmin, isLoggedIn } = useAuth();
+  const { info, refreshCart } = useStore();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    ApiService.categories().then(setCategories).catch(() => {});
+  const load = useCallback(() => {
+    setLoading(true);
+    setFailed(false);
+    Promise.all([ApiService.products(), ApiService.categories()])
+      .then(([p, c]) => {
+        setProducts(p);
+        setCategories(c);
+      })
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    ApiService.products()
-      .then((data) => {
-        setMasterProductCatalog(data);
-        setProducts(data);
-        if (!query) {
-          setCategoryId('');
-          setSort('name');
-        }
-      })
-      .catch((err) => {
-        toast.error('Failed to load products');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [searchParams, query, toast]);
+    load();
+  }, [load]);
 
   useEffect(() => {
-    if (location.hash === '#products') {
-      setTimeout(() => {
-        document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    }
-  }, [location]);
+    document.title = 'InfinityStore — Handwoven Saree Collection';
+  }, []);
 
   useEffect(() => {
-    let term = query.toLowerCase().trim();
-    let result = products
-      .filter((p) => !term || p.name.toLowerCase().includes(term) || p.description.toLowerCase().includes(term))
-      .filter((p) => !categoryId || p.category.id === Number(categoryId))
-      .sort((a, b) => sort === 'low' ? a.price - b.price : sort === 'high' ? b.price - a.price : a.name.localeCompare(b.name));
-    setFiltered(result);
-  }, [products, query, categoryId, sort]);
-
-  const handleCategoryChange = (e) => {
-    const val = e.target.value;
-    setCategoryId(val);
-    if (products.length !== masterProductCatalog.length && masterProductCatalog.length > 0) {
-      setProducts([...masterProductCatalog]);
+    if (location.hash === '#products' && !loading) {
+      document.getElementById('products')?.scrollIntoView({ block: 'start' });
     }
+  }, [location, loading]);
+
+  const visible = useMemo(() => {
+    const term = query.toLowerCase().trim();
+    return products
+      .filter(p => !term || p.name.toLowerCase().includes(term) || p.description.toLowerCase().includes(term)
+        || p.category?.name.toLowerCase().includes(term))
+      .filter(p => !categoryId || String(p.category?.id) === categoryId)
+      .filter(p => view !== 'deals' || isOnDeal(p))
+      .sort(SORTS[sort].fn);
+  }, [products, query, categoryId, view, sort]);
+
+  const update = (changes) => {
+    const next = new URLSearchParams(params);
+    Object.entries(changes).forEach(([k, v]) => (v ? next.set(k, v) : next.delete(k)));
+    setParams(next, { replace: true });
   };
 
-  const handleSortChange = (e) => {
-    const val = e.target.value;
-    setSort(val);
-    if (products.length !== masterProductCatalog.length && masterProductCatalog.length > 0) {
-      setProducts([...masterProductCatalog]);
+  const requireCustomer = () => {
+    if (!isLoggedIn()) {
+      toast.info('Sign in to continue');
+      navigate('/login', { state: { from: location } });
+      return false;
     }
-  };
-
-  const loadDeals = () => {
-    setLoading(true);
-    ApiService.deals()
-      .then((data) => {
-        setProducts(data);
-        setCategoryId('');
-        navigate('?');
-        setTimeout(() => {
-          document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      })
-      .catch(() => {
-        toast.error('Failed to load deals');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    return true;
   };
 
   const addToCart = (product) => {
-    if (!isLoggedIn()) {
-      navigate('/login');
-      return;
-    }
-    ApiService.addToCart(product.id).then(() => {
-      toast.success('Product added to cart');
-    }).catch(err => {
-      toast.error(err.response?.data?.message || 'Could not add item');
-    });
+    if (!requireCustomer()) return;
+    setBusyId(product.id);
+    ApiService.addToCart(product.id)
+      .then(() => {
+        toast.success(`${product.name} added to your cart`);
+        refreshCart();
+      })
+      .catch(err => toast.error(err.response?.data?.message || 'Could not add this item'))
+      .finally(() => setBusyId(null));
   };
 
-  const wishlist = (product) => {
-    if (!isLoggedIn()) {
-      navigate('/login');
-      return;
-    }
+  const addToWishlist = (product) => {
+    if (!requireCustomer()) return;
     ApiService.addWishlist(product.id)
-      .then(() => toast.success('Added to wishlist'))
-      .catch(err => toast.error(err.response?.data?.message || 'Could not add to wishlist'));
+      .then(() => toast.success('Saved to your wishlist'))
+      .catch(err => toast.error(err.response?.data?.message || 'Could not save to wishlist'));
   };
+
+  const activeCategory = categories.find(c => String(c.id) === categoryId);
+  const heading = query ? `Results for “${query}”` : view === 'deals' ? 'Current deals' : activeCategory ? activeCategory.name : 'The collection';
+  const filtersActive = query || categoryId || view;
 
   return (
     <>
-      <section className="hero">
-        <div>
-          <p className="eyebrow">InfinityStore deals</p>
-          <h1>Handwoven sarees, woven to be worn for years.</h1>
-          <p>Explore Kanchipuram silks, Bengal handlooms, Kerala kasavu and contemporary designer drapes, sourced directly from weavers.</p>
-          <button className="primary" onClick={loadDeals}>View deals</button>
+      <section className="hero-x full-bleed" aria-labelledby="hero-title">
+        <div className="hero-inner">
+          <div>
+            <span className="eyebrow">Handwoven saree collection</span>
+            <h1 id="hero-title">Drapes woven to be <em>treasured</em> for years.</h1>
+            <p>
+              Explore Kanchipuram silks, Bengal handlooms, Kerala kasavu and contemporary designer drapes,
+              sourced directly from weavers.
+            </p>
+            <div className="hero-ctas">
+              <a className="btn btn-light" href="#products">Shop the collection</a>
+              <button type="button" className="btn btn-ghost-light"
+                onClick={() => { update({ view: 'deals', category: '', q: '' }); document.getElementById('products')?.scrollIntoView(); }}>
+                View deals
+              </button>
+            </div>
+          </div>
+          <div className="hero-media">
+            <img src="/images/sarees/hero-sarees.jpg" alt="A selection of folded handwoven silk sarees" width="900" height="1125" fetchpriority="high" />
+          </div>
         </div>
-        <img src="/images/sarees/hero-sarees.jpg" alt="Handwoven saree collection" />
       </section>
 
-      <section id="products" className="toolbar">
-        <select value={categoryId} onChange={handleCategoryChange}>
-          <option value="">All categories</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-        <select value={sort} onChange={handleSortChange}>
-          <option value="name">Sort by name</option>
-          <option value="low">Price low to high</option>
-          <option value="high">Price high to low</option>
-        </select>
-        {!loading && filtered.length > 0 && (
-          <div className="catalog-stats">
-            Showing {filtered.length} of {products.length} products
+      {info && (
+        <section className="trust full-bleed" aria-label="Shopping with InfinityStore">
+          <div className="trust-item">
+            <i className="bi bi-truck" aria-hidden="true"></i>
+            <div><strong>Free shipping above {inrCompact(info.freeShippingThreshold)}</strong><span>Otherwise a flat {inrCompact(info.shippingFee)}</span></div>
+          </div>
+          <div className="trust-item">
+            <i className="bi bi-cash-coin" aria-hidden="true"></i>
+            <div><strong>Cash on delivery</strong><span>Pay when your order arrives</span></div>
+          </div>
+          <div className="trust-item">
+            <i className="bi bi-receipt" aria-hidden="true"></i>
+            <div><strong>Clear, upfront pricing</strong><span>Full GST and shipping breakdown before you order</span></div>
+          </div>
+        </section>
+      )}
+
+      <section id="products" className="catalog full-bleed" aria-labelledby="catalog-title">
+        <div className="catalog-head">
+          <div>
+            <span className="eyebrow">Shop</span>
+            <h2 id="catalog-title">{heading}</h2>
+            {!loading && !failed && (
+              <p aria-live="polite">{visible.length} {visible.length === 1 ? 'saree' : 'sarees'}</p>
+            )}
+          </div>
+          {query && (
+            <span className="search-pill">
+              Searching “{query}”
+              <button type="button" aria-label="Clear search" onClick={() => update({ q: '' })}>
+                <i className="bi bi-x-lg" aria-hidden="true"></i>
+              </button>
+            </span>
+          )}
+        </div>
+
+        <div className="catalog-controls">
+          <div className="chips" role="group" aria-label="Filter by category">
+            <button type="button" className="chip" aria-pressed={!categoryId && view !== 'deals'}
+              onClick={() => update({ category: '', view: '' })}>All</button>
+            {categories.map(c => (
+              <button key={c.id} type="button" className="chip" aria-pressed={categoryId === String(c.id)}
+                onClick={() => update({ category: String(c.id), view: '' })}>{c.name}</button>
+            ))}
+            <button type="button" className="chip chip-deal" aria-pressed={view === 'deals'}
+              onClick={() => update({ view: view === 'deals' ? '' : 'deals', category: '' })}>
+              <i className="bi bi-tag" aria-hidden="true"></i> Deals
+            </button>
+          </div>
+          <label className="sort-control">
+            Sort
+            <select value={sort} onChange={e => update({ sort: e.target.value === 'featured' ? '' : e.target.value })}>
+              {Object.entries(SORTS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+            </select>
+          </label>
+        </div>
+
+        {failed ? (
+          <div className="notice" role="alert">
+            <span>We couldn’t load the collection. Check your connection and try again.</span>
+            <button type="button" className="btn btn-outline" onClick={load}>Retry</button>
+          </div>
+        ) : loading ? (
+          <div className="pgrid" aria-busy="true" aria-label="Loading products">
+            {Array.from({ length: 8 }, (_, i) => <ProductCardSkeleton key={i} />)}
+          </div>
+        ) : visible.length === 0 ? (
+          <EmptyState
+            icon="bi-search"
+            title="Nothing matches yet"
+            message={filtersActive ? 'Try another category or a different search.' : 'New sarees are on their way.'}
+            actionText={filtersActive ? 'Show all sarees' : null}
+            onAction={() => setParams({}, { replace: true })}
+          />
+        ) : (
+          <div className="pgrid">
+            {visible.map((p, i) => (
+              <ProductCard
+                key={p.id}
+                priority={i < 4}
+                product={p}
+                mode={isAdmin() ? 'admin' : 'shop'}
+                busy={busyId === p.id}
+                onAdd={addToCart}
+                onWish={addToWishlist}
+              />
+            ))}
           </div>
         )}
       </section>
-
-      {loading ? (
-        <Loader message="Loading catalog..." />
-      ) : filtered.length === 0 ? (
-        <EmptyState 
-          icon="bi-search" 
-          title="No Products Found" 
-          message="We couldn't find any products matching your criteria."
-          actionText="Clear Filters"
-          onAction={() => {
-            setCategoryId('');
-            setSort('name');
-            navigate('/');
-          }}
-        />
-      ) : (
-        <section className="grid">
-          {filtered.map(product => (
-            <article className="product-card" key={product.id}>
-              <div className="deal-badge-container">
-                {product.deal && <span className="deal-badge">Deal</span>}
-                <Link to={`/products/${product.id}`}><img src={product.imageUrl} alt={product.name} /></Link>
-              </div>
-              <div className="product-body">
-                <span className="tag">{product.category.name}</span>
-                <h3>{product.name}</h3>
-                <div style={{ marginBottom: '8px' }}>
-                  <StarRating rating={product.rating} />
-                </div>
-                <p>{product.description}</p>
-                <div className="row-line" style={{ flexWrap: 'wrap' }}>
-                  {product.deal && product.dealPrice ? (
-                    <div className="deal-price-block">
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                        <span className="deal-current-price">₹{product.dealPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        <span className="deal-original-price">₹{product.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        <span className="deal-percent-off">{Math.round(((product.price - product.dealPrice) / product.price) * 100)}% off</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <strong style={{ fontSize: '1.15rem', color: 'var(--primary-color)' }}>₹{product.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
-                  )}
-                  <span className={product.stockQuantity === 0 ? 'danger' : ''} style={{ fontSize: '0.85rem' }}>
-                    {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
-                  </span>
-                </div>
-                {isCustomer() && (
-                  <div className="actions">
-                    <button onClick={() => addToCart(product)} disabled={product.stockQuantity === 0}>
-                      <i className="bi bi-cart2"></i>
-                    </button>
-                    <button className="ghost" onClick={() => wishlist(product)}>
-                      <i className="bi bi-heart"></i>
-                    </button>
-                  </div>
-                )}
-                {isAdmin() && (
-                  <Link className="primary link-button" to={`/admin?editId=${product.id}`}>Manage in admin</Link>
-                )}
-              </div>
-            </article>
-          ))}
-        </section>
-      )}
     </>
   );
 }

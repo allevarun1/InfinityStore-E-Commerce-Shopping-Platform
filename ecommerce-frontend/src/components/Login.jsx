@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
@@ -23,6 +23,10 @@ export function Login() {
   const { login: authLogin, forgotPassword, resetPassword } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Return shoppers to the page they were on (e.g. the product they tried to add).
+  const from = location.state?.from;
+  const returnTo = from ? `${from.pathname || '/'}${from.search || ''}${from.hash || ''}` : '/';
 
   const validate = () => {
     const tempErrors = {};
@@ -44,7 +48,7 @@ export function Login() {
     authLogin(username, password)
       .then((res) => {
         toast.success('Login successful');
-        navigate('/');
+        navigate(returnTo, { replace: true });
       })
       .catch((err) => {
         const errorMsg = err.response?.data?.message || 'Invalid username or password';

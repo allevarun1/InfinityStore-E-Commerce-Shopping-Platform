@@ -19,6 +19,7 @@ api.interceptors.request.use(
 );
 
 export const ApiService = {
+  storeInfo: () => api.get('/store/info').then(res => res.data),
   products: () => api.get('/products').then(res => res.data),
   product: (id) => api.get(`/products/${id}`).then(res => res.data),
   deals: () => api.get('/products/deals').then(res => res.data),

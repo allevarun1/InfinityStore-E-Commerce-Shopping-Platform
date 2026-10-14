@@ -1,140 +1,202 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { Loader } from './Loader';
-import { StarRating } from './StarRating';
+import { useStore } from '../contexts/StoreContext';
+import { inr, inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK } from '../lib/format';
+import { NotFound } from './NotFound';
 
 export function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState('loading'); // loading | ready | missing | error
   const [qty, setQty] = useState(1);
-  
-  const { isCustomer, isAdmin, isLoggedIn } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [zoom, setZoom] = useState(null);
+  const { isAdmin, isLoggedIn } = useAuth();
+  const { info, refreshCart } = useStore();
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    setLoading(true);
+    setStatus('loading');
+    setQty(1);
     ApiService.product(id)
-      .then(setProduct)
-      .catch(() => {
-        toast.error('Failed to load product details');
+      .then(p => {
+        setProduct(p);
+        setStatus('ready');
+        document.title = `${p.name} | InfinityStore`;
       })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [id, toast]);
+      .catch(err => setStatus(err.response?.status === 404 ? 'missing' : 'error'));
+  }, [id]);
 
-  const add = () => {
-    if (!isLoggedIn()) { navigate('/login'); return; }
-    if (product) {
-      ApiService.addToCart(product.id, qty).then(() => {
-        toast.success(`Added ${qty} item(s) to cart`);
-        navigate('/cart');
-      });
-    }
-  };
-
-  const wish = () => {
-    if (!isLoggedIn()) { navigate('/login'); return; }
-    if (product) {
-      ApiService.addWishlist(product.id).then(() => {
-        toast.success('Added to wishlist');
-        navigate('/wishlist');
-      });
-    }
-  };
-
-  if (loading) {
-    return <Loader message="Loading details..." fullPage />;
+  if (status === 'missing') {
+    return <NotFound title="This saree isn’t available" message="It may have sold out or been removed from the collection." />;
   }
-
-  if (!product) {
+  if (status === 'error') {
     return (
-      <section className="panel">
-        <h1>Product Not Found</h1>
-        <Link to="/" className="primary link-button">Back to Home</Link>
-      </section>
+      <div className="pdp">
+        <div className="notice" role="alert">
+          <span>We couldn’t load this product. Please try again.</span>
+          <button type="button" className="btn btn-outline" onClick={() => navigate(0)}>Retry</button>
+        </div>
+      </div>
+    );
+  }
+  if (status === 'loading') {
+    return (
+      <div className="pdp" aria-busy="true">
+        <div className="pdp-grid">
+          <div className="skel" style={{ aspectRatio: '4 / 5', borderRadius: 16 }}></div>
+          <div>
+            <div className="skel skel-line" style={{ width: '30%' }}></div>
+            <div className="skel skel-line" style={{ width: '80%', height: 36, marginTop: 16 }}></div>
+            <div className="skel skel-line" style={{ width: '40%', height: 28, marginTop: 24 }}></div>
+            <div className="skel skel-line" style={{ height: 46, marginTop: 32 }}></div>
+          </div>
+        </div>
+      </div>
     );
   }
 
+  const soldOut = !product.stockQuantity || product.stockQuantity <= 0;
+  const maxQty = Math.min(10, product.stockQuantity || 0);
+  const onDeal = isOnDeal(product);
+  const saving = onDeal ? product.price - product.dealPrice : 0;
+
+  const add = (thenCheckout) => {
+    if (!isLoggedIn()) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    setBusy(true);
+    ApiService.addToCart(product.id, qty)
+      .then(() => {
+        refreshCart();
+        if (thenCheckout) {
+          navigate('/checkout');
+        } else {
+          toast.success(`Added ${qty} × ${product.name} to your cart`);
+        }
+      })
+      .catch(err => toast.error(err.response?.data?.message || 'Could not add this item'))
+      .finally(() => setBusy(false));
+  };
+
+  const wish = () => {
+    if (!isLoggedIn()) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    ApiService.addWishlist(product.id)
+      .then(() => toast.success('Saved to your wishlist'))
+      .catch(err => toast.error(err.response?.data?.message || 'Could not save to wishlist'));
+  };
+
+  const moveZoom = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setZoom(`${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`);
+  };
+
+  const stockClass = soldOut ? 'out' : product.stockQuantity < LOW_STOCK ? 'low' : '';
+  const stockText = soldOut ? 'Sold out' : product.stockQuantity < LOW_STOCK
+    ? `In stock — only ${product.stockQuantity} left` : 'In stock, ready to ship';
+
   return (
-    <section className="detail">
-      <img src={product.imageUrl} alt={product.name} />
-      <div>
-        <span className="tag">{product.category.name}</span>
-        <div className="breadcrumb">
-          <Link to="/">Home</Link> &gt; <span>{product.category.name}</span> &gt; <span className="current">{product.name}</span>
-        </div>
-        <h1>{product.name}</h1>
-        <p>{product.description}</p>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-          <StarRating rating={product.rating} />
-          <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>({product.rating} out of 5)</span>
+    <div className="pdp">
+      <nav className="crumbs" aria-label="Breadcrumb">
+        <Link to="/">Home</Link><span aria-hidden="true">/</span>
+        <Link to={`/?category=${product.category.id}#products`}>{product.category.name}</Link><span aria-hidden="true">/</span>
+        <span aria-current="page">{product.name}</span>
+      </nav>
+
+      <div className="pdp-grid">
+        <div
+          className={`pdp-media ${zoom ? 'zoomed' : ''}`}
+          onMouseMove={moveZoom}
+          onMouseLeave={() => setZoom(null)}
+        >
+          <img src={product.imageUrl} alt={product.name} width="900" height="1125"
+            style={zoom ? { transformOrigin: zoom } : undefined} />
         </div>
 
-        {product.deal && product.dealPrice ? (
-          <div className="deal-price-block" style={{ margin: '16px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
-              <span className="deal-percent-off" style={{ fontSize: '1.1rem', padding: '4px 12px' }}>{Math.round(((product.price - product.dealPrice) / product.price) * 100)}% off</span>
-              <span className="deal-current-price" style={{ fontSize: '2rem' }}>₹{product.dealPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+        <div className="pdp-info">
+          <span className="eyebrow">{product.category.name}</span>
+          <h1>{product.name}</h1>
+
+          <div className="pdp-price">
+            <div className="price">
+              <span className="price-now">{inr(activePrice(product))}</span>
+              {onDeal && (
+                <>
+                  <span className="price-was"><span className="sr-only">Was </span>{inr(product.price)}</span>
+                  <span className="price-off">Save {inrCompact(saving)} ({discountPercent(product)}%)</span>
+                </>
+              )}
             </div>
-            <div style={{ marginTop: '4px' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>M.R.P.: </span>
-              <span className="deal-original-price" style={{ fontSize: '0.95rem' }}>₹{product.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-            </div>
+            <small>Price excludes GST. Tax and shipping are shown in full before you place your order.</small>
           </div>
-        ) : (
-          <h2 style={{ margin: '16px 0' }}>₹{product.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
-        )}
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '24px' }}>
-          <p style={{ margin: 0 }}>
-            {product.stockQuantity > 0 ? (
-              <span style={{ color: 'var(--success-color)', fontWeight: '600' }}>In Stock</span>
-            ) : (
-              <span style={{ color: 'var(--danger-color)', fontWeight: '600' }}>Out of stock</span>
-            )}
-          </p>
-          {product.stockQuantity > 0 && product.stockQuantity < 5 && (
-            <span className="stock-urgency">Hurry! Only {product.stockQuantity} left in stock.</span>
-          )}
-        </div>
-        
-        {isCustomer() && (
-          <div className="actions detail-actions" style={{ flexWrap: 'wrap' }}>
-            {product.stockQuantity > 0 && (
-              <div className="quantity-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <label style={{ fontSize: '0.9rem', fontWeight: '600' }}>Qty:</label>
-                <select 
-                  value={qty} 
-                  onChange={e => setQty(Number(e.target.value))}
-                  style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid var(--border-color)' }}
-                >
-                  {[...Array(Math.min(10, product.stockQuantity)).keys()].map(n => (
-                    <option key={n+1} value={n+1}>{n+1}</option>
-                  ))}
-                </select>
+
+          <p className={`stock-line ${stockClass}`}><span className="dot" aria-hidden="true"></span>{stockText}</p>
+
+          {isAdmin() ? (
+            <Link className="btn btn-primary" to={`/admin?editId=${product.id}`}>Manage in admin</Link>
+          ) : (
+            <>
+              <div className="buy-row">
+                {!soldOut && (
+                  <div className="stepper" role="group" aria-label="Quantity">
+                    <button type="button" aria-label="Decrease quantity" disabled={qty <= 1} onClick={() => setQty(q => q - 1)}>−</button>
+                    <output aria-live="polite">{qty}</output>
+                    <button type="button" aria-label="Increase quantity" disabled={qty >= maxQty} onClick={() => setQty(q => q + 1)}>+</button>
+                  </div>
+                )}
+                <button type="button" className="btn btn-primary" disabled={soldOut || busy} onClick={() => add(false)}>
+                  <i className="bi bi-bag" aria-hidden="true"></i> {soldOut ? 'Sold out' : busy ? 'Adding…' : 'Add to cart'}
+                </button>
               </div>
-            )}
-            <button className="primary" onClick={add} disabled={product.stockQuantity === 0}>
-              <i className="bi bi-cart-plus" style={{ marginRight: '8px' }}></i>
-              Add to cart
-            </button>
-            <button className="ghost" onClick={wish}>
-              <i className="bi bi-heart" style={{ marginRight: '8px' }}></i>
-              Wishlist
-            </button>
-          </div>
-        )}
-        {isAdmin() && (
-          <Link className="primary link-button" to={`/admin?editId=${product.id}`}>Manage in admin</Link>
-        )}
+              <div className="buy-row">
+                {!soldOut && (
+                  <button type="button" className="btn btn-outline" disabled={busy} onClick={() => add(true)}>Buy now</button>
+                )}
+                <button type="button" className="btn btn-outline" onClick={wish}>
+                  <i className="bi bi-heart" aria-hidden="true"></i> Save to wishlist
+                </button>
+              </div>
+            </>
+          )}
+
+          {info && (
+            <ul className="facts">
+              <li><i className="bi bi-truck" aria-hidden="true"></i>
+                <span>{activePrice(product) > info.freeShippingThreshold
+                  ? 'Ships free with this item.'
+                  : `Free shipping on orders above ${inrCompact(info.freeShippingThreshold)}; otherwise ${inrCompact(info.shippingFee)}.`}</span></li>
+              <li><i className="bi bi-cash-coin" aria-hidden="true"></i><span>Cash on delivery available.</span></li>
+              <li><i className="bi bi-receipt" aria-hidden="true"></i><span>GST is itemised on your order.</span></li>
+            </ul>
+          )}
+
+          <section className="pdp-details" aria-labelledby="details-title">
+            <h2 id="details-title">Details</h2>
+            <p>{product.description}</p>
+          </section>
+        </div>
       </div>
-    </section>
+
+      {!isAdmin() && !soldOut && (
+        <div className="mobile-buy">
+          <div>
+            <div className="price-now">{inrCompact(activePrice(product))}</div>
+            {onDeal && <div className="price-was" style={{ fontSize: '0.8rem' }}>{inrCompact(product.price)}</div>}
+          </div>
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => add(false)}>
+            {busy ? 'Adding…' : 'Add to cart'}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

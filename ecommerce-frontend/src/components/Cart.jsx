@@ -1,105 +1,142 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
+import { useStore } from '../contexts/StoreContext';
 import { Loader } from './Loader';
 import { EmptyState } from './EmptyState';
+import { inr, inrCompact, isOnDeal } from '../lib/format';
 
 export function Cart() {
   const [items, setItems] = useState([]);
+  const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState(null);
   const toast = useToast();
+  const { info, refreshCart } = useStore();
 
-  const load = () => {
-    setLoading(true);
-    ApiService.cart()
-      .then(setItems)
-      .catch(() => {
-        toast.error('Failed to load cart');
+  // The summary always comes from the server quote, the same calculation checkout charges.
+  const load = useCallback(() => {
+    return Promise.all([ApiService.cart(), ApiService.cartQuote()])
+      .then(([c, q]) => {
+        setItems(c);
+        setQuote(q);
       })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
+      .catch(() => toast.error('Failed to load your cart'))
+      .finally(() => setLoading(false));
+  }, [toast]);
 
   useEffect(() => {
+    document.title = 'Your cart | InfinityStore';
     load();
-  }, []);
+  }, [load]);
 
-  const getActivePrice = (product) => (product.deal && product.dealPrice) ? product.dealPrice : product.price;
-
-  const total = () => items.reduce((sum, item) => sum + getActivePrice(item.product) * item.quantity, 0);
-
-  const setQty = (item, quantity) => {
-    if (quantity < 1) {
-      remove(item);
-      return;
-    }
-    ApiService.updateCart(item.id, quantity)
-      .then(() => load())
-      .catch((err) => {
-        toast.error(err.response?.data?.message || 'Could not update quantity');
-      });
-  };
-
-  const remove = (item) => {
-    ApiService.removeCart(item.id)
+  const mutate = (item, request, successMessage) => {
+    setBusyId(item.id);
+    request
       .then(() => {
-        toast.success('Removed from cart');
-        load();
+        if (successMessage) toast.success(successMessage);
+        refreshCart();
+        return load();
       })
-      .catch(() => {
-        toast.error('Could not remove item');
-      });
+      .catch(err => toast.error(err.response?.data?.message || 'Could not update your cart'))
+      .finally(() => setBusyId(null));
   };
+
+  const setQty = (item, quantity) => mutate(item, ApiService.updateCart(item.id, quantity));
+  const remove = (item) => mutate(item, ApiService.removeCart(item.id), `${item.product.name} removed`);
 
   if (loading) {
     return <Loader message="Loading your cart..." />;
   }
 
-  return (
-    <section className="panel">
-      <h1>Cart</h1>
-      {!items.length ? (
-        <EmptyState 
-          icon="bi-cart-x" 
-          title="Your cart is empty" 
-          message="Looks like you haven't added anything to your cart yet." 
-          actionText="Start shopping" 
-          actionLink="/" 
+  if (!items.length) {
+    return (
+      <section className="panel">
+        <EmptyState
+          icon="bi-bag"
+          title="Your cart is empty"
+          message="Browse the collection and add the drapes you love."
+          actionText="Shop the collection"
+          actionLink="/#products"
         />
-      ) : (
-        <>
+      </section>
+    );
+  }
+
+  const lineFor = (item) => quote?.lines.find(l => l.cartItemId === item.id);
+  const threshold = info ? Number(info.freeShippingThreshold) : null;
+  const taxable = quote ? Number(quote.taxableAmount) : 0;
+  // Free shipping applies strictly above the threshold; the server's shipping figure is the authority.
+  const freeShipping = quote && Number(quote.shipping) === 0;
+  const remaining = threshold != null ? Math.max(1, Math.floor(threshold - taxable) + 1) : null;
+  const units = items.reduce((n, i) => n + i.quantity, 0);
+
+  return (
+    <div className="cart-page">
+      <h1>Your cart</h1>
+      <p>{units} {units === 1 ? 'item' : 'items'}</p>
+
+      <div className="cart-grid">
+        <ul className="cart-lines">
           {items.map(item => {
-            const activePrice = getActivePrice(item.product);
+            const line = lineFor(item);
+            const maxQty = Math.min(10, item.product.stockQuantity || 0);
+            const busy = busyId === item.id;
             return (
-              <div className="list-row" key={item.id}>
-                <img src={item.product.imageUrl} alt={item.product.name} />
+              <li className="cart-line" key={item.id} aria-busy={busy}>
+                <Link to={`/products/${item.product.id}`} tabIndex={-1} aria-hidden="true">
+                  <img src={item.product.imageUrl} alt="" loading="lazy" />
+                </Link>
                 <div>
-                  <strong>{item.product.name}</strong>
-                  {item.product.deal && item.product.dealPrice ? (
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '4px' }}>
-                      <span className="deal-current-price" style={{ fontSize: '1rem' }}>₹{item.product.dealPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      <span className="deal-original-price">₹{item.product.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                      <span className="deal-percent-off">{Math.round(((item.product.price - item.product.dealPrice) / item.product.price) * 100)}% off</span>
+                  <h3><Link to={`/products/${item.product.id}`}>{item.product.name}</Link></h3>
+                  <div className="price">
+                    <span>{inr(line ? line.unitPrice : item.product.price)}</span>
+                    {isOnDeal(item.product) && <span className="price-was">{inr(item.product.price)}</span>}
+                  </div>
+                  <div className="cart-line-controls">
+                    <div className="stepper sm" role="group" aria-label={`Quantity of ${item.product.name}`}>
+                      <button type="button" aria-label="Decrease quantity" disabled={busy || item.quantity <= 1}
+                        onClick={() => setQty(item, item.quantity - 1)}>−</button>
+                      <output aria-live="polite">{item.quantity}</output>
+                      <button type="button" aria-label="Increase quantity" disabled={busy || item.quantity >= maxQty}
+                        onClick={() => setQty(item, item.quantity + 1)}>+</button>
                     </div>
-                  ) : (
-                    <p>₹{activePrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-                  )}
+                    <button type="button" className="text-link" disabled={busy} onClick={() => remove(item)}>Remove</button>
+                  </div>
                 </div>
-                <button className="cart-qty-btn" onClick={() => setQty(item, item.quantity - 1)}>-</button>
-                <span className="cart-qty-val">{item.quantity}</span>
-                <button className="cart-qty-btn" onClick={() => setQty(item, item.quantity + 1)}>+</button>
-                <button className="ghost" onClick={() => remove(item)}>Remove</button>
-              </div>
+                <div className="cart-line-total">{line ? inr(line.lineNet) : ''}</div>
+              </li>
             );
           })}
-          
-          <h2>Subtotal: ₹{total().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>GST and shipping are calculated at checkout.</p>
-          <Link className="primary link-button" to="/checkout">Checkout</Link>
-        </>
-      )}
-    </section>
+        </ul>
+
+        {quote && (
+          <aside className="summary" aria-labelledby="summary-title">
+            <h2 id="summary-title">Order summary</h2>
+            {remaining != null && (
+              <div className="ship-progress">
+                {freeShipping
+                  ? <>You’ve unlocked <strong>free shipping</strong>.</>
+                  : <>Add <strong>{inrCompact(remaining)}</strong> more for free shipping.</>}
+                <div className="bar" aria-hidden="true">
+                  <span style={{ width: `${Math.min(100, (taxable / threshold) * 100)}%` }}></span>
+                </div>
+              </div>
+            )}
+            <div className="summary-row"><span>Subtotal</span><span>{inr(quote.subtotal)}</span></div>
+            {Number(quote.discount) > 0 && (
+              <div className="summary-row" style={{ color: 'var(--success)' }}><span>Savings</span><span>−{inr(quote.discount)}</span></div>
+            )}
+            <div className="summary-row"><span>GST</span><span>{inr(quote.tax)}</span></div>
+            <div className="summary-row"><span>Shipping</span><span>{Number(quote.shipping) === 0 ? 'Free' : inr(quote.shipping)}</span></div>
+            <div className="summary-row total"><span>Total</span><span>{inr(quote.total)}</span></div>
+            <Link className="btn btn-primary" to="/checkout">Proceed to checkout</Link>
+            <p className="secure-note"><i className="bi bi-cash-coin" aria-hidden="true"></i> Cash on delivery available</p>
+            <p style={{ textAlign: 'center', marginTop: 8 }}><Link to="/#products">Continue shopping</Link></p>
+          </aside>
+        )}
+      </div>
+    </div>
   );
 }

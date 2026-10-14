@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -12,6 +13,7 @@ export function Profile() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const toast = useToast();
 
   useEffect(() => {
@@ -88,7 +90,14 @@ export function Profile() {
 
   return (
     <form className="form-card" onSubmit={save} style={{ gap: '16px' }}>
-      <h1>Your Profile</h1>
+      <h1>Your account</h1>
+      <div className="account-links">
+        <Link className="btn btn-outline" to="/orders"><i className="bi bi-box-seam" aria-hidden="true"></i> Your orders</Link>
+        <Link className="btn btn-outline" to="/wishlist"><i className="bi bi-heart" aria-hidden="true"></i> Wishlist</Link>
+        <button type="button" className="btn btn-outline" onClick={() => { logout(); navigate('/'); }}>
+          <i className="bi bi-box-arrow-right" aria-hidden="true"></i> Sign out
+        </button>
+      </div>
       
       <div className="field-group">
         <label htmlFor="firstName">First Name</label>
