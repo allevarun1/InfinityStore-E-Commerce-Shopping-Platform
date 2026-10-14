@@ -78,8 +78,8 @@ export function Login() {
     forgotPassword(forgotEmail.trim())
       .then(() => {
         setForgotStep('reset');
-        setForgotMessage('Reset code sent. Check your email and enter the code below.');
-        toast.success('Reset code sent to email');
+        setForgotMessage('If an account exists for that email, a reset link has been sent. Open it, or paste the token below.');
+        toast.success('Check your email for the reset link');
       })
       .catch((err) => {
         const errorMsg = err.response?.data?.message || 'Failed to send reset code';
@@ -96,8 +96,8 @@ export function Login() {
       toast.error('Please enter the reset code');
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters long');
+    if (newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters long');
       return;
     }
     if (newPassword !== confirmPassword) {

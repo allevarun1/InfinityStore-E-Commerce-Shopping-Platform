@@ -2,10 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { ApiService } from '../services/api';
 import { Loader } from './Loader';
 import { EmptyState } from './EmptyState';
+import { useToast } from '../contexts/ToastContext';
+
+const inr = (v) => `₹${Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(null);
+  const toast = useToast();
 
   useEffect(() => {
     setLoading(true);
@@ -16,6 +21,18 @@ export function Orders() {
         setLoading(false);
       });
   }, []);
+
+  const cancel = (order) => {
+    if (!window.confirm('Cancel this order?')) return;
+    setCancelling(order.id);
+    ApiService.cancelOrder(order.id)
+      .then((updated) => {
+        setOrders(prev => prev.map(o => (o.id === updated.id ? updated : o)));
+        toast.success('Order cancelled');
+      })
+      .catch((err) => toast.error(err.response?.data?.message || 'Could not cancel the order'))
+      .finally(() => setCancelling(null));
+  };
 
   if (loading) {
     return <Loader message="Loading your orders..." />;
@@ -45,7 +62,8 @@ export function Orders() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span className={`tag ${order.status === 'DELIVERED' ? 'success' : ''}`}>{order.status}</span>
-                  <span className={`tag ${order.paymentStatus === 'PAID' ? 'success' : ''}`} style={{ marginLeft: '8px' }}>{order.paymentStatus}</span>
+                  <span className={`tag ${order.paymentStatus === 'PAID' ? 'success' : ''}`} style={{ marginLeft: '8px' }}>{order.paymentMethod === 'COD' ? 'COD · ' : ''}{order.paymentStatus}</span>
+                  {order.testPayment && <span className="tag" style={{ marginLeft: '8px' }}>TEST</span>}
                 </div>
               </div>
               
@@ -64,8 +82,24 @@ export function Orders() {
                   <strong>Shipping to:</strong><br/>
                   {order.shippingAddress}
                 </div>
-                <div style={{ textAlign: 'right', fontSize: '1.2rem', fontWeight: '700', color: 'var(--primary-color)' }}>
-                  Total: ₹{order.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                <div style={{ textAlign: 'right', minWidth: '200px' }}>
+                  {order.pricingVersion && (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'grid', gap: '2px', marginBottom: '6px' }}>
+                      <span>Subtotal {inr(order.subtotalAmount)}</span>
+                      {Number(order.discountAmount) > 0 && <span>Discount −{inr(order.discountAmount)}</span>}
+                      <span>GST {inr(order.taxAmount)}</span>
+                      <span>Shipping {Number(order.shippingAmount) === 0 ? 'FREE' : inr(order.shippingAmount)}</span>
+                    </div>
+                  )}
+                  <div style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--primary-color)' }}>
+                    {order.pricingVersion ? 'Total' : 'Subtotal'}: {inr(order.totalPrice)}
+                  </div>
+                  {order.status === 'PENDING' && order.paymentStatus !== 'PAID' && (
+                    <button type="button" className="danger-btn" style={{ marginTop: '8px' }}
+                      disabled={cancelling === order.id} onClick={() => cancel(order)}>
+                      {cancelling === order.id ? 'Cancelling...' : 'Cancel order'}
+                    </button>
+                  )}
                 </div>
               </div>
             </article>

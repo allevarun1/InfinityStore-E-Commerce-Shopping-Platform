@@ -95,7 +95,8 @@ export function Cart() {
             );
           })}
           
-          <h2>Total: ₹{total().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
+          <h2>Subtotal: ₹{total().toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>GST and shipping are calculated at checkout.</p>
           <Link className="primary link-button" to="/checkout">Checkout</Link>
         </>
       )}

@@ -9,7 +9,7 @@ const api = axios.create({
 // Interceptor to add JWT token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('snapbuy_token');
+    const token = localStorage.getItem('infinity_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,7 +34,12 @@ export const ApiService = {
   addWishlist: (productId) => api.post(`/wishlist/${productId}`).then(res => res.data),
   removeWishlist: (productId) => api.delete(`/wishlist/${productId}`).then(res => res.data),
   
-  checkout: (payload) => api.post('/orders/checkout', payload).then(res => res.data),
+  cartQuote: () => api.get('/cart/quote').then(res => res.data),
+  paymentOptions: () => api.get('/orders/payment-options').then(res => res.data),
+  checkout: (payload, idempotencyKey) => api.post('/orders/checkout', payload, {
+    headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
+  }).then(res => res.data),
+  cancelOrder: (id) => api.post(`/orders/${id}/cancel`).then(res => res.data),
   orders: () => api.get('/orders/history').then(res => res.data),
   
   profile: () => api.get('/user/profile').then(res => res.data),

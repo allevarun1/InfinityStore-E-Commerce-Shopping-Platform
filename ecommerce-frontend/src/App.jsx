@@ -117,7 +117,7 @@ function Footer() {
         <p>Built with ❤️ for better shopping.</p>
       </div>
       <div className="footer-links">
-        <a href="mailto:snapbuy1111@gmail.com">Email Us</a>
+        {import.meta.env.VITE_SUPPORT_EMAIL && <a href={`mailto:${import.meta.env.VITE_SUPPORT_EMAIL}`}>Email Us</a>}
         <Link to="/privacy">Privacy Policy</Link>
         <Link to="/terms">Terms</Link>
       </div>

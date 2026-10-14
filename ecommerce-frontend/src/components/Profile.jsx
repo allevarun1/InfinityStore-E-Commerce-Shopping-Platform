@@ -6,6 +6,7 @@ import { Loader } from './Loader';
 
 export function Profile() {
   const [form, setForm] = useState(null);
+  const [original, setOriginal] = useState({});
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,7 +17,10 @@ export function Profile() {
   useEffect(() => {
     setLoading(true);
     ApiService.profile()
-      .then(setForm)
+      .then((profile) => {
+        setOriginal(profile);
+        setForm(profile);
+      })
       .catch(() => toast.error('Failed to load profile details'))
       .finally(() => setLoading(false));
   }, [toast]);
@@ -33,10 +37,13 @@ export function Profile() {
     if (form.phone && !/^\d{10}$/.test(form.phone)) {
       tempErrors.phone = 'Phone number must be exactly 10 digits';
     }
-    if (form.password && form.password.length < 6) {
-      tempErrors.password = 'New password must be at least 6 characters long';
+    if (form.password && form.password.length < 8) {
+      tempErrors.password = 'New password must be at least 8 characters long';
     }
 
+    if ((form.password || (form.email && form.email !== original.email)) && !form.currentPassword) {
+      tempErrors.currentPassword = 'Enter your current password to change your email or password';
+    }
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
@@ -55,7 +62,11 @@ export function Profile() {
 
     setIsSubmitting(true);
     ApiService.updateProfile(form)
-      .then(() => toast.success('Profile updated successfully'))
+      .then((saved) => {
+        setOriginal(saved);
+        setForm(prev => ({ ...prev, password: '', currentPassword: '' }));
+        toast.success('Profile updated successfully');
+      })
       .catch((err) => toast.error(err.response?.data?.message || 'Failed to update profile'))
       .finally(() => setIsSubmitting(false));
   };
@@ -158,6 +169,20 @@ export function Profile() {
           onChange={handleChange}
         />
         {errors.password && <span className="field-error">{errors.password}</span>}
+      </div>
+      <div className="field-group">
+        <label htmlFor="currentPassword">Current password</label>
+        <input
+          id="currentPassword"
+          name="currentPassword"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Required only when changing email or password"
+          value={form.currentPassword || ''}
+          className={errors.currentPassword ? 'input-invalid' : ''}
+          onChange={handleChange}
+        />
+        {errors.currentPassword && <span className="field-error">{errors.currentPassword}</span>}
       </div>
       
       <button type="submit" className="primary" disabled={isSubmitting}>

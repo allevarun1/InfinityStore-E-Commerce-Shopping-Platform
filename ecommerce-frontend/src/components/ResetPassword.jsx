@@ -7,7 +7,7 @@ export function ResetPassword() {
   const [searchParams] = useSearchParams();
   const [form, setForm] = useState({
     email: searchParams.get('email') || '',
-    code: searchParams.get('code') || '',
+    code: searchParams.get('token') || searchParams.get('code') || '',
     newPassword: '',
     confirmPassword: ''
   });
@@ -25,11 +25,11 @@ export function ResetPassword() {
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       tempErrors.email = 'Enter a valid email address';
     }
-    if (!form.code.trim() || form.code.trim().length < 4) {
-      tempErrors.code = 'Enter the reset code from your email';
+    if (!form.code.trim() || form.code.trim().length < 20) {
+      tempErrors.code = 'Open the link from your email, or paste the full reset token';
     }
-    if (form.newPassword.length < 6) {
-      tempErrors.newPassword = 'Password must be at least 6 characters';
+    if (form.newPassword.length < 8) {
+      tempErrors.newPassword = 'Password must be at least 8 characters';
     }
     if (form.newPassword !== form.confirmPassword) {
       tempErrors.confirmPassword = 'Passwords do not match';
@@ -58,7 +58,7 @@ export function ResetPassword() {
         setTimeout(() => navigate('/login'), 2000);
       })
       .catch((err) => {
-        const msg = err.response?.data?.message || 'Failed to reset password. Please check your code.';
+        const msg = err.response?.data?.message || 'Failed to reset password. The link may have expired.';
         toast.error(msg);
       })
       .finally(() => {
@@ -88,7 +88,7 @@ export function ResetPassword() {
           </div>
           <h1>Reset Password</h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-            Enter the code you received in your email and create a new password.
+            Choose a new password. Use the link from your email; it expires after 30 minutes.
           </p>
         </div>
 
@@ -108,16 +108,16 @@ export function ResetPassword() {
         </div>
 
         <div className="field-group">
-          <label htmlFor="reset-code">Reset Code</label>
+          <label htmlFor="reset-code">Reset token</label>
           <input
             id="reset-code"
             name="code"
-            placeholder="Enter 8-character code from email"
+            placeholder="Filled in automatically from your email link"
             required
             value={form.code}
-            className={errors.code ? 'input-invalid' : form.code.length >= 4 ? 'input-valid' : ''}
+            className={errors.code ? 'input-invalid' : form.code.length >= 20 ? 'input-valid' : ''}
             onChange={handleChange}
-            style={{ letterSpacing: '0.15em', fontWeight: '700', textTransform: 'uppercase' }}
+            autoComplete="off"
           />
           {errors.code && <span className="field-error">{errors.code}</span>}
         </div>
@@ -129,10 +129,10 @@ export function ResetPassword() {
               id="reset-newPassword"
               name="newPassword"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Minimum 6 characters"
+              placeholder="Minimum 8 characters"
               required
               value={form.newPassword}
-              className={errors.newPassword ? 'input-invalid' : form.newPassword.length >= 6 ? 'input-valid' : ''}
+              className={errors.newPassword ? 'input-invalid' : form.newPassword.length >= 8 ? 'input-valid' : ''}
               onChange={handleChange}
             />
             <button
@@ -157,7 +157,7 @@ export function ResetPassword() {
               placeholder="Re-enter your password"
               required
               value={form.confirmPassword}
-              className={errors.confirmPassword ? 'input-invalid' : (form.confirmPassword.length >= 6 && form.confirmPassword === form.newPassword) ? 'input-valid' : ''}
+              className={errors.confirmPassword ? 'input-invalid' : (form.confirmPassword.length >= 8 && form.confirmPassword === form.newPassword) ? 'input-valid' : ''}
               onChange={handleChange}
             />
           </div>

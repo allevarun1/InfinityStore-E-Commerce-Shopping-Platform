@@ -134,6 +134,13 @@ export function Admin() {
     }
   };
 
+  // Mirrors the server's payment state machine; the server remains the authority.
+  const paymentOptionsFor = (order) => {
+    const next = { PENDING: ['PAID', 'FAILED'], PAID: ['REFUNDED'], FAILED: [], REFUNDED: [] }[order.paymentStatus] || [];
+    const allowed = next.filter(st => st !== 'PAID' || (order.paymentMethod === 'COD' && order.status !== 'CANCELLED'));
+    return [order.paymentStatus, ...allowed];
+  };
+
   const delivery = (order, status) => {
     ApiService.updateDeliveryStatus(order.id, status)
       .then(() => {
@@ -353,7 +360,7 @@ export function Admin() {
                       <span style={{ backgroundColor: 'var(--danger-color)', color: 'white', padding: '1px 6px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold' }}>NEW ORDER</span>
                     )}
                   </div>
-                  <span>₹{order.totalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                  <span>₹{Number(order.totalPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}{order.testPayment ? ' (TEST PAYMENT)' : ''}</span>
                 </div>
 
                 <div style={{ width: '100%', fontSize: '0.85rem', color: 'var(--text-color)', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -366,7 +373,7 @@ export function Admin() {
                     <ul style={{ margin: 0, paddingLeft: '16px' }}>
                       {order.orderItems?.map(item => (
                         <li key={item.id}>
-                          {item.product?.name || 'Deleted Product'} (x{item.quantity}) - ₹{item.price.toLocaleString('en-IN')}
+                          {item.product?.name || 'Deleted Product'} (x{item.quantity}) - ₹{Number(item.price).toLocaleString('en-IN')}
                         </li>
                       ))}
                     </ul>
@@ -379,7 +386,7 @@ export function Admin() {
                     value={order.status} 
                     onChange={e => delivery(order, e.target.value)}
                   >
-                    <option>PENDING</option><option>SHIPPED</option><option>DELIVERED</option><option>CANCELLED</option>
+                    {[order.status, ...(order.nextStatuses || [])].map(st => <option key={st}>{st}</option>)}
                   </select>
                 </div>
                 <div className="field-group" style={{ flex: 1, minWidth: '150px' }}>
@@ -388,7 +395,7 @@ export function Admin() {
                     value={order.paymentStatus} 
                     onChange={e => payment(order, e.target.value)}
                   >
-                    <option>PENDING</option><option>PAID</option><option>FAILED</option><option>REFUNDED</option>
+                    {paymentOptionsFor(order).map(st => <option key={st}>{st}</option>)}
                   </select>
                 </div>
               </div>

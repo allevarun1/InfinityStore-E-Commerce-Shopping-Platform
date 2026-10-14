@@ -22,7 +22,7 @@ export function Register() {
 
   const getPasswordStrength = (pass) => {
     if (!pass) return { label: '', class: '' };
-    if (pass.length < 6) return { label: 'Weak (min 6 chars)', class: 'weak' };
+    if (pass.length < 8) return { label: 'Weak (min 8 chars)', class: 'weak' };
     const hasLetters = /[a-zA-Z]/.test(pass);
     const hasNumbers = /[0-9]/.test(pass);
     const hasSpecials = /[^A-Za-z0-9]/.test(pass);
@@ -50,8 +50,8 @@ export function Register() {
       tempErrors.email = 'Please enter a valid email address';
     }
     
-    if (form.password.length < 6) {
-      tempErrors.password = 'Password must be at least 6 characters long';
+    if (form.password.length < 8) {
+      tempErrors.password = 'Password must be at least 8 characters long';
     }
     
     if (form.password !== form.confirmPassword) {
@@ -167,7 +167,7 @@ export function Register() {
             placeholder="Password" 
             required
             value={form.password}
-            className={errors.password ? 'input-invalid' : form.password.length >= 6 ? 'input-valid' : ''}
+            className={errors.password ? 'input-invalid' : form.password.length >= 8 ? 'input-valid' : ''}
             onChange={handleChange}
             style={{ width: '100%' }}
           />

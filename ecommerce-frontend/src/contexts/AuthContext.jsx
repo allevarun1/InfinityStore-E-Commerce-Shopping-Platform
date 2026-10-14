@@ -5,7 +5,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
-    const user = localStorage.getItem('snapbuy_user');
+    const user = localStorage.getItem('infinity_user');
     return user ? JSON.parse(user) : null;
   });
 
@@ -15,8 +15,8 @@ export function AuthProvider({ children }) {
   const login = async (username, password) => {
     const res = await axios.post(`${apiUrl}/signin`, { username, password });
     const response = res.data;
-    localStorage.setItem('snapbuy_token', response.token || response.accessToken);
-    localStorage.setItem('snapbuy_user', JSON.stringify(response));
+    localStorage.setItem('infinity_token', response.token || response.accessToken);
+    localStorage.setItem('infinity_user', JSON.stringify(response));
     setCurrentUser(response);
     return response;
   };
@@ -37,12 +37,12 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('snapbuy_token');
-    localStorage.removeItem('snapbuy_user');
+    localStorage.removeItem('infinity_token');
+    localStorage.removeItem('infinity_user');
     setCurrentUser(null);
   };
 
-  const token = () => localStorage.getItem('snapbuy_token');
+  const token = () => localStorage.getItem('infinity_token');
 
   const isLoggedIn = () => !!token();
 
