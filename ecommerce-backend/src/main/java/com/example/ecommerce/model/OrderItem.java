@@ -32,6 +32,10 @@ public class OrderItem {
     @Column(name = "tax_percent", precision = 5, scale = 2)
     private BigDecimal taxPercent; // snapshot
 
+    // Our cost per unit when the order was placed (null when unknown). Admin reporting only.
+    @Column(name = "unit_cost", precision = 12, scale = 2)
+    private BigDecimal unitCost;
+
     public OrderItem() {}
 
     public OrderItem(Order order, Product product, Integer quantity, BigDecimal price) {
@@ -88,4 +92,7 @@ public class OrderItem {
     public BigDecimal getTaxPercent() { return taxPercent; }
 
     public void setTaxPercent(BigDecimal taxPercent) { this.taxPercent = taxPercent; }
+
+    @JsonIgnore public BigDecimal getUnitCost() { return unitCost; }
+    public void setUnitCost(BigDecimal unitCost) { this.unitCost = unitCost; }
 }

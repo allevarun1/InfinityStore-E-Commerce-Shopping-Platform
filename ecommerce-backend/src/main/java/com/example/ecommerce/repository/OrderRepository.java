@@ -21,6 +21,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     boolean existsByUser(User user);
 
+    long countByStatus(String status);
+
     @Query("select count(o) > 0 from Order o join o.orderItems i where o.user.id = :userId and i.product.id = :productId and o.status = 'DELIVERED'")
     boolean hasDelivered(@Param("userId") Long userId, @Param("productId") Long productId);
+
+    @Query("select distinct o from Order o left join fetch o.orderItems where o.orderDate >= :from order by o.orderDate")
+    List<Order> findSince(@Param("from") java.time.LocalDateTime from);
 }

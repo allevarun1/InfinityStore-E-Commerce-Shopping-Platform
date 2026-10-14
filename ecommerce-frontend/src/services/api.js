@@ -55,6 +55,10 @@ export const ApiService = {
   adminUsers: () => api.get('/admin/users').then(res => res.data),
   adminProducts: () => api.get('/admin/products').then(res => res.data),
   setProductStatus: (id, to) => api.put(`/products/${id}/status?to=${to}`).then(res => res.data),
+  insightsDashboard: (days) => api.get(`/admin/insights/dashboard?days=${days}`).then(res => res.data),
+  insightsOpportunities: () => api.get('/admin/insights/opportunities').then(res => res.data),
+  studioStatus: () => api.get('/admin/studio/status').then(res => res.data),
+  studioDraft: (payload) => api.post('/admin/studio/draft', payload).then(res => res.data),
   adminOrders: () => api.get('/admin/orders').then(res => res.data),
   
   saveProduct: (product) => {

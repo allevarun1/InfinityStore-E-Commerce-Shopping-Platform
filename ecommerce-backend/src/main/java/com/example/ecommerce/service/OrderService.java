@@ -145,6 +145,7 @@ public class OrderService {
             product.setStockQuantity(product.getStockQuantity() - cartItem.getQuantity());
             OrderItem orderItem = new OrderItem(order, product, cartItem.getQuantity(), line.unitPrice());
             orderItem.setProductName(product.getName());
+            orderItem.setUnitCost(product.getCostPrice());
             orderItem.setTaxPercent(line.taxPercent());
             orderItems.add(orderItem);
         }

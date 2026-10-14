@@ -4,6 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { Loader } from './Loader';
+import { AdminInsights } from './AdminInsights';
+import { StudioAssist } from './StudioAssist';
 
 const BLANK_PRODUCT = { stockQuantity: 10, deal: false, dealPrice: '', categoryId: '', status: 'DRAFT', source: 'MANUAL' };
 
@@ -218,6 +220,9 @@ export function Admin() {
           <button className={currentTab === 'management' ? 'active' : ''} onClick={() => setCurrentTab('management')}>
             <i className="bi bi-plus-circle"></i> New product / category
           </button>
+          <button className={currentTab === 'insights' ? 'active' : ''} onClick={() => setCurrentTab('insights')}>
+            <i className="bi bi-graph-up-arrow"></i> Insights
+          </button>
           <button className={currentTab === 'products' ? 'active' : ''} onClick={() => setCurrentTab('products')}>
             <i className="bi bi-box-seam"></i> Products ({products.length})
           </button>
@@ -302,6 +307,14 @@ export function Admin() {
                   <input id="care" maxLength="500" placeholder="Dry clean only" value={product.careInstructions || ''} onChange={e => setProduct({...product, careInstructions: e.target.value})} /></div>
               </fieldset>
 
+              <StudioAssist
+                product={product}
+                onApply={(changes) => {
+                  const { aiAssisted, ...fields } = changes;
+                  setProduct(prev => ({ ...prev, ...fields, ...(aiAssisted ? { source: 'AI_ASSISTED' } : {}) }));
+                }}
+              />
+
               <fieldset className="admin-fieldset">
                 <legend>Business details (private, never shown to customers)</legend>
                 <div className="admin-two">
@@ -332,7 +345,7 @@ export function Admin() {
               )}
               <div className="admin-actions">
                 <button className="primary" type="submit">{product.id ? 'Save changes' : 'Save as draft'}</button>
-                {!product.id && (
+                {!product.id && product.source !== 'AI_ASSISTED' && (
                   <button type="button" className="secondary" onClick={e => { const f = e.currentTarget.form; if (f.reportValidity()) saveProduct(e, true); }}>Save and publish</button>
                 )}
               </div>
@@ -361,6 +374,15 @@ export function Admin() {
               </div>
               <button className="primary" type="submit" style={{marginTop: '16px'}}>Save category</button>
             </form>
+          </div>
+        )}
+
+        {currentTab === 'insights' && (
+          <div className="tab-content">
+            <AdminInsights
+              onOpenProduct={(id) => { const p = products.find(x => x.id === id); if (p) editProduct(p); }}
+              onStartDraft={(prefill) => { setProduct({ ...BLANK_PRODUCT, ...prefill }); setCurrentTab('management'); }}
+            />
           </div>
         )}
 
