@@ -109,7 +109,7 @@ public class OrderService {
         for (CartItem item : cartItems) {
             Product product = item.getProduct();
             em.refresh(product, LockModeType.PESSIMISTIC_WRITE);
-            if (Boolean.TRUE.equals(product.getDeleted())) {
+            if (!product.isPublished()) {
                 throw new BusinessException("'" + product.getName() + "' is no longer available");
             }
             if (product.getStockQuantity() == null || product.getStockQuantity() < item.getQuantity()) {

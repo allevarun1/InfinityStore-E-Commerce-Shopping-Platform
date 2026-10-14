@@ -508,3 +508,55 @@ select, input, textarea { max-width: 100%; }
 
 /* Account shortcuts (orders and sign-out live here on small screens) */
 .account-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 20px; }
+
+/* ---- reviews, specs, rating summary ---- */
+.rating-summary { display: inline-flex; align-items: center; gap: 10px; margin: 2px 0 8px; color: var(--ink-2); font-size: 0.92rem; text-decoration: none; }
+.star-rating { color: var(--gold-ink); display: inline-flex; gap: 2px; }
+.specs { margin: 18px 0 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+.specs div { display: grid; grid-template-columns: 9rem 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.specs dt { color: var(--muted); font-size: 0.88rem; }
+.specs dd { margin: 0; color: var(--ink); }
+.reviews { max-width: 760px; margin: 56px 0 24px; }
+.reviews h2 { font-size: 1.6rem; margin: 0 0 14px; }
+.review { padding: 16px 0; border-top: 1px solid var(--line); }
+.review-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.review p { margin: 8px 0; color: var(--ink-2); line-height: 1.7; }
+.review small, .muted { color: var(--muted); }
+.review-form { margin-top: 24px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface, #fff); display: grid; gap: 14px; }
+.review-form h3 { margin: 0; }
+.rate-pick { border: 0; padding: 0; margin: 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.rate-pick legend { font-size: 0.88rem; color: var(--muted); padding: 0; margin-bottom: 6px; }
+.rate-pick label { cursor: pointer; }
+.rate-pick input { position: absolute; opacity: 0; }
+.rate-pick span { display: inline-block; min-width: 46px; text-align: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 999px; }
+.rate-pick input:checked + span { background: var(--maroon, #7B1E2B); border-color: var(--maroon, #7B1E2B); color: #fff; }
+.rate-pick input:focus-visible + span { outline: 3px solid var(--gold, #C9A24B); outline-offset: 2px; }
+.linklike { background: none; border: 0; padding: 0; color: var(--maroon, #7B1E2B); text-decoration: underline; cursor: pointer; font: inherit; }
+
+/* ---- admin catalogue ---- */
+.admin-hint { color: var(--muted); font-size: 0.88rem; margin: 4px 0 10px; font-weight: 400; }
+.admin-warn { color: #9a3412; font-size: 0.86rem; margin: 4px 0 0; }
+.admin-fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 16px 0 0; }
+.admin-fieldset legend { padding: 0 8px; font-weight: 600; font-size: 0.9rem; }
+.admin-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+.admin-check { display: flex; align-items: center; gap: 8px; margin: 6px 0 10px; }
+.admin-preview { display: block; margin-top: 10px; max-width: 160px; max-height: 200px; border-radius: 10px; object-fit: cover; border: 1px solid var(--line); }
+.admin-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.admin-product { align-items: flex-start; gap: 14px; }
+.admin-row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.status-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 600; background: #eee; color: #444; margin-right: 6px; }
+.status-PUBLISHED { background: #dcfce7; color: #166534; }
+.status-DRAFT { background: #f3f4f6; color: #374151; }
+.status-READY_FOR_REVIEW { background: #fef3c7; color: #92400e; }
+.status-APPROVED { background: #dbeafe; color: #1e40af; }
+.status-ai { background: #ede9fe; color: #5b21b6; }
+@media (max-width: 640px) {
+  .specs div { grid-template-columns: 1fr; gap: 2px; }
+  .admin-two { grid-template-columns: 1fr; }
+  .admin-row-actions { justify-content: flex-start; }
+}
+
+.filter-selects { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.pcard-rating { display: inline-flex; align-items: center; gap: 5px; font-size: 0.84rem; color: var(--ink-2); }
+.pcard-rating i { color: var(--gold-ink); }
+.pcard-rating small { color: var(--muted); }

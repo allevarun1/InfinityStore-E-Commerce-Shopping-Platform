@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.ecommerce.model.Product;
@@ -11,19 +13,26 @@ import com.example.ecommerce.model.Product;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    // All active (not deleted) products
+    String PUBLIC = "p.deleted = false and (p.status is null or p.status = com.example.ecommerce.model.ProductStatus.PUBLISHED)";
+
+    // ---- Admin: everything that is not soft-deleted, whatever its lifecycle state
     List<Product> findByDeletedFalse();
 
-    // Get product by id only if not deleted
     Optional<Product> findByIdAndDeletedFalse(Long id);
 
-    // Products by category only if not deleted
-    List<Product> findByCategoryIdAndDeletedFalse(Long categoryId);
+    // ---- Shopper-facing: published only
+    @Query("select p from Product p where " + PUBLIC)
+    List<Product> findPublic();
 
-    // Search by name ignoring case and not deleted
-    List<Product> findByNameContainingIgnoreCaseAndDeletedFalse(String name);
+    @Query("select p from Product p where p.id = :id and " + PUBLIC)
+    Optional<Product> findPublicById(@Param("id") Long id);
 
-    // Deals only if not deleted
-    List<Product> findByDealTrueAndDeletedFalse();
+    @Query("select p from Product p where p.category.id = :categoryId and " + PUBLIC)
+    List<Product> findPublicByCategory(@Param("categoryId") Long categoryId);
 
+    @Query("select p from Product p where lower(p.name) like lower(concat('%', :q, '%')) and " + PUBLIC)
+    List<Product> searchPublic(@Param("q") String q);
+
+    @Query("select p from Product p where p.deal = true and " + PUBLIC)
+    List<Product> findPublicDeals();
 }

@@ -22,3 +22,8 @@ export const discountPercent = (p) =>
   isOnDeal(p) ? Math.round(((p.price - p.dealPrice) / p.price) * 100) : 0;
 
 export const LOW_STOCK = 5;
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
+/** Uploaded images are served by the API (/api/products/:id/image); bundled ones live with the frontend. */
+export const imageSrc = (url) => (url && url.startsWith('/api/') ? API_BASE.replace(/\/api\/?$/, '') + url : url);

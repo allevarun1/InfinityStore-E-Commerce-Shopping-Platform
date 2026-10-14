@@ -5,7 +5,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useStore } from '../contexts/StoreContext';
 import { Loader } from './Loader';
 import { EmptyState } from './EmptyState';
-import { inr, inrCompact, isOnDeal } from '../lib/format';
+import { inr, inrCompact, isOnDeal, imageSrc } from '../lib/format';
 
 export function Cart() {
   const [items, setItems] = useState([]);
@@ -86,7 +86,7 @@ export function Cart() {
             return (
               <li className="cart-line" key={item.id} aria-busy={busy}>
                 <Link to={`/products/${item.product.id}`} tabIndex={-1} aria-hidden="true">
-                  <img src={item.product.imageUrl} alt="" loading="lazy" />
+                  <img src={imageSrc(item.product.imageUrl)} alt="" loading="lazy" />
                 </Link>
                 <div>
                   <h3><Link to={`/products/${item.product.id}`}>{item.product.name}</Link></h3>

@@ -13,6 +13,7 @@ const SORTS = {
   'price-asc': { label: 'Price: low to high', fn: (a, b) => activePrice(a) - activePrice(b) },
   'price-desc': { label: 'Price: high to low', fn: (a, b) => activePrice(b) - activePrice(a) },
   discount: { label: 'Biggest discount', fn: (a, b) => discountPercent(b) - discountPercent(a) },
+  rated: { label: 'Top rated', fn: (a, b) => (b.averageRating || 0) - (a.averageRating || 0) || (b.reviewCount || 0) - (a.reviewCount || 0) },
   name: { label: 'Name A–Z', fn: (a, b) => a.name.localeCompare(b.name) },
 };
 
@@ -27,6 +28,8 @@ export function Home() {
   const query = params.get('q') || '';
   const categoryId = params.get('category') || '';
   const view = params.get('view') || '';
+  const fabric = params.get('fabric') || '';
+  const occasion = params.get('occasion') || '';
   const sort = SORTS[params.get('sort')] ? params.get('sort') : 'featured';
 
   const { isAdmin, isLoggedIn } = useAuth();
@@ -65,11 +68,17 @@ export function Home() {
     const term = query.toLowerCase().trim();
     return products
       .filter(p => !term || p.name.toLowerCase().includes(term) || p.description.toLowerCase().includes(term)
-        || p.category?.name.toLowerCase().includes(term))
+        || p.category?.name.toLowerCase().includes(term) || [p.fabric, p.weave, p.colour, p.occasion, p.region].some(v => v && v.toLowerCase().includes(term)))
+      .filter(p => !fabric || p.fabric === fabric)
+      .filter(p => !occasion || p.occasion === occasion)
       .filter(p => !categoryId || String(p.category?.id) === categoryId)
       .filter(p => view !== 'deals' || isOnDeal(p))
       .sort(SORTS[sort].fn);
-  }, [products, query, categoryId, view, sort]);
+  }, [products, query, categoryId, view, sort, fabric, occasion]);
+
+  const options = (key) => [...new Set(products.map(p => p[key]).filter(Boolean))].sort();
+  const fabrics = useMemo(() => options('fabric'), [products]); // eslint-disable-line react-hooks/exhaustive-deps
+  const occasions = useMemo(() => options('occasion'), [products]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = (changes) => {
     const next = new URLSearchParams(params);
@@ -107,7 +116,7 @@ export function Home() {
 
   const activeCategory = categories.find(c => String(c.id) === categoryId);
   const heading = query ? `Results for “${query}”` : view === 'deals' ? 'Current deals' : activeCategory ? activeCategory.name : 'The collection';
-  const filtersActive = query || categoryId || view;
+  const filtersActive = query || categoryId || view || fabric || occasion;
 
   return (
     <>
@@ -183,12 +192,32 @@ export function Home() {
               <i className="bi bi-tag" aria-hidden="true"></i> Deals
             </button>
           </div>
+          <div className="filter-selects">
+            {fabrics.length > 0 && (
+              <label className="sort-control">
+                Fabric
+                <select value={fabric} onChange={e => update({ fabric: e.target.value })}>
+                  <option value="">All fabrics</option>
+                  {fabrics.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </label>
+            )}
+            {occasions.length > 0 && (
+              <label className="sort-control">
+                Occasion
+                <select value={occasion} onChange={e => update({ occasion: e.target.value })}>
+                  <option value="">Any occasion</option>
+                  {occasions.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </label>
+            )}
           <label className="sort-control">
             Sort
             <select value={sort} onChange={e => update({ sort: e.target.value === 'featured' ? '' : e.target.value })}>
               {Object.entries(SORTS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
           </label>
+          </div>
         </div>
 
         {failed ? (

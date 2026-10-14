@@ -45,6 +45,7 @@ abstract class IntegrationTestSupport {
                 .orElseGet(() -> categories.save(new Category("Test", "Test category")));
         Product p = new Product("Item " + SEQ.incrementAndGet(), "Description", new BigDecimal(price), "/x.jpg", stock, c);
         p.setDeal(false);
+        p.setStatus(ProductStatus.PUBLISHED);
         return products.save(p);
     }
 

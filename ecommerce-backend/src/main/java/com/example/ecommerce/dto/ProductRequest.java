@@ -6,6 +6,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class ProductRequest {
     @NotBlank
@@ -112,4 +113,44 @@ public class ProductRequest {
 
     public BigDecimal getGstPercent() { return gstPercent; }
     public void setGstPercent(BigDecimal gstPercent) { this.gstPercent = gstPercent; }
+
+    @Size(max = 60) private String fabric;
+    @Size(max = 60) private String weave;
+    @Size(max = 60) private String occasion;
+    @Size(max = 40) private String colour;
+    @Size(max = 60) private String region;
+    @Size(max = 500) private String careInstructions;
+    private Boolean blouseIncluded;
+    @DecimalMin("0") @DecimalMax("20") private BigDecimal lengthMeters;
+    @DecimalMin("0") private BigDecimal costPrice;
+    @Size(max = 120) private String supplierName;
+    /** MANUAL (default) or AI_ASSISTED. */
+    private String source;
+    /** Optional lifecycle target applied after save; defaults to staying in DRAFT. */
+    private String status;
+
+    public String getFabric() { return fabric; }
+    public void setFabric(String v) { this.fabric = v; }
+    public String getWeave() { return weave; }
+    public void setWeave(String v) { this.weave = v; }
+    public String getOccasion() { return occasion; }
+    public void setOccasion(String v) { this.occasion = v; }
+    public String getColour() { return colour; }
+    public void setColour(String v) { this.colour = v; }
+    public String getRegion() { return region; }
+    public void setRegion(String v) { this.region = v; }
+    public String getCareInstructions() { return careInstructions; }
+    public void setCareInstructions(String v) { this.careInstructions = v; }
+    public Boolean getBlouseIncluded() { return blouseIncluded; }
+    public void setBlouseIncluded(Boolean v) { this.blouseIncluded = v; }
+    public BigDecimal getLengthMeters() { return lengthMeters; }
+    public void setLengthMeters(BigDecimal v) { this.lengthMeters = v; }
+    public BigDecimal getCostPrice() { return costPrice; }
+    public void setCostPrice(BigDecimal v) { this.costPrice = v; }
+    public String getSupplierName() { return supplierName; }
+    public void setSupplierName(String v) { this.supplierName = v; }
+    public String getSource() { return source; }
+    public void setSource(String v) { this.source = v; }
+    public String getStatus() { return status; }
+    public void setStatus(String v) { this.status = v; }
 }

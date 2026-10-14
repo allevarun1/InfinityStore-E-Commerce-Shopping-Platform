@@ -4,8 +4,10 @@ import { ApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useStore } from '../contexts/StoreContext';
-import { inr, inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK } from '../lib/format';
+import { inr, inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK, imageSrc } from '../lib/format';
 import { NotFound } from './NotFound';
+import { Reviews } from './Reviews';
+import { StarRating } from './StarRating';
 
 export function ProductDetail() {
   const { id } = useParams();
@@ -19,6 +21,8 @@ export function ProductDetail() {
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const refreshProduct = () => ApiService.product(id).then(setProduct).catch(() => {});
 
   useEffect(() => {
     setStatus('loading');
@@ -100,6 +104,17 @@ export function ProductDetail() {
     setZoom(`${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`);
   };
 
+  const specs = [
+    ['Fabric', product.fabric],
+    ['Weave', product.weave],
+    ['Occasion', product.occasion],
+    ['Colour', product.colour],
+    ['Made in', product.region],
+    ['Length', product.lengthMeters ? `${Number(product.lengthMeters)} m` : null],
+    ['Blouse piece', product.blouseIncluded == null ? null : product.blouseIncluded ? 'Included' : 'Not included'],
+    ['Care', product.careInstructions],
+  ].filter(([, v]) => v);
+
   const stockClass = soldOut ? 'out' : product.stockQuantity < LOW_STOCK ? 'low' : '';
   const stockText = soldOut ? 'Sold out' : product.stockQuantity < LOW_STOCK
     ? `In stock — only ${product.stockQuantity} left` : 'In stock, ready to ship';
@@ -118,13 +133,19 @@ export function ProductDetail() {
           onMouseMove={moveZoom}
           onMouseLeave={() => setZoom(null)}
         >
-          <img src={product.imageUrl} alt={product.name} width="900" height="1125"
+          <img src={imageSrc(product.imageUrl)} alt={product.name} width="900" height="1125"
             style={zoom ? { transformOrigin: zoom } : undefined} />
         </div>
 
         <div className="pdp-info">
           <span className="eyebrow">{product.category.name}</span>
           <h1>{product.name}</h1>
+          {product.reviewCount > 0 && (
+            <a className="rating-summary" href="#reviews" aria-label={`Rated ${product.averageRating} out of 5 from ${product.reviewCount} ${product.reviewCount === 1 ? 'review' : 'reviews'}`}>
+              <StarRating rating={product.averageRating} />
+              <span>{product.averageRating} · {product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'}</span>
+            </a>
+          )}
 
           <div className="pdp-price">
             <div className="price">
@@ -182,9 +203,18 @@ export function ProductDetail() {
           <section className="pdp-details" aria-labelledby="details-title">
             <h2 id="details-title">Details</h2>
             <p>{product.description}</p>
+            {specs.length > 0 && (
+              <dl className="specs">
+                {specs.map(([label, value]) => (
+                  <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
+                ))}
+              </dl>
+            )}
           </section>
         </div>
       </div>
+
+      <Reviews productId={product.id} onChange={refreshProduct} />
 
       {!isAdmin() && !soldOut && (
         <div className="mobile-buy">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK } from '../lib/format';
+import { inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK, imageSrc } from '../lib/format';
 
 export function ProductCard({ product, mode, busy, onAdd, onWish, priority = false }) {
   const soldOut = !product.stockQuantity || product.stockQuantity <= 0;
@@ -10,7 +10,7 @@ export function ProductCard({ product, mode, busy, onAdd, onWish, priority = fal
   return (
     <article className="pcard">
       <Link to={href} className="pcard-media" tabIndex={-1} aria-hidden="true">
-        <img src={product.imageUrl} alt="" loading={priority ? 'eager' : 'lazy'} decoding="async" width="600" height="800" />
+        <img src={imageSrc(product.imageUrl)} alt="" loading={priority ? 'eager' : 'lazy'} decoding="async" width="600" height="800" />
         {onDeal && <span className="pcard-badge">{discountPercent(product)}% off</span>}
         {soldOut && <span className="pcard-soldout">Sold out</span>}
       </Link>
@@ -29,6 +29,11 @@ export function ProductCard({ product, mode, busy, onAdd, onWish, priority = fal
       <div className="pcard-body">
         <span className="pcard-cat">{product.category?.name}</span>
         <h3 className="pcard-title"><Link to={href}>{product.name}</Link></h3>
+        {product.reviewCount > 0 && (
+          <span className="pcard-rating" aria-label={`Rated ${product.averageRating} out of 5 from ${product.reviewCount} reviews`}>
+            <i className="bi bi-star-fill" aria-hidden="true"></i> {product.averageRating} <small>({product.reviewCount})</small>
+          </span>
+        )}
         <div className="price">
           <span className="price-now">{inrCompact(activePrice(product))}</span>
           {onDeal && <span className="price-was"><span className="sr-only">Was </span>{inrCompact(product.price)}</span>}

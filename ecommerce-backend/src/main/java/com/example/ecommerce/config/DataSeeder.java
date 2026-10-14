@@ -51,6 +51,10 @@ public class DataSeeder implements CommandLineRunner {
     @Value("${app.seed.customer.password}")
     private String customerPassword;
 
+    // Sample sarees are for local development only. A real store must never launch with them.
+    @Value("${app.seed.demo-catalog:false}")
+    private boolean demoCatalog;
+
     @Override
     public void run(String... args) throws Exception {
         // 1. Seed Roles
@@ -121,7 +125,7 @@ public class DataSeeder implements CommandLineRunner {
         });
 
         // 3. Seed Categories & Products
-        if (categoryRepository.count() == 0) {
+        if (demoCatalog && categoryRepository.count() == 0) {
             Category silk = categoryRepository.save(new Category("Silk Sarees", "Traditional handwoven silk sarees for weddings and festive occasions"));
             Category cotton = categoryRepository.save(new Category("Cotton Sarees", "Lightweight breathable handloom cotton sarees for daily and office wear"));
             Category designer = categoryRepository.save(new Category("Designer Sarees", "Contemporary designer sarees with modern drapes and embellishments"));
@@ -142,6 +146,8 @@ public class DataSeeder implements CommandLineRunner {
             kanchipuram.setDeal(true);
             kanchipuram.setDealPrice(new java.math.BigDecimal("9999.00"));
             kanchipuram.setRating(4.9);
+            kanchipuram.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            kanchipuram.setFabric("Silk"); kanchipuram.setWeave("Kanchipuram"); kanchipuram.setOccasion("Wedding"); kanchipuram.setColour("Maroon & gold"); kanchipuram.setRegion("Tamil Nadu");
             productRepository.save(kanchipuram);
 
             Product banarasi = new Product(
@@ -155,6 +161,8 @@ public class DataSeeder implements CommandLineRunner {
             banarasi.setDeal(true);
             banarasi.setDealPrice(new java.math.BigDecimal("7499.00"));
             banarasi.setRating(4.8);
+            banarasi.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            banarasi.setFabric("Silk"); banarasi.setWeave("Banarasi katan"); banarasi.setOccasion("Festive"); banarasi.setColour("Gold"); banarasi.setRegion("Uttar Pradesh");
             productRepository.save(banarasi);
 
             Product mysore = new Product(
@@ -166,6 +174,8 @@ public class DataSeeder implements CommandLineRunner {
                     silk
             );
             mysore.setRating(4.6);
+            mysore.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            mysore.setFabric("Silk"); mysore.setWeave("Crepe"); mysore.setOccasion("Festive"); mysore.setColour("Mint"); mysore.setRegion("Karnataka");
             productRepository.save(mysore);
 
             // Cotton Sarees
@@ -178,6 +188,8 @@ public class DataSeeder implements CommandLineRunner {
                     cotton
             );
             chanderi.setRating(4.5);
+            chanderi.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            chanderi.setFabric("Silk cotton"); chanderi.setWeave("Chanderi"); chanderi.setOccasion("Festive"); chanderi.setColour("Pink & orange"); chanderi.setRegion("Madhya Pradesh");
             productRepository.save(chanderi);
 
             Product bengal = new Product(
@@ -189,6 +201,8 @@ public class DataSeeder implements CommandLineRunner {
                     cotton
             );
             bengal.setRating(4.4);
+            bengal.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            bengal.setFabric("Cotton"); bengal.setWeave("Handloom"); bengal.setOccasion("Everyday"); bengal.setColour("Indigo"); bengal.setRegion("West Bengal");
             productRepository.save(bengal);
 
             Product kasavu = new Product(
@@ -200,6 +214,8 @@ public class DataSeeder implements CommandLineRunner {
                     cotton
             );
             kasavu.setRating(4.7);
+            kasavu.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            kasavu.setFabric("Cotton"); kasavu.setWeave("Kasavu"); kasavu.setOccasion("Temple & Onam"); kasavu.setColour("Off white & gold"); kasavu.setRegion("Kerala");
             productRepository.save(kasavu);
 
             // Designer Sarees
@@ -214,6 +230,8 @@ public class DataSeeder implements CommandLineRunner {
             georgette.setDeal(true);
             georgette.setDealPrice(new java.math.BigDecimal("2999.00"));
             georgette.setRating(4.3);
+            georgette.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            georgette.setFabric("Georgette"); georgette.setWeave("Plain weave"); georgette.setOccasion("Party"); georgette.setColour("Teal"); georgette.setRegion("Mixed");
             productRepository.save(georgette);
 
             Product organza = new Product(
@@ -225,6 +243,8 @@ public class DataSeeder implements CommandLineRunner {
                     designer
             );
             organza.setRating(4.5);
+            organza.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            organza.setFabric("Organza"); organza.setWeave("Zari butta"); organza.setOccasion("Festive"); organza.setColour("Emerald"); organza.setRegion("Mixed");
             productRepository.save(organza);
 
             // Bridal Sarees
@@ -237,6 +257,8 @@ public class DataSeeder implements CommandLineRunner {
                     bridal
             );
             bridalSaree.setRating(4.9);
+            bridalSaree.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+            bridalSaree.setFabric("Silk"); bridalSaree.setWeave("Zari embroidered"); bridalSaree.setOccasion("Wedding"); bridalSaree.setColour("Red"); bridalSaree.setRegion("Mixed");
             productRepository.save(bridalSaree);
 
             System.out.println("Seeded default saree inventory.");

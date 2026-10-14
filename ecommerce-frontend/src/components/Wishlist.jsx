@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { imageSrc } from '../lib/format';
 import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { Loader } from './Loader';
@@ -64,7 +65,7 @@ export function Wishlist() {
       ) : (
         items.map(item => (
           <div className="list-row" key={item.id}>
-            <img src={item.product.imageUrl} alt={item.product.name} />
+            <img src={imageSrc(item.product.imageUrl)} alt={item.product.name} />
             <div className="wishlist-row-div">
               <strong>{item.product.name}</strong>
               {item.product.deal && item.product.dealPrice ? (

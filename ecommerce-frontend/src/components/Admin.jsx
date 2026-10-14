@@ -1,8 +1,31 @@
 import React, { useEffect, useState } from 'react';
+import { imageSrc } from '../lib/format';
 import { useSearchParams } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { Loader } from './Loader';
+
+const BLANK_PRODUCT = { stockQuantity: 10, deal: false, dealPrice: '', categoryId: '', status: 'DRAFT', source: 'MANUAL' };
+
+const STATUS_LABEL = { DRAFT: 'Draft', READY_FOR_REVIEW: 'Ready for review', APPROVED: 'Approved', PUBLISHED: 'Published' };
+
+/** Lifecycle buttons for a product. The server enforces the same rules and is the authority. */
+function nextSteps(p) {
+  const manual = p.source !== 'AI_ASSISTED';
+  switch (p.status) {
+    case 'DRAFT': return [['READY_FOR_REVIEW', 'Send for review'], ...(manual ? [['PUBLISHED', 'Publish']] : [])];
+    case 'READY_FOR_REVIEW': return [['APPROVED', 'Approve'], ...(manual ? [['PUBLISHED', 'Publish']] : []), ['DRAFT', 'Back to draft']];
+    case 'APPROVED': return [['PUBLISHED', 'Publish'], ['DRAFT', 'Back to draft']];
+    case 'PUBLISHED': return [['DRAFT', 'Unpublish']];
+    default: return [];
+  }
+}
+
+const margin = (p) => {
+  const sell = p.deal && p.dealPrice ? Number(p.dealPrice) : Number(p.price);
+  if (!p.costPrice || !sell) return null;
+  return ((sell - Number(p.costPrice)) / sell) * 100;
+};
 
 export function Admin() {
   const [currentTab, setCurrentTab] = useState('management');
@@ -13,7 +36,7 @@ export function Admin() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const [product, setProduct] = useState({ stockQuantity: 10, deal: false, dealPrice: '', rating: 4.5, categoryId: '' });
+  const [product, setProduct] = useState(BLANK_PRODUCT);
   const [category, setCategory] = useState({ name: '', description: '' });
   
   const [searchParams] = useSearchParams();
@@ -25,7 +48,7 @@ export function Admin() {
       ApiService.categories(),
       ApiService.adminUsers(),
       ApiService.adminOrders(),
-      ApiService.products()
+      ApiService.adminProducts()
     ])
       .then(([cats, usr, ords, prods]) => {
         setCategories(cats);
@@ -54,18 +77,37 @@ export function Admin() {
     // eslint-disable-next-line
   }, [searchParams]);
 
-  const saveProduct = (e) => {
+  const saveProduct = (e, publish = false) => {
     e.preventDefault();
-    const payload = { ...product, categoryId: Number(product.categoryId) };
+    const numeric = (v) => (v === '' || v === undefined || v === null ? null : Number(v));
+    const { previewImage, readinessIssues, marginPercent, category, ...rest } = product; // eslint-disable-line no-unused-vars
+    const payload = {
+      ...rest,
+      categoryId: Number(product.categoryId),
+      price: numeric(product.price),
+      dealPrice: product.deal ? numeric(product.dealPrice) : null,
+      stockQuantity: numeric(product.stockQuantity),
+      costPrice: numeric(product.costPrice),
+      lengthMeters: numeric(product.lengthMeters),
+      gstPercent: numeric(product.gstPercent),
+      status: !product.id && publish ? 'PUBLISHED' : 'DRAFT',
+    };
     ApiService.saveProduct(payload)
       .then(() => {
-        toast.success('Product saved successfully');
-        setProduct({ stockQuantity: 10, deal: false, dealPrice: '', rating: 4.5, categoryId: '' });
+        toast.success(publish && !product.id ? 'Product published' : 'Product saved');
+        setProduct(BLANK_PRODUCT);
         load();
       })
-      .catch(() => {
-        toast.error('Failed to save product');
-      });
+      .catch(err => toast.error(err.response?.data?.message || 'Failed to save product'));
+  };
+
+  const step = (p, to) => {
+    ApiService.setProductStatus(p.id, to)
+      .then(() => {
+        toast.success(`${p.name}: ${STATUS_LABEL[to].toLowerCase()}`);
+        load();
+      })
+      .catch(err => toast.error(err.response?.data?.message || 'Could not change the status'));
   };
 
   const handleImageUpload = (e) => {
@@ -73,7 +115,7 @@ export function Admin() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProduct({...product, imageUrl: reader.result});
+        setProduct({...product, imageUrl: reader.result, previewImage: null});
       };
       reader.readAsDataURL(file);
     }
@@ -174,7 +216,7 @@ export function Admin() {
         
         <nav className="admin-tabs">
           <button className={currentTab === 'management' ? 'active' : ''} onClick={() => setCurrentTab('management')}>
-            <i className="bi bi-plus-circle"></i> Management Forms
+            <i className="bi bi-plus-circle"></i> New product / category
           </button>
           <button className={currentTab === 'products' ? 'active' : ''} onClick={() => setCurrentTab('products')}>
             <i className="bi bi-box-seam"></i> Products ({products.length})
@@ -195,97 +237,105 @@ export function Admin() {
         {currentTab === 'management' && (
           <div className="admin-grid">
             <form onSubmit={saveProduct}>
-              <h2>Product management</h2>
+              <h2>{product.id ? 'Edit product' : 'New product'}</h2>
+              {product.id && (
+                <p className="admin-hint">
+                  Status: <strong>{STATUS_LABEL[product.status] || product.status}</strong>. Use the Products tab to publish or unpublish.
+                  {' '}<button type="button" className="linklike" onClick={() => setProduct(BLANK_PRODUCT)}>Start a new product instead</button>
+                </p>
+              )}
               <div className="field-group">
-                <label>Product Name</label>
-                <input 
-                  name="pname" 
-                  placeholder="e.g., Wireless Headphones" 
-                  required 
-                  value={product.name || ''}
-                  onChange={e => setProduct({...product, name: e.target.value})}
-                />
+                <label htmlFor="pname">Product name</label>
+                <input id="pname" name="pname" placeholder="e.g., Kanchipuram Pure Silk Saree" required
+                  value={product.name || ''} onChange={e => setProduct({...product, name: e.target.value})} />
               </div>
               <div className="field-group">
-                <label>Description</label>
-                <textarea 
-                  name="pdesc" 
-                  placeholder="Detailed description..." 
-                  required 
-                  value={product.description || ''}
-                  onChange={e => setProduct({...product, description: e.target.value})}
-                />
+                <label htmlFor="pdesc">Description <span className="admin-hint">(at least 30 characters)</span></label>
+                <textarea id="pdesc" name="pdesc" rows="4" placeholder="Fabric, weave, border, pallu, what is included…" required
+                  value={product.description || ''} onChange={e => setProduct({...product, description: e.target.value})} />
               </div>
               <div className="field-group">
-                <label>Price (₹)</label>
-                <input 
-                  name="price" 
-                  type="number" 
-                  placeholder="0.00" 
-                  required 
-                  value={product.price || ''}
-                  onChange={e => setProduct({...product, price: e.target.value})}
-                />
+                <label htmlFor="price">Price (₹, before GST)</label>
+                <input id="price" name="price" type="number" step="0.01" min="0.01" placeholder="0.00" required
+                  value={product.price ?? ''} onChange={e => setProduct({...product, price: e.target.value})} />
               </div>
               <div className="field-group">
-                <label>Product Image</label>
-                <input 
-                  name="image" 
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                />
-                {product.imageUrl && <div style={{marginTop: 8, fontSize: '0.8rem', color: 'var(--success-color)'}}>Image selected</div>}
+                <label htmlFor="image">Product image</label>
+                <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleImageUpload} />
+                {(product.previewImage || product.imageUrl) && (
+                  <img className="admin-preview" src={product.previewImage || imageSrc(product.imageUrl)} alt="Product preview" />
+                )}
               </div>
               <div className="field-group">
-                <label>Stock Quantity</label>
-                <input 
-                  name="stock" 
-                  type="number" 
-                  placeholder="0" 
-                  required 
-                  value={product.stockQuantity || ''}
-                  onChange={e => setProduct({...product, stockQuantity: e.target.value})}
-                />
+                <label htmlFor="stock">Stock quantity</label>
+                <input id="stock" name="stock" type="number" min="0" placeholder="0" required
+                  value={product.stockQuantity ?? ''} onChange={e => setProduct({...product, stockQuantity: e.target.value})} />
               </div>
               <div className="field-group">
-                <label>Category</label>
-                <select 
-                  name="cat" 
-                  required 
-                  value={product.categoryId}
-                  onChange={e => setProduct({...product, categoryId: e.target.value})}
-                >
+                <label htmlFor="cat">Category</label>
+                <select id="cat" name="cat" required value={product.categoryId} onChange={e => setProduct({...product, categoryId: e.target.value})}>
                   <option value="" disabled>Select category</option>
-                  {categories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
+
+              <fieldset className="admin-fieldset">
+                <legend>Saree details (shown to customers)</legend>
+                <div className="admin-two">
+                  <div className="field-group"><label htmlFor="fabric">Fabric</label>
+                    <input id="fabric" list="fabrics" value={product.fabric || ''} onChange={e => setProduct({...product, fabric: e.target.value})} />
+                    <datalist id="fabrics"><option>Silk</option><option>Cotton</option><option>Silk cotton</option><option>Georgette</option><option>Organza</option><option>Linen</option></datalist></div>
+                  <div className="field-group"><label htmlFor="weave">Weave</label>
+                    <input id="weave" placeholder="Kanchipuram, Banarasi…" value={product.weave || ''} onChange={e => setProduct({...product, weave: e.target.value})} /></div>
+                  <div className="field-group"><label htmlFor="occasion">Occasion</label>
+                    <input id="occasion" list="occasions" value={product.occasion || ''} onChange={e => setProduct({...product, occasion: e.target.value})} />
+                    <datalist id="occasions"><option>Wedding</option><option>Festive</option><option>Party</option><option>Everyday</option><option>Office</option></datalist></div>
+                  <div className="field-group"><label htmlFor="colour">Colour</label>
+                    <input id="colour" value={product.colour || ''} onChange={e => setProduct({...product, colour: e.target.value})} /></div>
+                  <div className="field-group"><label htmlFor="region">Region of origin</label>
+                    <input id="region" placeholder="Tamil Nadu" value={product.region || ''} onChange={e => setProduct({...product, region: e.target.value})} /></div>
+                  <div className="field-group"><label htmlFor="len">Length (metres)</label>
+                    <input id="len" type="number" step="0.01" min="0" max="20" value={product.lengthMeters ?? ''} onChange={e => setProduct({...product, lengthMeters: e.target.value})} /></div>
+                </div>
+                <label className="admin-check"><input type="checkbox" checked={!!product.blouseIncluded} onChange={e => setProduct({...product, blouseIncluded: e.target.checked})} /> Blouse piece included</label>
+                <div className="field-group"><label htmlFor="care">Care instructions</label>
+                  <input id="care" maxLength="500" placeholder="Dry clean only" value={product.careInstructions || ''} onChange={e => setProduct({...product, careInstructions: e.target.value})} /></div>
+              </fieldset>
+
+              <fieldset className="admin-fieldset">
+                <legend>Business details (private, never shown to customers)</legend>
+                <div className="admin-two">
+                  <div className="field-group"><label htmlFor="cost">Your cost per piece (₹)</label>
+                    <input id="cost" type="number" step="0.01" min="0" value={product.costPrice ?? ''} onChange={e => setProduct({...product, costPrice: e.target.value})} /></div>
+                  <div className="field-group"><label htmlFor="supplier">Supplier</label>
+                    <input id="supplier" maxLength="120" value={product.supplierName || ''} onChange={e => setProduct({...product, supplierName: e.target.value})} /></div>
+                </div>
+                {margin(product) !== null && (
+                  <p className={`admin-hint ${margin(product) < 0 ? 'admin-warn' : ''}`}>
+                    Gross margin before GST and shipping: <strong>{margin(product).toFixed(1)}%</strong>
+                    {margin(product) < 0 && ' — you would sell below cost'}
+                  </p>
+                )}
+              </fieldset>
+
               <div className="field-group" style={{marginTop: '12px'}}>
-                <label>
-                  <input 
-                    name="deal" 
-                    type="checkbox" 
-                    checked={product.deal || false}
-                    onChange={e => setProduct({...product, deal: e.target.checked})}
-                  /> Special Deal Banner
+                <label className="admin-check">
+                  <input name="deal" type="checkbox" checked={product.deal || false} onChange={e => setProduct({...product, deal: e.target.checked})} /> Special deal
                 </label>
               </div>
               {product.deal && (
                 <div className="field-group">
-                  <label>Deal Price (₹)</label>
-                  <input 
-                    name="dealPrice" 
-                    type="number" 
-                    placeholder="Discounted price" 
-                    required={product.deal}
-                    value={product.dealPrice || ''}
-                    onChange={e => setProduct({...product, dealPrice: e.target.value})}
-                  />
+                  <label htmlFor="dealPrice">Deal price (₹)</label>
+                  <input id="dealPrice" name="dealPrice" type="number" step="0.01" min="0.01" placeholder="Discounted price" required
+                    value={product.dealPrice ?? ''} onChange={e => setProduct({...product, dealPrice: e.target.value})} />
                 </div>
               )}
-              <button className="primary" type="submit" style={{marginTop: '8px'}}>Save product</button>
+              <div className="admin-actions">
+                <button className="primary" type="submit">{product.id ? 'Save changes' : 'Save as draft'}</button>
+                {!product.id && (
+                  <button type="button" className="secondary" onClick={e => { const f = e.currentTarget.form; if (f.reportValidity()) saveProduct(e, true); }}>Save and publish</button>
+                )}
+              </div>
             </form>
             
             <form onSubmit={saveCategory}>
@@ -316,18 +366,31 @@ export function Admin() {
 
         {currentTab === 'products' && (
           <div className="tab-content">
-            <h2>Products Directory</h2>
+            <h2>Products</h2>
+            <p className="admin-hint">Only <strong>Published</strong> products are visible to customers. Cost and supplier are never sent to the storefront.</p>
+            {products.length === 0 && <p>No products yet. Add your first one under New product.</p>}
             {products.map(p => (
-              <div className="list-row" key={p.id}>
+              <div className="list-row admin-product" key={p.id}>
                 <div>
                   <strong>{p.name}</strong>
-                  <p>{p.category.name} | Stock {p.stockQuantity}</p>
+                  <p>
+                    <span className={`status-pill status-${p.status}`}>{STATUS_LABEL[p.status] || p.status}</span>
+                    {p.source === 'AI_ASSISTED' && <span className="status-pill status-ai">AI-assisted</span>}
+                    {' '}{p.category?.name} · Stock {p.stockQuantity}
+                    {p.marginPercent != null && <> · Margin {p.marginPercent}%</>}
+                  </p>
+                  {p.status !== 'PUBLISHED' && p.readinessIssues?.length > 0 && (
+                    <p className="admin-warn">To publish: {p.readinessIssues.join('; ')}</p>
+                  )}
                 </div>
-                <button onClick={() => editProduct(p)}>Edit</button>
-                <button onClick={() => toggleStock(p)}>
-                  {p.stockQuantity === 0 ? 'Mark in-stock' : 'Mark out-of-stock'}
-                </button>
-                <button className="danger-btn" onClick={() => deleteProduct(p)}>Delete</button>
+                <div className="admin-row-actions">
+                  {nextSteps(p).map(([to, label]) => (
+                    <button key={to} className={to === 'PUBLISHED' ? 'primary' : ''} onClick={() => step(p, to)}>{label}</button>
+                  ))}
+                  <button onClick={() => editProduct(p)}>Edit</button>
+                  <button onClick={() => toggleStock(p)}>{p.stockQuantity === 0 ? 'Mark in-stock' : 'Mark out-of-stock'}</button>
+                  <button className="danger-btn" onClick={() => deleteProduct(p)}>Delete</button>
+                </div>
               </div>
             ))}
           </div>

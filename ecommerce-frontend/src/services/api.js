@@ -35,6 +35,11 @@ export const ApiService = {
   addWishlist: (productId) => api.post(`/wishlist/${productId}`).then(res => res.data),
   removeWishlist: (productId) => api.delete(`/wishlist/${productId}`).then(res => res.data),
   
+  reviews: (productId) => api.get(`/products/${productId}/reviews`).then(res => res.data),
+  reviewEligibility: (productId) => api.get(`/reviews/eligibility/${productId}`).then(res => res.data),
+  submitReview: (productId, payload) => api.post(`/reviews/product/${productId}`, payload).then(res => res.data),
+  hideReview: (id, hidden) => api.put(`/reviews/${id}/hidden?hidden=${hidden}`).then(res => res.data),
+
   cartQuote: () => api.get('/cart/quote').then(res => res.data),
   paymentOptions: () => api.get('/orders/payment-options').then(res => res.data),
   checkout: (payload, idempotencyKey) => api.post('/orders/checkout', payload, {
@@ -48,6 +53,8 @@ export const ApiService = {
   deleteAccount: () => api.delete('/user/profile').then(res => res.data),
   
   adminUsers: () => api.get('/admin/users').then(res => res.data),
+  adminProducts: () => api.get('/admin/products').then(res => res.data),
+  setProductStatus: (id, to) => api.put(`/products/${id}/status?to=${to}`).then(res => res.data),
   adminOrders: () => api.get('/admin/orders').then(res => res.data),
   
   saveProduct: (product) => {

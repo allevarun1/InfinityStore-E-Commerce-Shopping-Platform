@@ -24,7 +24,7 @@ public class WishlistService {
     }
 
     public WishlistItem add(User user, Long productId) {
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findPublicById(productId)
                 .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Product not found"));
         return wishlistItemRepository.findByUserAndProduct(user, product)
                 .orElseGet(() -> wishlistItemRepository.save(new WishlistItem(user, product)));
