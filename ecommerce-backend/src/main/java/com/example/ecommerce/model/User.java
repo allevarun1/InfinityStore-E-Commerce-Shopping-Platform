@@ -44,8 +44,22 @@ public class User {
     @Column(length = 1000)
     private String addresses;
 
+    // Legacy plaintext column from the first reset implementation. No longer written or read.
     @Column(name = "reset_token")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String resetToken;
+
+    @Column(name = "reset_token_hash", length = 64)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String resetTokenHash;
+
+    @Column(name = "reset_token_expires_at")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private java.time.LocalDateTime resetTokenExpiresAt;
+
+    @Column(name = "reset_attempts")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Integer resetAttempts;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_roles",
@@ -142,4 +156,11 @@ public class User {
     public void setResetToken(String resetToken) {
         this.resetToken = resetToken;
     }
+
+    public String getResetTokenHash() { return resetTokenHash; }
+    public void setResetTokenHash(String resetTokenHash) { this.resetTokenHash = resetTokenHash; }
+    public java.time.LocalDateTime getResetTokenExpiresAt() { return resetTokenExpiresAt; }
+    public void setResetTokenExpiresAt(java.time.LocalDateTime resetTokenExpiresAt) { this.resetTokenExpiresAt = resetTokenExpiresAt; }
+    public int getResetAttempts() { return resetAttempts == null ? 0 : resetAttempts; }
+    public void setResetAttempts(Integer resetAttempts) { this.resetAttempts = resetAttempts; }
 }

@@ -22,6 +22,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.example.ecommerce.security.RateLimitFilter;
+import com.example.ecommerce.security.RateLimiter;
 import java.util.Arrays;
 
 @Configuration
@@ -39,6 +41,14 @@ public class WebSecurityConfig {
     // CORS_ORIGINS environment variable when deploying (e.g. on Railway).
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
+
+    @Value("${app.ratelimit.multiplier:1}")
+    private int rateLimitMultiplier;
+
+    @Bean
+    public RateLimitFilter rateLimitFilter() {
+        return new RateLimitFilter(new RateLimiter(), rateLimitMultiplier);
+    }
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -78,6 +88,7 @@ public class WebSecurityConfig {
             );
 
         http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(rateLimitFilter(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -86,7 +97,8 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
+        configuration.setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim).filter(o -> !o.isEmpty()).toList());
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));

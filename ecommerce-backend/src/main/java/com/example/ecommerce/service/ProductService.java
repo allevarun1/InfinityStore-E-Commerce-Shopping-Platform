@@ -33,7 +33,7 @@ public class ProductService {
     // ✅ GET PRODUCT BY ID (ONLY IF NOT DELETED)
     public Product getProductById(Long id) {
         return productRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Product not found with id: " + id));
     }
 
     // ✅ GET BY CATEGORY
@@ -52,7 +52,7 @@ public class ProductService {
     // ✅ CREATE PRODUCT
     public Product createProduct(ProductRequest request) {
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.getCategoryId()));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Category not found with id: " + request.getCategoryId()));
 
         Product product = new Product(
                 request.getName(),
@@ -64,6 +64,8 @@ public class ProductService {
                 category
         );
 
+        validatePricing(request);
+        product.setGstPercent(request.getGstPercent());
         product.setDeal(Boolean.TRUE.equals(request.getDeal()));
         product.setRating(request.getRating() == null ? 4.5 : request.getRating());
         product.setDeleted(false);
@@ -71,13 +73,22 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    private void validatePricing(ProductRequest request) {
+        if (Boolean.TRUE.equals(request.getDeal())
+                && (request.getDealPrice() == null || request.getDealPrice().compareTo(request.getPrice()) >= 0)) {
+            throw new BusinessException("A deal needs a deal price lower than the regular price");
+        }
+    }
+
     // ✅ UPDATE PRODUCT
     public Product updateProduct(Long id, ProductRequest request) {
         Product product = getProductById(id);
 
         Category category = categoryRepository.findById(request.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.getCategoryId()));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Category not found with id: " + request.getCategoryId()));
 
+        validatePricing(request);
+        product.setGstPercent(request.getGstPercent());
         product.setName(request.getName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());

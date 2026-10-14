@@ -12,8 +12,11 @@ public class ProfileUpdateRequest {
     @Email
     private String email;
 
-    @Size(min = 6, max = 40)
+    @Size(min = 8, max = 72, message = "Password must be 8-72 characters")
     private String password;
+
+    /** Required when changing the email address or password. */
+    private String currentPassword;
 
     public String getFirstName() {
         return firstName;
@@ -62,4 +65,8 @@ public class ProfileUpdateRequest {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public String getCurrentPassword() { return currentPassword; }
+
+    public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
 }

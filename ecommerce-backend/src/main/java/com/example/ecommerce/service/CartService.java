@@ -28,10 +28,10 @@ public class CartService {
 
     public CartItem addItemToCart(User user, CartItemRequest request) {
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Product not found with id: " + request.getProductId()));
 
         if (product.getStockQuantity() < request.getQuantity()) {
-            throw new RuntimeException("Insufficient stock for product: " + product.getName());
+            throw new com.example.ecommerce.service.BusinessException("Insufficient stock for product: " + product.getName());
         }
 
         Optional<CartItem> existingItem = cartItemRepository.findByUserAndProduct(user, product);
@@ -39,7 +39,7 @@ public class CartService {
             CartItem cartItem = existingItem.get();
             int newQuantity = cartItem.getQuantity() + request.getQuantity();
             if (product.getStockQuantity() < newQuantity) {
-                throw new RuntimeException("Insufficient stock for product: " + product.getName());
+                throw new com.example.ecommerce.service.BusinessException("Insufficient stock for product: " + product.getName());
             }
             cartItem.setQuantity(newQuantity);
             return cartItemRepository.save(cartItem);
@@ -51,18 +51,18 @@ public class CartService {
 
     public CartItem updateItemQuantity(User user, Long cartItemId, Integer quantity) {
         if (quantity == null || quantity < 1) {
-            throw new RuntimeException("Quantity must be at least 1");
+            throw new com.example.ecommerce.service.BusinessException("Quantity must be at least 1");
         }
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found with id: " + cartItemId));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Cart item not found with id: " + cartItemId));
 
         if (!cartItem.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized access to cart item");
+            throw new com.example.ecommerce.service.BusinessException("Unauthorized access to cart item");
         }
 
         Product product = cartItem.getProduct();
         if (product.getStockQuantity() < quantity) {
-            throw new RuntimeException("Insufficient stock for product: " + product.getName());
+            throw new com.example.ecommerce.service.BusinessException("Insufficient stock for product: " + product.getName());
         }
 
         cartItem.setQuantity(quantity);
@@ -71,10 +71,10 @@ public class CartService {
 
     public void removeItemFromCart(User user, Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found with id: " + cartItemId));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Cart item not found with id: " + cartItemId));
 
         if (!cartItem.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Unauthorized access to cart item");
+            throw new com.example.ecommerce.service.BusinessException("Unauthorized access to cart item");
         }
 
         cartItemRepository.delete(cartItem);

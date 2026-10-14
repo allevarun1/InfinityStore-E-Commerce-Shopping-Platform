@@ -10,14 +10,15 @@ public class ResetPasswordRequest {
     private String email;
 
     @NotBlank
+    @Size(max = 200)
     private String code;
 
     @NotBlank
-    @Size(min = 6, max = 40)
+    @Size(min = 8, max = 72, message = "Password must be 8-72 characters")
     private String newPassword;
 
     @NotBlank
-    @Size(min = 6, max = 40)
+    @Size(min = 8, max = 72, message = "Password must be 8-72 characters")
     private String confirmPassword;
 
     public String getEmail() {

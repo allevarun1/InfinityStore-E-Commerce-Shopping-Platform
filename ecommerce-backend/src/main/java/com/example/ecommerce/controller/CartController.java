@@ -6,7 +6,9 @@ import com.example.ecommerce.model.CartItem;
 import com.example.ecommerce.model.User;
 import com.example.ecommerce.repository.UserRepository;
 import com.example.ecommerce.security.services.UserDetailsImpl;
+import com.example.ecommerce.dto.PriceQuote;
 import com.example.ecommerce.service.CartService;
+import com.example.ecommerce.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/cart")
 @PreAuthorize("hasRole('CUSTOMER') and !hasRole('ADMIN')")
@@ -28,17 +29,26 @@ public class CartController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private OrderService orderService;
+
     private User getAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         return userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("User not found"));
     }
 
     @GetMapping
     public ResponseEntity<List<CartItem>> getCart() {
         User user = getAuthenticatedUser();
         return ResponseEntity.ok(cartService.getCartByUser(user));
+    }
+
+    /** The authoritative price breakdown (same calculation used when the order is placed). */
+    @GetMapping("/quote")
+    public ResponseEntity<PriceQuote> quote() {
+        return ResponseEntity.ok(orderService.quoteCart(getAuthenticatedUser()));
     }
 
     @PostMapping

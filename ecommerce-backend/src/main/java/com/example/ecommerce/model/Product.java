@@ -1,5 +1,6 @@
 package com.example.ecommerce.model;
 
+import java.math.BigDecimal;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -31,7 +32,8 @@ public class Product {
     private String description;
 
     @NotNull
-    private Double price;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal price;
 
     @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
@@ -43,8 +45,12 @@ public class Product {
     @Column(nullable = false)
     private Boolean deal = false;
 
-    @Column(name = "deal_price")
-    private Double dealPrice;
+    @Column(name = "deal_price", precision = 12, scale = 2)
+    private BigDecimal dealPrice;
+
+    // Optional per-product GST rate (percent). Null means use the configured default.
+    @Column(name = "gst_percent", precision = 5, scale = 2)
+    private BigDecimal gstPercent;
 
     @Column(nullable = false)
     private Double rating = 4.5;
@@ -58,7 +64,7 @@ public class Product {
 
     public Product() {}
 
-    public Product(String name, String description, Double price, Double dealPrice, String imageUrl, Integer stockQuantity, Category category) {
+    public Product(String name, String description, BigDecimal price, BigDecimal dealPrice, String imageUrl, Integer stockQuantity, Category category) {
         this.name = name;
         this.description = description;
         this.price = price;
@@ -68,7 +74,7 @@ public class Product {
         this.category = category;
     }
 
-    public Product(String name, String description, Double price, String imageUrl, Integer stockQuantity, Category category) {
+    public Product(String name, String description, BigDecimal price, String imageUrl, Integer stockQuantity, Category category) {
         this.name = name;
         this.description = description;
         this.price = price;
@@ -101,11 +107,11 @@ public class Product {
         this.description = description;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
@@ -149,13 +155,17 @@ public class Product {
         this.rating = rating;
     }
 
-    public Double getDealPrice() {
+    public BigDecimal getDealPrice() {
         return dealPrice;
     }
 
-    public void setDealPrice(Double dealPrice) {
+    public void setDealPrice(BigDecimal dealPrice) {
         this.dealPrice = dealPrice;
     }
+
+    public BigDecimal getGstPercent() { return gstPercent; }
+
+    public void setGstPercent(BigDecimal gstPercent) { this.gstPercent = gstPercent; }
 
     // soft delete flag
     public Boolean getDeleted() {

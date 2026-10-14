@@ -67,7 +67,7 @@ public class DataSeeder implements CommandLineRunner {
                 .orElseThrow(() -> new RuntimeException("Role admin not found"));
 
         // 2. Seed Users (Admin & Customer)
-        if (userRepository.count() == 0) {
+        if (userRepository.count() == 0 && !adminPassword.isBlank()) {
             // Seed Admin User
             User admin = new User(
                     adminUsername,
@@ -84,7 +84,8 @@ public class DataSeeder implements CommandLineRunner {
             admin.setRoles(adminRoles);
             userRepository.save(admin);
 
-            // Seed Customer User
+            // Seed Customer User (demo account; only when CUSTOMER_PASSWORD is provided)
+            if (!customerPassword.isBlank()) {
             User customer = new User(
                     customerUsername,
                     customerEmail,
@@ -98,8 +99,9 @@ public class DataSeeder implements CommandLineRunner {
             customerRoles.add(customerRole);
             customer.setRoles(customerRoles);
             userRepository.save(customer);
+            }
 
-            System.out.println("Seeded admin and customer accounts.");
+            System.out.println("Seeded admin account" + (customerPassword.isBlank() ? "." : " and demo customer account."));
             if ("admin123".equals(adminPassword)) {
                 System.out.println("WARNING: the admin account is using the built-in development password. "
                         + "Set the ADMIN_PASSWORD environment variable before exposing this deployment.");
@@ -110,7 +112,7 @@ public class DataSeeder implements CommandLineRunner {
         // The seeding block above only runs on an empty database, and an admin cannot
         // change their own password through /api/user/profile, so this is what lets an
         // existing deployment have its credentials rotated.
-        userRepository.findByUsername(adminUsername).ifPresent(existingAdmin -> {
+        if (!adminPassword.isBlank()) userRepository.findByUsername(adminUsername).ifPresent(existingAdmin -> {
             if (!passwordEncoder.matches(adminPassword, existingAdmin.getPassword())) {
                 existingAdmin.setPassword(passwordEncoder.encode(adminPassword));
                 userRepository.save(existingAdmin);
@@ -132,33 +134,33 @@ public class DataSeeder implements CommandLineRunner {
             Product kanchipuram = new Product(
                     "Kanchipuram Pure Silk Saree",
                     "Handwoven in Kanchipuram from pure mulberry silk with a contrast gold zari border and traditional temple motifs. Comes with an unstitched blouse piece.",
-                    12499.00,
+                    new java.math.BigDecimal("12499.00"),
                     "/images/sarees/kanchipuram-silk-saree.jpg",
                     15,
                     silk
             );
             kanchipuram.setDeal(true);
-            kanchipuram.setDealPrice(9999.00);
+            kanchipuram.setDealPrice(new java.math.BigDecimal("9999.00"));
             kanchipuram.setRating(4.9);
             productRepository.save(kanchipuram);
 
             Product banarasi = new Product(
                     "Banarasi Katan Silk Saree",
                     "Classic Banarasi weave in lustrous katan silk with intricate gold and silver brocade work across the pallu. A timeless choice for receptions and festivals.",
-                    8999.00,
+                    new java.math.BigDecimal("8999.00"),
                     "/images/sarees/banarasi-silk-saree.jpg",
                     25,
                     silk
             );
             banarasi.setDeal(true);
-            banarasi.setDealPrice(7499.00);
+            banarasi.setDealPrice(new java.math.BigDecimal("7499.00"));
             banarasi.setRating(4.8);
             productRepository.save(banarasi);
 
             Product mysore = new Product(
                     "Mysore Crepe Silk Saree",
                     "Soft mysore crepe silk in a serene mint tone with a fine zari border. Feather light, easy to drape, and perfect for long celebration days.",
-                    4499.00,
+                    new java.math.BigDecimal("4499.00"),
                     "/images/sarees/mysore-crepe-silk-saree.jpg",
                     10,
                     silk
@@ -170,7 +172,7 @@ public class DataSeeder implements CommandLineRunner {
             Product chanderi = new Product(
                     "Chanderi Silk Cotton Saree",
                     "Handloom Chanderi in a glowing pink and orange palette with delicate gold buttis and a rich zari border. Breathable silk cotton blend with a subtle sheen.",
-                    2899.00,
+                    new java.math.BigDecimal("2899.00"),
                     "/images/sarees/chanderi-silk-cotton-saree.jpg",
                     29,
                     cotton
@@ -181,7 +183,7 @@ public class DataSeeder implements CommandLineRunner {
             Product bengal = new Product(
                     "Bengal Handloom Cotton Saree",
                     "Traditional Bengal handloom in deep indigo with woven zari buttas and a contrast red and gold border. Crisp, comfortable, and made for everyday elegance.",
-                    1499.00,
+                    new java.math.BigDecimal("1499.00"),
                     "/images/sarees/bengal-handloom-cotton-saree.jpg",
                     50,
                     cotton
@@ -192,7 +194,7 @@ public class DataSeeder implements CommandLineRunner {
             Product kasavu = new Product(
                     "Kerala Kasavu Cotton Saree",
                     "Authentic Kerala kasavu in off white pure cotton with a broad golden kasavu border. The signature drape for Onam, Vishu and temple visits.",
-                    1899.00,
+                    new java.math.BigDecimal("1899.00"),
                     "/images/sarees/kerala-kasavu-saree.jpg",
                     12,
                     cotton
@@ -204,20 +206,20 @@ public class DataSeeder implements CommandLineRunner {
             Product georgette = new Product(
                     "Designer Georgette Party Saree",
                     "Modern teal georgette with a woven mustard border and a fluid, easy fall. Pairs effortlessly with a statement blouse for evening parties.",
-                    3799.00,
+                    new java.math.BigDecimal("3799.00"),
                     "/images/sarees/designer-georgette-saree.jpg",
                     99,
                     designer
             );
             georgette.setDeal(true);
-            georgette.setDealPrice(2999.00);
+            georgette.setDealPrice(new java.math.BigDecimal("2999.00"));
             georgette.setRating(4.3);
             productRepository.save(georgette);
 
             Product organza = new Product(
                     "Organza Zari Butta Saree",
                     "Sheer emerald organza scattered with gold zari buttas and finished with a contrast brocade border. Light as air with a graceful festive drape.",
-                    3299.00,
+                    new java.math.BigDecimal("3299.00"),
                     "/images/sarees/organza-zari-saree.jpg",
                     35,
                     designer
@@ -229,7 +231,7 @@ public class DataSeeder implements CommandLineRunner {
             Product bridalSaree = new Product(
                     "Bridal Red Zari Silk Saree",
                     "A statement bridal drape in deep red silk with dense gold zari embroidery, hand embellished detailing and a matching dupatta. Crafted for the wedding day.",
-                    18999.00,
+                    new java.math.BigDecimal("18999.00"),
                     "/images/sarees/bridal-red-zari-saree.jpg",
                     0,
                     bridal

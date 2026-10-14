@@ -1,5 +1,6 @@
 package com.example.ecommerce.model;
 
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
@@ -22,12 +23,18 @@ public class OrderItem {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(nullable = false)
-    private Double price; // Captured price at the time of ordering
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal price; // Unit price (tax-exclusive) captured at order time
+
+    @Column(name = "product_name", length = 500)
+    private String productName; // snapshot
+
+    @Column(name = "tax_percent", precision = 5, scale = 2)
+    private BigDecimal taxPercent; // snapshot
 
     public OrderItem() {}
 
-    public OrderItem(Order order, Product product, Integer quantity, Double price) {
+    public OrderItem(Order order, Product product, Integer quantity, BigDecimal price) {
         this.order = order;
         this.product = product;
         this.quantity = quantity;
@@ -66,11 +73,19 @@ public class OrderItem {
         this.quantity = quantity;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
+
+    public String getProductName() { return productName; }
+
+    public void setProductName(String productName) { this.productName = productName; }
+
+    public BigDecimal getTaxPercent() { return taxPercent; }
+
+    public void setTaxPercent(BigDecimal taxPercent) { this.taxPercent = taxPercent; }
 }

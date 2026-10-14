@@ -25,14 +25,14 @@ public class WishlistService {
 
     public WishlistItem add(User user, Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Product not found"));
         return wishlistItemRepository.findByUserAndProduct(user, product)
                 .orElseGet(() -> wishlistItemRepository.save(new WishlistItem(user, product)));
     }
 
     public void remove(User user, Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Product not found"));
         wishlistItemRepository.deleteByUserAndProduct(user, product);
     }
 }

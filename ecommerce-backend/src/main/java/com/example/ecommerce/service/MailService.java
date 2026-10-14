@@ -1,6 +1,8 @@
 package com.example.ecommerce.service;
 
 import com.example.ecommerce.model.Order;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class MailService {
+    private static final Logger log = LoggerFactory.getLogger(MailService.class);
+
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
@@ -20,7 +24,7 @@ public class MailService {
         send(to, "InfinityStore - Order Confirmed",
                 "Hi there!\n\nYour order has been placed successfully.\n\n" +
                 "Order ID: " + order.getTrackingNumber() + "\n" +
-                "Total: Rs. " + String.format("%.2f", order.getTotalPrice()) + "\n" +
+                "Total: Rs. " + order.getTotalPrice().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString() + "\n" +
                 "Payment: " + order.getPaymentMethod() + " (" + order.getPaymentStatus() + ")\n\n" +
                 "We'll notify you when it ships.\n\nThank you for shopping with InfinityStore!");
     }
@@ -29,23 +33,22 @@ public class MailService {
         send(to, "InfinityStore - Payment Successful",
                 "Hi there!\n\nPayment for your order has been confirmed.\n\n" +
                 "Order ID: " + order.getTrackingNumber() + "\n" +
-                "Amount Paid: Rs. " + String.format("%.2f", order.getTotalPrice()) + "\n\n" +
+                "Amount Paid: Rs. " + order.getTotalPrice().setScale(2, java.math.RoundingMode.HALF_UP).toPlainString() + "\n\n" +
                 "Thank you for shopping with InfinityStore!");
     }
 
-    public void sendPasswordReset(String to, String token) {
+    public void sendPasswordReset(String to, String resetLink, long validMinutes) {
         send(to, "InfinityStore - Password Reset",
                 "Hi there!\n\nYou requested a password reset.\n\n" +
-                "Your reset code is: " + token + "\n\n" +
-                "Enter this code in the app to reset your password.\n" +
-                "If you didn't request this, please ignore this email.\n\n" +
+                "Open this link to choose a new password (valid for " + validMinutes + " minutes):\n" + resetLink + "\n\n" +
+                "If you didn't request this, you can safely ignore this email.\n\n" +
                 "- InfinityStore Team");
     }
 
     @Async
     public void send(String to, String subject, String body) {
         if (mailSender == null || to == null || to.isBlank()) {
-            System.out.println("Email skipped: mailSender is null or recipient is blank.");
+            log.warn("Email skipped: mail is not configured or the recipient is blank");
             return;
         }
         try {
@@ -55,10 +58,9 @@ public class MailService {
             message.setSubject(subject);
             message.setText(body);
             mailSender.send(message);
-            System.out.println("Email sent successfully to: " + to + " | Subject: " + subject);
+            log.info("Email sent: subject=\"{}\"", subject);
         } catch (Exception ex) {
-            System.out.println("Email delivery failed to " + to + ": " + ex.getMessage());
-            ex.printStackTrace();
+            log.error("Email delivery failed: subject=\"{}\" cause={}", subject, ex.getMessage());
         }
     }
 }

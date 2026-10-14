@@ -18,7 +18,7 @@ public class CategoryService {
 
     public Category getCategoryById(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Category not found with id: " + id));
     }
 
     public Category createCategory(Category category) {

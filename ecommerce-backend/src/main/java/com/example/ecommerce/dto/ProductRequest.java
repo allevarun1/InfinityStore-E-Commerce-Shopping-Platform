@@ -1,5 +1,9 @@
 package com.example.ecommerce.dto;
 
+import java.math.BigDecimal;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -11,18 +15,27 @@ public class ProductRequest {
     private String description;
 
     @NotNull
-    private Double price;
+    @DecimalMin("0.01")
+    private BigDecimal price;
 
     private String imageUrl;
 
     @NotNull
+    @Min(0)
     private Integer stockQuantity;
 
     @NotNull
     private Long categoryId;
 
     private Boolean deal = false;
-    private Double dealPrice;
+    @DecimalMin("0.01")
+    private BigDecimal dealPrice;
+
+    @DecimalMin("0")
+    @DecimalMax("100")
+    private BigDecimal gstPercent;
+    @DecimalMin("0")
+    @DecimalMax("5")
     private Double rating = 4.5;
 
     public String getName() {
@@ -41,11 +54,11 @@ public class ProductRequest {
         this.description = description;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 
@@ -89,11 +102,14 @@ public class ProductRequest {
         this.rating = rating;
     }
 
-    public Double getDealPrice() {
+    public BigDecimal getDealPrice() {
         return dealPrice;
     }
 
-    public void setDealPrice(Double dealPrice) {
+    public void setDealPrice(BigDecimal dealPrice) {
         this.dealPrice = dealPrice;
     }
+
+    public BigDecimal getGstPercent() { return gstPercent; }
+    public void setGstPercent(BigDecimal gstPercent) { this.gstPercent = gstPercent; }
 }

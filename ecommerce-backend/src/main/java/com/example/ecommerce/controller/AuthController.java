@@ -8,25 +8,28 @@ import com.example.ecommerce.repository.RoleRepository;
 import com.example.ecommerce.repository.UserRepository;
 import com.example.ecommerce.security.jwt.JwtUtils;
 import com.example.ecommerce.security.services.UserDetailsImpl;
+import com.example.ecommerce.service.LoginAttemptService;
+import com.example.ecommerce.service.PasswordResetService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+    static final String RESET_REQUESTED = "If an account exists for that email, a password reset link has been sent.";
+
     @Autowired
     AuthenticationManager authenticationManager;
 
@@ -43,15 +46,25 @@ public class AuthController {
     JwtUtils jwtUtils;
 
     @Autowired
-    com.example.ecommerce.service.MailService mailService;
+    PasswordResetService passwordResetService;
+
+    @Autowired
+    LoginAttemptService loginAttempts;
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+        loginAttempts.checkAllowed(loginRequest.getUsername());
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        } catch (AuthenticationException e) {
+            loginAttempts.recordFailure(loginRequest.getUsername());
+            throw e;
+        }
+        loginAttempts.recordSuccess(loginRequest.getUsername());
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -71,18 +84,13 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Username is already taken!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Username is already taken"));
         }
 
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Email is already in use"));
         }
 
-        // Create new user's account
         User user = new User(signUpRequest.getUsername(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()),
@@ -90,10 +98,8 @@ public class AuthController {
                 signUpRequest.getLastName());
 
         Set<Role> roles = new HashSet<>();
-        
-        // Default role is ROLE_CUSTOMER
         Role userRole = roleRepository.findByName(ERole.ROLE_CUSTOMER)
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                .orElseThrow(() -> new IllegalStateException("Customer role is missing from the database"));
         roles.add(userRole);
 
         user.setRoles(roles);
@@ -104,34 +110,14 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail().trim())
-                .orElseThrow(() -> new RuntimeException("No account found for that email"));
-        String token = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        user.setResetToken(token);
-        userRepository.save(user);
-        mailService.sendPasswordReset(user.getEmail(), token);
-        return ResponseEntity.ok(new MessageResponse("Password reset code sent to email"));
+        passwordResetService.request(request.getEmail());
+        return ResponseEntity.ok(new MessageResponse(RESET_REQUESTED));
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail().trim())
-                .orElseThrow(() -> new RuntimeException("No account found for that email"));
-
-        String savedCode = user.getResetToken();
-        String submittedCode = request.getCode().trim();
-        if (savedCode == null || savedCode.isBlank() || !savedCode.equalsIgnoreCase(submittedCode)) {
-            throw new RuntimeException("Invalid reset code");
-        }
-
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("New password and confirm password do not match");
-        }
-
-        user.setPassword(encoder.encode(request.getNewPassword()));
-        user.setResetToken(null);
-        userRepository.save(user);
-
+        passwordResetService.reset(request.getEmail(), request.getCode(), request.getNewPassword(),
+                request.getConfirmPassword());
         return ResponseEntity.ok(new MessageResponse("Password reset successfully"));
     }
 }
