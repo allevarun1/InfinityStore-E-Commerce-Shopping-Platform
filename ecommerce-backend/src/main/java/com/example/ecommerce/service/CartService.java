@@ -22,11 +22,16 @@ public class CartService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private com.example.ecommerce.repository.UserRepository userRepository;
+
     public List<CartItem> getCartByUser(User user) {
         return cartItemRepository.findByUser(user);
     }
 
     public CartItem addItemToCart(User user, CartItemRequest request) {
+        // Serialise a customer's cart writes so a double tap cannot create two lines for one product.
+        userRepository.lockById(user.getId());
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Product not found with id: " + request.getProductId()));
 

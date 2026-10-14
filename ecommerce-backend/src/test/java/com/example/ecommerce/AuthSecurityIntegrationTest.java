@@ -226,6 +226,18 @@ class AuthSecurityIntegrationTest extends IntegrationTestSupport {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void storeInfoIsPublicAndMatchesPricingConfiguration() throws Exception {
+        String res = mvc.perform(get("/api/store/info")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode info = json.readTree(res);
+        assertEquals("INR", info.get("currency").asText());
+        assertEquals(999, info.get("freeShippingThreshold").asInt());
+        assertEquals(49, info.get("shippingFee").asInt());
+        assertTrue(info.get("cashOnDelivery").asBoolean());
+        assertFalse(info.get("onlinePayment").asBoolean());
+    }
+
     // ---- abuse protection and error hygiene ----
 
     @Test
