@@ -1,5 +1,6 @@
 package com.example.ecommerce;
 
+import com.example.ecommerce.dto.OrderRequest;
 import com.example.ecommerce.model.*;
 import com.example.ecommerce.service.BusinessException;
 import com.example.ecommerce.service.OrderService;
@@ -197,6 +198,23 @@ class OrderFlowIntegrationTest extends IntegrationTestSupport {
         assertEquals("ORDER_PLACED", entries.get(0).getAction());
         assertEquals("ORDER_STATUS_CHANGED", entries.get(1).getAction());
         assertEquals("PENDING -> CONFIRMED", entries.get(1).getDetail());
+    }
+
+    @Test
+    void orderIsRefusedWhenTheTotalTheCustomerSawIsStale() {
+        User user = customer();
+        Product p = product("500.00", 10);
+        addToCart(user, p, 1);
+        OrderRequest r = request("COD");
+        r.setExpectedTotal(new BigDecimal("1.00"));
+
+        assertThrows(BusinessException.class, () -> orderService.placeOrder(user, r, null));
+        assertEquals(10, stockOf(p), "no stock is taken for a refused order");
+        assertEquals(1, carts.findByUser(user).size(), "the cart is untouched");
+
+        r.setExpectedTotal(new BigDecimal("639.00")); // 500 + 90 GST + 49 shipping
+        Order o = orderService.placeOrder(user, r, null);
+        assertEquals(new BigDecimal("639.00"), o.getTotalPrice());
     }
 
     @Test

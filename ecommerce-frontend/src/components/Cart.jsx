@@ -4,10 +4,17 @@ import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { useStore } from '../contexts/StoreContext';
 import { Loader } from './Loader';
+import { GuestCart } from './GuestCart';
+import { useAuth } from '../contexts/AuthContext';
 import { EmptyState } from './EmptyState';
 import { inr, inrCompact, isOnDeal, imageSrc } from '../lib/format';
 
 export function Cart() {
+  const { isLoggedIn } = useAuth();
+  return isLoggedIn() ? <ServerCart /> : <GuestCart />;
+}
+
+function ServerCart() {
   const [items, setItems] = useState([]);
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(true);

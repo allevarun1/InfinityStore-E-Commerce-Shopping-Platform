@@ -47,6 +47,12 @@ public class Order {
     @Column(length = 3)
     private String currency;
 
+    @Column(name = "coupon_code", length = 40)
+    private String couponCode;
+
+    @Column(name = "coupon_discount_amount", precision = 12, scale = 2)
+    private BigDecimal couponDiscountAmount;
+
     // True when the payment was recorded by the non-production test adapter.
     // Such orders must never be counted as real sales.
     @Column(name = "test_payment")
@@ -75,6 +81,11 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    public String getCouponCode() { return couponCode; }
+    public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
+    public BigDecimal getCouponDiscountAmount() { return couponDiscountAmount; }
+    public void setCouponDiscountAmount(BigDecimal couponDiscountAmount) { this.couponDiscountAmount = couponDiscountAmount; }
 
     public Order() {}
 

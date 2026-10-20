@@ -23,6 +23,7 @@ public class UserDetailsImpl implements UserDetails {
     private String password;
 
     private Collection<? extends GrantedAuthority> authorities;
+    private java.time.LocalDateTime passwordChangedAt;
 
     public UserDetailsImpl(Long id, String username, String email, String password,
                            String firstName, String lastName,
@@ -41,7 +42,7 @@ public class UserDetailsImpl implements UserDetails {
                 .map(role -> new SimpleGrantedAuthority(role.getName().name()))
                 .collect(Collectors.toList());
 
-        return new UserDetailsImpl(
+        UserDetailsImpl details = new UserDetailsImpl(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
@@ -49,6 +50,12 @@ public class UserDetailsImpl implements UserDetails {
                 user.getFirstName(),
                 user.getLastName(),
                 authorities);
+        details.passwordChangedAt = user.getPasswordChangedAt();
+        return details;
+    }
+
+    public java.time.LocalDateTime getPasswordChangedAt() {
+        return passwordChangedAt;
     }
 
     @Override

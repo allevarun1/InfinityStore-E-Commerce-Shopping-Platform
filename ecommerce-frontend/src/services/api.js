@@ -18,6 +18,23 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// An expired or revoked token makes every protected call fail with 401 while the UI still
+// looks signed in. Drop the stale session and send the customer back to sign in.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const hadToken = !!localStorage.getItem('infinity_token');
+    if (error.response?.status === 401 && hadToken) {
+      localStorage.removeItem('infinity_token');
+      localStorage.removeItem('infinity_user');
+      if (window.location.pathname !== '/login') {
+        window.location.assign('/login?expired=1');
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const ApiService = {
   storeInfo: () => api.get('/store/info').then(res => res.data),
   products: () => api.get('/products').then(res => res.data),
@@ -40,7 +57,11 @@ export const ApiService = {
   submitReview: (productId, payload) => api.post(`/reviews/product/${productId}`, payload).then(res => res.data),
   hideReview: (id, hidden) => api.put(`/reviews/${id}/hidden?hidden=${hidden}`).then(res => res.data),
 
-  cartQuote: () => api.get('/cart/quote').then(res => res.data),
+  cartQuote: (coupon) => api.get('/cart/quote', { params: coupon ? { coupon } : {} }).then(res => res.data),
+  subscribe: (email) => api.post('/store/subscribe', { email, source: 'footer' }).then(res => res.data),
+  adminCoupons: () => api.get('/admin/coupons').then(res => res.data),
+  createCoupon: (payload) => api.post('/admin/coupons', payload).then(res => res.data),
+  setCouponActive: (id, value) => api.put(`/admin/coupons/${id}/active`, null, { params: { value } }).then(res => res.data),
   paymentOptions: () => api.get('/orders/payment-options').then(res => res.data),
   checkout: (payload, idempotencyKey) => api.post('/orders/checkout', payload, {
     headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},

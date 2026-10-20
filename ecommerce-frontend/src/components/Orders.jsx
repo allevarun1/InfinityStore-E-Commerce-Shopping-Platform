@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { Loader } from './Loader';
 import { EmptyState } from './EmptyState';
@@ -11,6 +12,7 @@ export function Orders() {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
   const toast = useToast();
+  const placed = useLocation().state?.placed;
 
   useEffect(() => {
     setLoading(true);
@@ -40,6 +42,11 @@ export function Orders() {
 
   return (
     <section className="panel">
+      {placed && (
+        <div className="notice" role="status" style={{ marginBottom: '16px' }}>
+          <span><strong>Thank you! Your order {placed} has been placed.</strong> We’ve emailed a confirmation and will update you when it ships. Pay when it arrives (cash on delivery).</span>
+        </div>
+      )}
       <h1>Order history</h1>
       {!orders.length ? (
         <EmptyState 

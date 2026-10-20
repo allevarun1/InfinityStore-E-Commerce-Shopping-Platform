@@ -27,7 +27,9 @@ public record OrderResponse(
         BigDecimal totalPrice,
         List<Item> orderItems,
         List<String> nextStatuses,
-        Customer user) {
+        Customer user,
+        String couponCode,
+        BigDecimal couponDiscountAmount) {
 
     public record Item(Long id, ProductRef product, int quantity, BigDecimal price, BigDecimal taxPercent) {
     }
@@ -55,7 +57,7 @@ public record OrderResponse(
                 o.getPaymentMethod(), o.getPaymentStatus(), o.isTestPayment(), o.getShippingAddress(),
                 o.getPhoneNumber(), o.getCurrency(), o.getPricingVersion(), o.getSubtotalAmount(),
                 o.getDiscountAmount(), o.getTaxAmount(), o.getShippingAmount(), o.getTotalPrice(), items, next,
-                customer);
+                customer, o.getCouponCode(), o.getCouponDiscountAmount());
     }
 
     private static Item item(OrderItem i) {

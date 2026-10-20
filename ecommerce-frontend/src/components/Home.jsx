@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
 import { useStore } from '../contexts/StoreContext';
 import { EmptyState } from './EmptyState';
+import { useCartActions } from '../lib/useCartActions';
+import { Reveal, Spotlight, CategoryTiles, OccasionStrip } from './HomeSections';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { inrCompact, isOnDeal, activePrice, discountPercent } from '../lib/format';
 
@@ -32,10 +33,9 @@ export function Home() {
   const occasion = params.get('occasion') || '';
   const sort = SORTS[params.get('sort')] ? params.get('sort') : 'featured';
 
-  const { isAdmin, isLoggedIn } = useAuth();
-  const { info, refreshCart } = useStore();
-  const toast = useToast();
-  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const { info } = useStore();
+  const cartActions = useCartActions();
   const location = useLocation();
 
   const load = useCallback(() => {
@@ -86,32 +86,21 @@ export function Home() {
     setParams(next, { replace: true });
   };
 
-  const requireCustomer = () => {
-    if (!isLoggedIn()) {
-      toast.info('Sign in to continue');
-      navigate('/login', { state: { from: location } });
-      return false;
-    }
-    return true;
-  };
-
-  const addToCart = (product) => {
-    if (!requireCustomer()) return;
+  const addToCart = async (product) => {
     setBusyId(product.id);
-    ApiService.addToCart(product.id)
-      .then(() => {
-        toast.success(`${product.name} added to your cart`);
-        refreshCart();
-      })
-      .catch(err => toast.error(err.response?.data?.message || 'Could not add this item'))
-      .finally(() => setBusyId(null));
+    await cartActions.addToCart(product);
+    setBusyId(null);
   };
 
-  const addToWishlist = (product) => {
-    if (!requireCustomer()) return;
-    ApiService.addWishlist(product.id)
-      .then(() => toast.success('Saved to your wishlist'))
-      .catch(err => toast.error(err.response?.data?.message || 'Could not save to wishlist'));
+  const heroProducts = useMemo(() => {
+    const inStock = products.filter(p => p.stockQuantity > 0);
+    const deals = inStock.filter(isOnDeal);
+    return [...deals, ...inStock.filter(p => !isOnDeal(p))].slice(0, 4);
+  }, [products]);
+
+  const pickAndScroll = (changes) => {
+    update(changes);
+    setTimeout(() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
   const activeCategory = categories.find(c => String(c.id) === categoryId);
@@ -138,7 +127,7 @@ export function Home() {
             </div>
           </div>
           <div className="hero-media">
-            <img src="/images/sarees/hero-sarees.jpg" alt="A selection of folded handwoven silk sarees" width="900" height="1125" fetchpriority="high" />
+            <Spotlight products={heroProducts} />
           </div>
         </div>
       </section>
@@ -158,6 +147,19 @@ export function Home() {
             <div><strong>Clear, upfront pricing</strong><span>Full GST and shipping breakdown before you order</span></div>
           </div>
         </section>
+      )}
+
+      {!loading && !failed && (
+        <>
+          <Reveal>
+            <CategoryTiles categories={categories} products={products}
+              onPick={(id) => pickAndScroll({ category: id, view: '', q: '' })} />
+          </Reveal>
+          <Reveal>
+            <OccasionStrip products={products} active={occasion}
+              onPick={(o) => pickAndScroll({ occasion: o })} />
+          </Reveal>
+        </>
       )}
 
       <section id="products" className="catalog full-bleed" aria-labelledby="catalog-title">
@@ -247,7 +249,6 @@ export function Home() {
                 mode={isAdmin() ? 'admin' : 'shop'}
                 busy={busyId === p.id}
                 onAdd={addToCart}
-                onWish={addToWishlist}
               />
             ))}
           </div>

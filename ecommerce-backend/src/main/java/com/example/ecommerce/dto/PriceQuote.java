@@ -15,7 +15,15 @@ public record PriceQuote(
         BigDecimal tax,
         BigDecimal shipping,
         BigDecimal total,
-        String currency) {
+        String currency,
+        String couponCode,
+        BigDecimal couponDiscount) {
+
+    /** Quote without a coupon. */
+    public PriceQuote(List<Line> lines, BigDecimal subtotal, BigDecimal discount, BigDecimal taxableAmount,
+                      BigDecimal tax, BigDecimal shipping, BigDecimal total, String currency) {
+        this(lines, subtotal, discount, taxableAmount, tax, shipping, total, currency, null, BigDecimal.ZERO);
+    }
 
     public record Line(
             Long cartItemId,

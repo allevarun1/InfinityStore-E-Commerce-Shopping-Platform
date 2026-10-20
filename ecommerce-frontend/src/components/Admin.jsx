@@ -1,3 +1,4 @@
+import { AdminCoupons } from './AdminCoupons';
 import React, { useEffect, useState } from 'react';
 import { imageSrc } from '../lib/format';
 import { useSearchParams } from 'react-router-dom';
@@ -229,6 +230,9 @@ export function Admin() {
           <button className={currentTab === 'users' ? 'active' : ''} onClick={() => setCurrentTab('users')}>
             <i className="bi bi-people"></i> Users ({users.length})
           </button>
+          <button className={currentTab === 'coupons' ? 'active' : ''} onClick={() => setCurrentTab('coupons')}>
+            <i className="bi bi-tag"></i> Coupons
+          </button>
           <button className={currentTab === 'orders' ? 'active' : ''} onClick={() => setCurrentTab('orders')}>
             <i className="bi bi-receipt"></i> Orders ({orders.length})
             {orders.some(o => o.status === 'PENDING') && (
@@ -433,6 +437,8 @@ export function Admin() {
           </div>
         )}
 
+        {currentTab === 'coupons' && <AdminCoupons />}
+
         {currentTab === 'orders' && (
           <div className="tab-content">
             <h2>Customer Orders</h2>
@@ -450,7 +456,12 @@ export function Admin() {
 
                 <div style={{ width: '100%', fontSize: '0.85rem', color: 'var(--text-color)', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div><strong>Customer:</strong> {order.user ? `${order.user.firstName} ${order.user.lastName} (@${order.user.username})` : 'Unknown'}</div>
-                  <div><strong>Phone:</strong> {order.phoneNumber || 'N/A'}</div>
+                  <div><strong>Phone:</strong> {order.phoneNumber || 'N/A'}
+                    {order.phoneNumber && (
+                      <> · <a href={`https://wa.me/91${order.phoneNumber}?text=${encodeURIComponent(`Hi, this is InfinityStore about your order ${order.trackingNumber}.`)}`} target="_blank" rel="noopener noreferrer">WhatsApp customer</a></>
+                    )}
+                  </div>
+                  {order.couponCode && <div><strong>Coupon:</strong> {order.couponCode} (−₹{Number(order.couponDiscountAmount || 0).toLocaleString('en-IN')})</div>}
                   <div><strong>Shipping Address:</strong> {order.shippingAddress}</div>
                   <div><strong>Payment Method:</strong> {order.paymentMethod} ({order.paymentStatus})</div>
                   <div style={{ marginTop: '8px', padding: '8px', backgroundColor: 'rgba(0,0,0,0.03)', borderRadius: '4px' }}>

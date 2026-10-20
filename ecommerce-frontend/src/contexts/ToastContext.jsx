@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react';
 
 const ToastContext = createContext(null);
 
 export function ToastProvider({ children }) {
   const [messages, setMessages] = useState([]);
+  const nextId = useRef(0);
 
   const remove = useCallback((id) => {
     // First set leaving to true
@@ -17,7 +18,7 @@ export function ToastProvider({ children }) {
   }, []);
 
   const add = useCallback((text, type = 'success') => {
-    const id = Date.now();
+    const id = ++nextId.current;
     setMessages((prev) => [...prev, { id, text, type, leaving: false }]);
     setTimeout(() => {
       remove(id);
@@ -28,8 +29,12 @@ export function ToastProvider({ children }) {
   const error = useCallback((text) => add(text, 'error'), [add]);
   const info = useCallback((text) => add(text, 'info'), [add]);
 
+  // Stable identity: components list `toast` in effect dependencies, and a new object per message
+  // would re-run their data loading (wiping half-filled forms) every time a toast appears.
+  const api = useMemo(() => ({ success, error, info, remove }), [success, error, info, remove]);
+
   return (
-    <ToastContext.Provider value={{ messages, success, error, info, remove }}>
+    <ToastContext.Provider value={api}>
       {children}
       <div className="toast-stack" aria-live="polite">
         {messages.map((msg) => (

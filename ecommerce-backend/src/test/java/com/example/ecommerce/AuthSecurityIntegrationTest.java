@@ -254,6 +254,26 @@ class AuthSecurityIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void sessionsIssuedBeforeAPasswordResetAreRevoked() throws Exception {
+        User u = customer();
+        String oldSession = signIn(u.getUsername(), "password-" + u.getUsername().substring(4));
+        mvc.perform(get("/api/cart").header("Authorization", "Bearer " + oldSession)).andExpect(status().isOk());
+
+        Thread.sleep(1100); // JWT issued-at has one-second resolution
+        mvc.perform(post("/api/auth/forgot-password").contentType(MediaType.APPLICATION_JSON)
+                .content(body(Map.of("email", u.getEmail())))).andExpect(status().isOk());
+        String token = resetTokenSentTo(u.getEmail());
+        mvc.perform(post("/api/auth/reset-password").contentType(MediaType.APPLICATION_JSON)
+                .content(body(Map.of("email", u.getEmail(), "code", token,
+                        "newPassword", "brand-new-pass", "confirmPassword", "brand-new-pass"))))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/api/cart").header("Authorization", "Bearer " + oldSession)).andExpect(status().isUnauthorized());
+        String newSession = signIn(u.getUsername(), "brand-new-pass");
+        mvc.perform(get("/api/cart").header("Authorization", "Bearer " + newSession)).andExpect(status().isOk());
+    }
+
+    @Test
     void errorsDoNotLeakInternals() throws Exception {
         String res = mvc.perform(post("/api/auth/signin").contentType(MediaType.APPLICATION_JSON).content("{not json"))
                 .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();

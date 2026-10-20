@@ -26,6 +26,9 @@ public class DataSeeder implements CommandLineRunner {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private com.example.ecommerce.repository.CouponRepository couponRepository;
+
+    @Autowired
     private ProductRepository productRepository;
 
     @Autowired
@@ -262,6 +265,18 @@ public class DataSeeder implements CommandLineRunner {
             productRepository.save(bridalSaree);
 
             System.out.println("Seeded default saree inventory.");
+        }
+
+        // Demo welcome offer (production owners create their own under Admin > Coupons).
+        if (demoCatalog && couponRepository.findByCodeIgnoreCase("WELCOME10").isEmpty()) {
+            com.example.ecommerce.model.Coupon welcome = new com.example.ecommerce.model.Coupon();
+            welcome.setCode("WELCOME10");
+            welcome.setDescription("Welcome offer");
+            welcome.setPercentOff(new java.math.BigDecimal("10"));
+            welcome.setMaxDiscount(new java.math.BigDecimal("500"));
+            welcome.setMinSubtotal(new java.math.BigDecimal("1499"));
+            welcome.setFirstOrderOnly(true);
+            couponRepository.save(welcome);
         }
     }
 }

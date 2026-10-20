@@ -1,30 +1,46 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK, imageSrc } from '../lib/format';
+import { useWishlist } from '../lib/useWishlist';
 
-export function ProductCard({ product, mode, busy, onAdd, onWish, priority = false }) {
+function WishHeart({ product }) {
+  const { isWished, toggle } = useWishlist();
+  const saved = isWished(product.id);
+  return (
+    <button
+      type="button"
+      className={`pcard-wish ${saved ? 'saved' : ''}`}
+      aria-pressed={saved}
+      aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+      onClick={() => toggle(product)}
+    >
+      <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`} aria-hidden="true"></i>
+    </button>
+  );
+}
+
+export function ProductCard({ product, mode, busy, onAdd, priority = false }) {
   const soldOut = !product.stockQuantity || product.stockQuantity <= 0;
   const onDeal = isOnDeal(product);
   const href = `/products/${product.id}`;
+  const addLabel = soldOut ? 'Sold out' : busy ? 'Adding…' : 'Add to cart';
 
   return (
     <article className="pcard">
-      <Link to={href} className="pcard-media" tabIndex={-1} aria-hidden="true">
-        <img src={imageSrc(product.imageUrl)} alt="" loading={priority ? 'eager' : 'lazy'} decoding="async" width="600" height="800" />
-        {onDeal && <span className="pcard-badge">{discountPercent(product)}% off</span>}
-        {soldOut && <span className="pcard-soldout">Sold out</span>}
-      </Link>
-
-      {mode !== 'admin' && (
-        <button
-          type="button"
-          className="pcard-wish"
-          aria-label={`Save ${product.name} to wishlist`}
-          onClick={() => onWish(product)}
-        >
-          <i className="bi bi-heart" aria-hidden="true"></i>
-        </button>
-      )}
+      <div className="pcard-mediawrap">
+        <Link to={href} className="pcard-media" tabIndex={-1} aria-hidden="true">
+          <img src={imageSrc(product.imageUrl)} alt="" loading={priority ? 'eager' : 'lazy'} decoding="async" width="600" height="800" />
+          {onDeal && <span className="pcard-badge">{discountPercent(product)}% off</span>}
+          {soldOut && <span className="pcard-soldout">Sold out</span>}
+        </Link>
+        {mode !== 'admin' && <WishHeart product={product} />}
+        {mode !== 'admin' && !soldOut && (
+          <button type="button" className="pcard-quick" disabled={busy} onClick={() => onAdd(product)}
+            aria-label={`Quick add ${product.name} to cart`}>
+            <i className="bi bi-bag-plus" aria-hidden="true"></i> {addLabel}
+          </button>
+        )}
+      </div>
 
       <div className="pcard-body">
         <span className="pcard-cat">{product.category?.name}</span>
@@ -46,13 +62,8 @@ export function ProductCard({ product, mode, busy, onAdd, onWish, priority = fal
           {mode === 'admin' ? (
             <Link className="btn btn-outline" to={`/admin?editId=${product.id}`}>Manage in admin</Link>
           ) : (
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={soldOut || busy}
-              onClick={() => onAdd(product)}
-            >
-              {soldOut ? 'Sold out' : busy ? 'Adding…' : 'Add to cart'}
+            <button type="button" className="btn btn-primary" disabled={soldOut || busy} onClick={() => onAdd(product)}>
+              {addLabel}
             </button>
           )}
         </div>

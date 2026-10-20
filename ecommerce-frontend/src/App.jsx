@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, NavLink, useNavigate, useLocation, Navigate, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { StoreProvider, useStore } from './contexts/StoreContext';
@@ -16,11 +16,16 @@ import { Admin } from './components/Admin';
 import { StaticPage } from './components/StaticPage';
 import { ResetPassword } from './components/ResetPassword';
 import { NotFound } from './components/NotFound';
+import { WhatsAppFab, Newsletter, ConsentBanner } from './components/Growth';
+import { pageView } from './lib/analytics';
+import { SearchBox, CategoryNav, BottomNav } from './components/Navigation';
+import { MiniCart } from './components/MiniCart';
 import { ApiService } from './services/api';
 import { inrCompact } from './lib/format';
 import './styles.css';
 import './App.css';
 import './theme.css';
+import './ux.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function AnnouncementBar() {
@@ -30,22 +35,17 @@ function AnnouncementBar() {
     <div className="announce">
       <span>Free shipping above {inrCompact(info.freeShippingThreshold)}</span>
       <span>Cash on delivery available</span>
+      {info.welcomeOffer && <span>New here? Use code <strong>{info.welcomeOffer.code}</strong> for {info.welcomeOffer.summary.split(' on orders')[0]}</span>}
     </div>
   );
 }
 
 function Header() {
-  const [params] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState(params.get('q') || '');
   const [hasNewOrders, setHasNewOrders] = useState(false);
   const { isCustomer, isAdmin, isLoggedIn, logout } = useAuth();
-  const { cartCount } = useStore();
+  const { cartCount, cartPulse } = useStore();
   const navigate = useNavigate();
   const admin = isAdmin();
-
-  useEffect(() => {
-    setSearchTerm(params.get('q') || '');
-  }, [params]);
 
   useEffect(() => {
     if (!admin) {
@@ -62,12 +62,6 @@ function Header() {
     return () => clearInterval(interval);
   }, [admin]);
 
-  const search = (e) => {
-    e.preventDefault();
-    const term = searchTerm.trim();
-    navigate(term ? `/?q=${encodeURIComponent(term)}#products` : '/#products');
-  };
-
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -76,26 +70,22 @@ function Header() {
           <span className="brand-name">InfinityStore</span>
         </Link>
 
-        <form className="header-search" role="search" onSubmit={search}>
-          <i className="bi bi-search" aria-hidden="true"></i>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search silk, kasavu, bridal…"
-            aria-label="Search sarees"
-          />
-          <button type="submit" aria-label="Search"><span className="label-text">Search</span><i className="bi bi-search" aria-hidden="true"></i></button>
-        </form>
+        <SearchBox />
 
         <nav className="header-actions" aria-label="Account and cart">
+          {!admin && !isLoggedIn() && (
+            <NavLink to="/cart" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}>
+              <i key={cartPulse} className={`bi bi-bag ${cartPulse ? 'bump' : ''}`} aria-hidden="true"></i><span className="label">Cart</span>
+              {cartCount > 0 && <span className="badge-count" aria-hidden="true">{cartCount > 99 ? '99+' : cartCount}</span>}
+            </NavLink>
+          )}
           {isCustomer() && (
             <>
               <NavLink to="/wishlist" aria-label="Wishlist"><i className="bi bi-heart" aria-hidden="true"></i><span className="label">Wishlist</span></NavLink>
               <NavLink to="/orders" aria-label="Orders" className="hide-sm"><i className="bi bi-box-seam" aria-hidden="true"></i><span className="label">Orders</span></NavLink>
               <NavLink to="/profile" aria-label="Account"><i className="bi bi-person" aria-hidden="true"></i><span className="label">Account</span></NavLink>
               <NavLink to="/cart" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}>
-                <i className="bi bi-bag" aria-hidden="true"></i><span className="label">Cart</span>
+                <i key={cartPulse} className={`bi bi-bag ${cartPulse ? 'bump' : ''}`} aria-hidden="true"></i><span className="label">Cart</span>
                 {cartCount > 0 && <span className="badge-count" aria-hidden="true">{cartCount > 99 ? '99+' : cartCount}</span>}
               </NavLink>
             </>
@@ -115,6 +105,7 @@ function Header() {
           )}
         </nav>
       </div>
+      <CategoryNav />
     </header>
   );
 }
@@ -124,6 +115,7 @@ function Footer() {
   const support = import.meta.env.VITE_SUPPORT_EMAIL;
   return (
     <footer className="footer">
+      <Newsletter />
       <div className="footer-inner">
         <div>
           <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true">∞</span>InfinityStore</Link>
@@ -140,9 +132,11 @@ function Footer() {
           <h3>Help</h3>
           <ul>
             <li><Link to="/orders">Your orders</Link></li>
+            <li><Link to="/shipping">Shipping &amp; returns</Link></li>
+            <li><Link to="/contact">Contact us</Link></li>
             <li><Link to="/privacy">Privacy policy</Link></li>
             <li><Link to="/terms">Terms</Link></li>
-            {support && <li><a href={`mailto:${support}`}>Email us</a></li>}
+            {(info?.supportEmail || support) && <li><a href={`mailto:${info?.supportEmail || support}`}>Email us</a></li>}
           </ul>
         </div>
         <div>
@@ -165,6 +159,7 @@ function Footer() {
 /** New pages start at the top unless the link targets a section. */
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
+  useEffect(() => { pageView(); }, [pathname]);
   useEffect(() => {
     if (!hash) window.scrollTo(0, 0);
   }, [pathname, hash]);
@@ -187,6 +182,12 @@ function ProtectedRoute({ children, role }) {
   return children;
 }
 
+/** Visitors may keep a cart; signed-in staff are sent away from the customer cart. */
+function CartRoute() {
+  const { isLoggedIn } = useAuth();
+  return isLoggedIn() ? <ProtectedRoute role="USER"><Cart /></ProtectedRoute> : <Cart />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -204,18 +205,24 @@ export default function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/cart" element={<ProtectedRoute role="USER"><Cart /></ProtectedRoute>} />
+                <Route path="/cart" element={<CartRoute />} />
                 <Route path="/wishlist" element={<ProtectedRoute role="USER"><Wishlist /></ProtectedRoute>} />
                 <Route path="/checkout" element={<ProtectedRoute role="USER"><Checkout /></ProtectedRoute>} />
                 <Route path="/orders" element={<ProtectedRoute role="USER"><Orders /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute role="USER"><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute role="ADMIN"><Admin /></ProtectedRoute>} />
                 <Route path="/privacy" element={<StaticPage page="privacy" />} />
+                <Route path="/shipping" element={<StaticPage page="shipping" />} />
+                <Route path="/contact" element={<StaticPage page="contact" />} />
                 <Route path="/terms" element={<StaticPage page="terms" />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
             <Footer />
+            <WhatsAppFab />
+            <MiniCart />
+            <BottomNav />
+            <ConsentBanner />
           </BrowserRouter>
         </StoreProvider>
       </ToastProvider>

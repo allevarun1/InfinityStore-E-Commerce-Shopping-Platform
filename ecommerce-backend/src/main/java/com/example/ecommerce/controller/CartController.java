@@ -47,8 +47,8 @@ public class CartController {
 
     /** The authoritative price breakdown (same calculation used when the order is placed). */
     @GetMapping("/quote")
-    public ResponseEntity<PriceQuote> quote() {
-        return ResponseEntity.ok(orderService.quoteCart(getAuthenticatedUser()));
+    public ResponseEntity<PriceQuote> quote(@RequestParam(value = "coupon", required = false) String coupon) {
+        return ResponseEntity.ok(orderService.quoteCart(getAuthenticatedUser(), coupon));
     }
 
     @PostMapping

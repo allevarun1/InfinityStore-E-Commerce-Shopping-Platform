@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -8,6 +8,39 @@ import { inr, inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK, ima
 import { NotFound } from './NotFound';
 import { Reviews } from './Reviews';
 import { StarRating } from './StarRating';
+import { WhatsAppAsk, ProductShelves, rememberViewed } from './Growth';
+import { useCartActions } from '../lib/useCartActions';
+import { track } from '../lib/analytics';
+import { useWishlist } from '../lib/useWishlist';
+
+// Search engines that run JavaScript read this to show price and availability in results.
+function setProductMeta(p) {
+  const price = activePrice(p);
+  const description = (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  let meta = document.querySelector('meta[name="description"]');
+  if (meta && description) meta.setAttribute('content', description);
+  let tag = document.getElementById('product-jsonld');
+  if (!tag) {
+    tag = document.createElement('script');
+    tag.id = 'product-jsonld';
+    tag.type = 'application/ld+json';
+    document.head.appendChild(tag);
+  }
+  tag.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: p.name,
+    description,
+    image: p.imageUrl ? new URL(imageSrc(p.imageUrl), window.location.origin).href : undefined,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'INR',
+      price: price.toFixed(2),
+      availability: p.stockQuantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: window.location.href,
+    },
+  });
+}
 
 export function ProductDetail() {
   const { id } = useParams();
@@ -16,11 +49,12 @@ export function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
   const [zoom, setZoom] = useState(null);
-  const { isAdmin, isLoggedIn } = useAuth();
-  const { info, refreshCart } = useStore();
+  const { isAdmin } = useAuth();
+  const { info, showAdded } = useStore();
+  const { isWished, toggle: toggleWish } = useWishlist();
+  const cartActions = useCartActions();
   const toast = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const refreshProduct = () => ApiService.product(id).then(setProduct).catch(() => {});
 
@@ -32,8 +66,12 @@ export function ProductDetail() {
         setProduct(p);
         setStatus('ready');
         document.title = `${p.name} | InfinityStore`;
+        setProductMeta(p);
+        rememberViewed(p.id);
+        track.viewItem(p);
       })
       .catch(err => setStatus(err.response?.status === 404 ? 'missing' : 'error'));
+    return () => document.getElementById('product-jsonld')?.remove();
   }, [id]);
 
   if (status === 'missing') {
@@ -70,34 +108,29 @@ export function ProductDetail() {
   const onDeal = isOnDeal(product);
   const saving = onDeal ? product.price - product.dealPrice : 0;
 
-  const add = (thenCheckout) => {
-    if (!isLoggedIn()) {
-      navigate('/login', { state: { from: location } });
-      return;
-    }
+  const add = async (thenCheckout) => {
     setBusy(true);
-    ApiService.addToCart(product.id, qty)
-      .then(() => {
-        refreshCart();
-        if (thenCheckout) {
-          navigate('/checkout');
-        } else {
-          toast.success(`Added ${qty} × ${product.name} to your cart`);
-        }
-      })
-      .catch(err => toast.error(err.response?.data?.message || 'Could not add this item'))
-      .finally(() => setBusy(false));
+    const ok = await cartActions.addToCart(product, qty, { quiet: true });
+    setBusy(false);
+    if (!ok) return;
+    if (thenCheckout) cartActions.goToCheckout();
+    else showAdded(product, qty);
   };
 
-  const wish = () => {
-    if (!isLoggedIn()) {
-      navigate('/login', { state: { from: location } });
-      return;
+  const share = async () => {
+    const data = { title: product.name, text: `${product.name} at InfinityStore`, url: window.location.href };
+    try {
+      if (navigator.share) await navigator.share(data);
+      else {
+        await navigator.clipboard.writeText(data.url);
+        toast.info('Link copied');
+      }
+    } catch {
+      // the share sheet was dismissed
     }
-    ApiService.addWishlist(product.id)
-      .then(() => toast.success('Saved to your wishlist'))
-      .catch(err => toast.error(err.response?.data?.message || 'Could not save to wishlist'));
   };
+
+  const copyCode = () => navigator.clipboard?.writeText(info.welcomeOffer.code).then(() => toast.info('Code copied')).catch(() => {});
 
   const moveZoom = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -160,6 +193,14 @@ export function ProductDetail() {
             <small>Price excludes GST. Tax and shipping are shown in full before you place your order.</small>
           </div>
 
+          {info?.welcomeOffer && (
+            <div className="offer-chip">
+              <i className="bi bi-tag" aria-hidden="true"></i>
+              <span>New here? <strong>{info.welcomeOffer.summary}</strong> with code <code>{info.welcomeOffer.code}</code></span>
+              <button type="button" onClick={copyCode}>Copy</button>
+            </div>
+          )}
+
           <p className={`stock-line ${stockClass}`}><span className="dot" aria-hidden="true"></span>{stockText}</p>
 
           {isAdmin() ? (
@@ -182,8 +223,14 @@ export function ProductDetail() {
                 {!soldOut && (
                   <button type="button" className="btn btn-outline" disabled={busy} onClick={() => add(true)}>Buy now</button>
                 )}
-                <button type="button" className="btn btn-outline" onClick={wish}>
-                  <i className="bi bi-heart" aria-hidden="true"></i> Save to wishlist
+                <button type="button" className="btn btn-outline" aria-pressed={isWished(product.id)} onClick={() => toggleWish(product)}>
+                  <i className={`bi ${isWished(product.id) ? 'bi-heart-fill' : 'bi-heart'}`} aria-hidden="true"></i> {isWished(product.id) ? 'Saved to wishlist' : 'Save to wishlist'}
+                </button>
+              </div>
+              <div className="pdp-actions-row">
+                <WhatsAppAsk product={product} />
+                <button type="button" className="btn btn-outline share-btn" onClick={share}>
+                  <i className="bi bi-share" aria-hidden="true"></i> Share
                 </button>
               </div>
             </>
@@ -200,21 +247,43 @@ export function ProductDetail() {
             </ul>
           )}
 
-          <section className="pdp-details" aria-labelledby="details-title">
-            <h2 id="details-title">Details</h2>
-            <p>{product.description}</p>
-            {specs.length > 0 && (
-              <dl className="specs">
-                {specs.map(([label, value]) => (
-                  <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
-                ))}
-              </dl>
-            )}
-          </section>
+          <div className="acc">
+            <details open>
+              <summary>Details</summary>
+              <div className="acc-body">
+                <p>{product.description}</p>
+                {specs.length > 0 && (
+                  <dl className="specs">
+                    {specs.map(([label, value]) => (
+                      <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+            </details>
+            <details>
+              <summary>Shipping &amp; returns</summary>
+              <div className="acc-body">
+                <ul>
+                  {info && <li>Free shipping above {inrCompact(info.freeShippingThreshold)}; otherwise {inrCompact(info.shippingFee)}.</li>}
+                  <li>Cash on delivery available.</li>
+                  <li>Returns are accepted for damaged or incorrect products. <Link to="/shipping">Read the full policy</Link>.</li>
+                </ul>
+              </div>
+            </details>
+            <details>
+              <summary>Need help choosing?</summary>
+              <div className="acc-body">
+                <p>We’re happy to help with colour, drape and occasion. Visit our <Link to="/contact">contact page</Link>{info?.whatsappNumber ? ' or tap the WhatsApp button' : ''}.</p>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
 
       <Reviews productId={product.id} onChange={refreshProduct} />
+
+      <ProductShelves product={product} />
 
       {!isAdmin() && !soldOut && (
         <div className="mobile-buy">

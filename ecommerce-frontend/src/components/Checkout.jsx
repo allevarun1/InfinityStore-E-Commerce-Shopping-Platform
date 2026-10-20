@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { Loader } from './Loader';
+import { track } from '../lib/analytics';
 
 const inr = (value) =>
   `₹${Number(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -19,6 +20,9 @@ export function Checkout() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState('');
+  const [couponBusy, setCouponBusy] = useState(false);
   // One key per checkout attempt: a double click or retry can never create two orders.
   const idempotencyKey = useRef(newKey());
   const toast = useToast();
@@ -30,10 +34,32 @@ export function Checkout() {
       .then(([q, o]) => {
         setQuote(q);
         setOptions(o);
+        track.beginCheckout(q);
       })
       .catch(() => toast.error('Failed to load checkout details'))
       .finally(() => setLoading(false));
   }, [toast]);
+
+  const applyCoupon = (e) => {
+    e.preventDefault();
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponBusy(true);
+    ApiService.cartQuote(code)
+      .then(q => {
+        setQuote(q);
+        setCoupon(q.couponCode || '');
+        toast.success(`Coupon ${q.couponCode} applied`);
+      })
+      .catch(err => toast.error(err.response?.data?.message || 'Could not apply this code'))
+      .finally(() => setCouponBusy(false));
+  };
+
+  const removeCoupon = () => {
+    setCoupon('');
+    setCouponInput('');
+    ApiService.cartQuote().then(setQuote).catch(() => {});
+  };
 
   const validate = () => {
     const tempErrors = {};
@@ -59,13 +85,19 @@ export function Checkout() {
     e.preventDefault();
     if (isSubmitting || !validate()) return;
     setIsSubmitting(true);
-    ApiService.checkout(form, idempotencyKey.current)
-      .then(() => {
-        toast.success('Order placed successfully');
-        navigate('/orders');
+    ApiService.checkout({ ...form, couponCode: coupon || undefined, expectedTotal: quote?.total }, idempotencyKey.current)
+      .then((order) => {
+        track.purchase(order);
+        navigate('/orders', { state: { placed: order.trackingNumber } });
       })
       .catch(err => {
         toast.error(err.response?.data?.message || 'Checkout failed');
+        // Prices, stock or shipping may have changed: show the customer the current totals.
+        ApiService.cartQuote(coupon || undefined).then(setQuote).catch(() => {
+          // the code may no longer be valid: fall back to the plain price
+          setCoupon('');
+          ApiService.cartQuote().then(setQuote).catch(() => {});
+        });
         setIsSubmitting(false);
       });
   };
@@ -101,6 +133,12 @@ export function Checkout() {
                 <span>−{inr(quote.discount)}</span>
               </div>
             )}
+            {Number(quote.couponDiscount) > 0 && (
+              <div className="order-summary-row">
+                <span>Coupon {quote.couponCode}:</span>
+                <span>−{inr(quote.couponDiscount)}</span>
+              </div>
+            )}
             <div className="order-summary-row">
               <span>GST:</span>
               <span>{inr(quote.tax)}</span>
@@ -113,6 +151,27 @@ export function Checkout() {
               <span>Total payable:</span>
               <span>{inr(quote.total)}</span>
             </div>
+          </div>
+        )}
+
+        {hasItems && (
+          <div className="field-group">
+            <label htmlFor="coupon">Coupon code</label>
+            {coupon ? (
+              <div className="coupon-applied">
+                <span><i className="bi bi-tag" aria-hidden="true"></i> {coupon} applied</span>
+                <button type="button" className="text-link" onClick={removeCoupon}>Remove</button>
+              </div>
+            ) : (
+              <div className="coupon-row">
+                <input id="coupon" value={couponInput} maxLength={40} autoCapitalize="characters" autoComplete="off"
+                  placeholder="Have a code?" onChange={e => setCouponInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') applyCoupon(e); }} />
+                <button type="button" className="btn btn-outline" disabled={couponBusy || !couponInput.trim()} onClick={applyCoupon}>
+                  {couponBusy ? 'Checking…' : 'Apply'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

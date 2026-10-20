@@ -22,6 +22,28 @@ public class OrderRequest {
     @Pattern(regexp = "(?i)^(COD|ONLINE|CARD|UPI)$", message = "Unsupported payment method")
     private String paymentMethod;
 
+    /** Total the customer saw at checkout. When present, the order is refused if the server price differs. */
+    private java.math.BigDecimal expectedTotal;
+
+    @Size(max = 40)
+    private String couponCode;
+
+    public String getCouponCode() {
+        return couponCode;
+    }
+
+    public void setCouponCode(String couponCode) {
+        this.couponCode = couponCode;
+    }
+
+    public java.math.BigDecimal getExpectedTotal() {
+        return expectedTotal;
+    }
+
+    public void setExpectedTotal(java.math.BigDecimal expectedTotal) {
+        this.expectedTotal = expectedTotal;
+    }
+
     public String getShippingAddress() {
         return shippingAddress;
     }

@@ -73,12 +73,33 @@ public class OrderService {
     @Autowired
     private MailService mailService;
 
+    @Autowired
+    private CouponService couponService;
+
     public PaymentOptions paymentOptions() {
         return new PaymentOptions(true, paymentGateway.enabled(), paymentGateway.testMode());
     }
 
     public PriceQuote quoteCart(User user) {
-        return pricingService.quote(cartItemRepository.findByUser(user));
+        return quoteCart(user, null);
+    }
+
+    /** Previews the price with an optional coupon; an invalid code is reported as a BusinessException. */
+    public PriceQuote quoteCart(User user, String couponCode) {
+        List<CartItem> items = cartItemRepository.findByUser(user);
+        return priceWithCoupon(user, items, couponCode, false).quote();
+    }
+
+    private record Priced(PriceQuote quote, CouponService.Applied applied) {
+    }
+
+    private Priced priceWithCoupon(User user, List<CartItem> items, String couponCode, boolean lock) {
+        PriceQuote base = pricingService.quote(items);
+        if (couponCode == null || couponCode.isBlank()) {
+            return new Priced(base, null);
+        }
+        CouponService.Applied applied = couponService.evaluate(user, couponCode, base.taxableAmount(), lock);
+        return new Priced(pricingService.quote(items, applied.discount(), applied.coupon().getCode()), applied);
     }
 
     public Order placeOrder(User user, OrderRequest request, String idempotencyKey) {
@@ -117,7 +138,12 @@ public class OrderService {
             }
         }
 
-        PriceQuote quote = pricingService.quote(cartItems);
+        Priced priced = priceWithCoupon(owner, cartItems, request.getCouponCode(), true);
+        PriceQuote quote = priced.quote();
+        if (request.getExpectedTotal() != null && request.getExpectedTotal().compareTo(quote.total()) != 0) {
+            throw new BusinessException("Prices or shipping changed since you opened checkout. "
+                    + "Please review the updated total and place the order again.");
+        }
 
         Order order = new Order();
         order.setUser(owner);
@@ -136,6 +162,11 @@ public class OrderService {
         order.setTaxAmount(quote.tax());
         order.setShippingAmount(quote.shipping());
         order.setTotalPrice(quote.total());
+        if (priced.applied() != null) {
+            order.setCouponCode(priced.applied().coupon().getCode());
+            order.setCouponDiscountAmount(quote.couponDiscount());
+            couponService.recordRedemption(priced.applied().coupon());
+        }
 
         List<OrderItem> orderItems = new ArrayList<>();
         for (int i = 0; i < cartItems.size(); i++) {
@@ -244,6 +275,9 @@ public class OrderService {
         }
         if ("CANCELLED".equals(next)) {
             restoreStock(order);
+            if (order.getCouponCode() != null) {
+                couponService.releaseRedemption(order.getCouponCode());
+            }
         }
         order.setStatus(next);
         Order saved = orderRepository.save(order);

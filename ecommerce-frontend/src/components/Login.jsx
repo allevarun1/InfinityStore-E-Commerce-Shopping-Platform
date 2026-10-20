@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -26,7 +26,13 @@ export function Login() {
   const location = useLocation();
   // Return shoppers to the page they were on (e.g. the product they tried to add).
   const from = location.state?.from;
+  const sessionExpired = new URLSearchParams(location.search).get('expired') === '1';
   const returnTo = from ? `${from.pathname || '/'}${from.search || ''}${from.hash || ''}` : '/';
+
+  useEffect(() => {
+    if (sessionExpired) toast.error('Your session has expired. Please sign in again.');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionExpired]);
 
   const validate = () => {
     const tempErrors = {};

@@ -1,5 +1,6 @@
 package com.example.ecommerce.security.jwt;
 
+import com.example.ecommerce.security.services.UserDetailsImpl;
 import com.example.ecommerce.security.services.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -34,6 +35,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (issuedBeforePasswordChange(jwt, userDetails)) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -45,6 +50,16 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    /** A password change or reset revokes every session issued before it. */
+    private boolean issuedBeforePasswordChange(String jwt, UserDetails userDetails) {
+        if (!(userDetails instanceof UserDetailsImpl details) || details.getPasswordChangedAt() == null) {
+            return false;
+        }
+        java.util.Date issuedAt = jwtUtils.getIssuedAtFromJwtToken(jwt);
+        long changedAtSeconds = details.getPasswordChangedAt().atZone(java.time.ZoneId.systemDefault()).toEpochSecond();
+        return issuedAt == null || issuedAt.getTime() / 1000 < changedAtSeconds;
     }
 
     private String parseJwt(HttpServletRequest request) {

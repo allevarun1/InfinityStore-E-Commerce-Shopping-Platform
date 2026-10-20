@@ -21,6 +21,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     boolean existsByUser(User user);
 
+    @Query("select count(o) from Order o where o.user.id = :userId and o.couponCode = :code and o.status <> 'CANCELLED'")
+    long countActiveByUserAndCoupon(@Param("userId") Long userId, @Param("code") String code);
+
+    /** Orders by this customer that still count against a coupon (not cancelled). */
+    @Query("select count(o) from Order o where o.user.id = :userId and o.status <> 'CANCELLED'")
+    long countActiveByUser(@Param("userId") Long userId);
+
     long countByStatus(String status);
 
     @Query("select count(o) > 0 from Order o join o.orderItems i where o.user.id = :userId and i.product.id = :productId and o.status = 'DELIVERED'")

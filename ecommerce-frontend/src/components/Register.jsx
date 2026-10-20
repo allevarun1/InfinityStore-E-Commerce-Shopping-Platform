@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
@@ -18,6 +18,7 @@ export function Register() {
   
   const { signup } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
 
   const getPasswordStrength = (pass) => {
@@ -79,7 +80,7 @@ export function Register() {
     signup(signupPayload)
       .then(() => {
         toast.success('Registration successful. Please log in.');
-        navigate('/login');
+        navigate('/login', { state: location.state });
       })
       .catch(err => {
         const errorData = err.response?.data;

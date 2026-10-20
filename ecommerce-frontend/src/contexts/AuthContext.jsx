@@ -1,7 +1,17 @@
 import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
+import { ApiService } from '../services/api';
+import { guestCart } from '../lib/guestCart';
 
 const AuthContext = createContext(null);
+
+/** Moves items a visitor added before signing in into their server cart. Failures never block sign-in. */
+async function mergeGuestCart(user) {
+  const items = guestCart.items();
+  if (!items.length || (user.roles || []).includes('ROLE_ADMIN')) return;
+  await Promise.allSettled(items.map(i => ApiService.addToCart(i.productId, i.quantity)));
+  guestCart.clear();
+}
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -18,6 +28,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem('infinity_token', response.token || response.accessToken);
     localStorage.setItem('infinity_user', JSON.stringify(response));
     setCurrentUser(response);
+    await mergeGuestCart(response);
     return response;
   };
 

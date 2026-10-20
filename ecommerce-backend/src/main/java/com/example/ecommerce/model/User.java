@@ -57,6 +57,10 @@ public class User {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private java.time.LocalDateTime resetTokenExpiresAt;
 
+    @Column(name = "password_changed_at")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private java.time.LocalDateTime passwordChangedAt;
+
     @Column(name = "reset_attempts")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Integer resetAttempts;
@@ -107,6 +111,12 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+        // Sessions issued before this moment are revoked (see AuthTokenFilter).
+        this.passwordChangedAt = java.time.LocalDateTime.now();
+    }
+
+    public java.time.LocalDateTime getPasswordChangedAt() {
+        return passwordChangedAt;
     }
 
     public String getFirstName() {
