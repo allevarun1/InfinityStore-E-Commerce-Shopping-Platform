@@ -12,6 +12,7 @@ import { WhatsAppAsk, ProductShelves, rememberViewed } from './Growth';
 import { useCartActions } from '../lib/useCartActions';
 import { track } from '../lib/analytics';
 import { useWishlist } from '../lib/useWishlist';
+import { ProductGallery } from './Gallery';
 
 // Search engines that run JavaScript read this to show price and availability in results.
 function setProductMeta(p) {
@@ -48,7 +49,6 @@ export function ProductDetail() {
   const [status, setStatus] = useState('loading'); // loading | ready | missing | error
   const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
-  const [zoom, setZoom] = useState(null);
   const { isAdmin } = useAuth();
   const { info, showAdded } = useStore();
   const { isWished, toggle: toggleWish } = useWishlist();
@@ -132,11 +132,6 @@ export function ProductDetail() {
 
   const copyCode = () => navigator.clipboard?.writeText(info.welcomeOffer.code).then(() => toast.info('Code copied')).catch(() => {});
 
-  const moveZoom = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    setZoom(`${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`);
-  };
-
   const specs = [
     ['Fabric', product.fabric],
     ['Weave', product.weave],
@@ -161,14 +156,7 @@ export function ProductDetail() {
       </nav>
 
       <div className="pdp-grid">
-        <div
-          className={`pdp-media ${zoom ? 'zoomed' : ''}`}
-          onMouseMove={moveZoom}
-          onMouseLeave={() => setZoom(null)}
-        >
-          <img src={imageSrc(product.imageUrl)} alt={product.name} width="900" height="1125"
-            style={zoom ? { transformOrigin: zoom } : undefined} />
-        </div>
+        <ProductGallery product={product} />
 
         <div className="pdp-info">
           <span className="eyebrow">{product.category.name}</span>

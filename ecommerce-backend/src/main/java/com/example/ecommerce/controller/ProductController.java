@@ -95,6 +95,28 @@ public class ProductController {
                 .body(Base64.getDecoder().decode(m.group(2)));
     }
 
+    /** Serves an uploaded gallery photo; the v parameter changes whenever the photo does. */
+    @GetMapping("/products/{id}/gallery/{index}")
+    public ResponseEntity<byte[]> galleryImage(@PathVariable Long id, @PathVariable int index) {
+        Product product;
+        try {
+            product = productService.getProductById(id);
+        } catch (BusinessException e) {
+            return ResponseEntity.notFound().build();
+        }
+        java.util.List<String> gallery = product.getGalleryRaw();
+        String stored = index >= 0 && index < gallery.size() ? gallery.get(index) : null;
+        Matcher m = stored == null ? null : DATA_URL.matcher(stored);
+        if (m == null || !m.matches()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(m.group(1)))
+                .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic().immutable())
+                .header("X-Content-Type-Options", "nosniff")
+                .body(Base64.getDecoder().decode(m.group(2)));
+    }
+
     // ------------------------------------------------------------ admin catalogue
 
     @GetMapping("/admin/products")

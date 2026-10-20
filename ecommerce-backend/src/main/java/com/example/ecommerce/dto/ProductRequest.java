@@ -21,6 +21,13 @@ public class ProductRequest {
 
     private String imageUrl;
 
+    /** Extra photos in display order (http(s), site paths or uploaded data URLs). */
+    @jakarta.validation.constraints.Size(max = 6, message = "Up to 6 extra photos")
+    private java.util.List<String> gallery;
+
+    public java.util.List<String> getGallery() { return gallery; }
+    public void setGallery(java.util.List<String> gallery) { this.gallery = gallery; }
+
     @NotNull
     @Min(0)
     private Integer stockQuantity;

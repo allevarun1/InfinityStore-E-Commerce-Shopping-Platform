@@ -52,7 +52,7 @@ export function Login() {
 
     setIsSubmitting(true);
     authLogin(username, password)
-      .then((res) => {
+      .then(() => {
         toast.success('Login successful');
         navigate(returnTo, { replace: true });
       })

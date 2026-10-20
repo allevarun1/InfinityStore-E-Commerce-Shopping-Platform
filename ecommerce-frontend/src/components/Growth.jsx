@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useStore } from '../contexts/StoreContext';
 import { useToast } from '../contexts/ToastContext';
@@ -13,7 +13,9 @@ export const whatsappLink = (number, text) =>
 /** Floating chat button; the main assisted-sales channel for sarees. Hidden until a number is configured. */
 export function WhatsAppFab() {
   const { info } = useStore();
-  if (!info?.whatsappNumber) return null;
+  const { pathname } = useLocation();
+  // Checkout keeps the bottom edge for its Place order bar.
+  if (!info?.whatsappNumber || pathname === '/checkout') return null;
   return (
     <a className="wa-fab" target="_blank" rel="noopener noreferrer"
       href={whatsappLink(info.whatsappNumber, 'Hi InfinityStore, I need help choosing a saree.')}

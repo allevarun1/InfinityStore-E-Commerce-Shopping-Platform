@@ -42,6 +42,10 @@ public class Product {
     @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
+    /** Extra photos (JSON array of up to 6 URLs or uploaded data URLs), shown after the main image. */
+    @Column(name = "gallery", columnDefinition = "LONGTEXT")
+    private String galleryJson;
+
     @NotNull
     @Column(name = "stock_quantity")
     private Integer stockQuantity;
@@ -221,6 +225,38 @@ public class Product {
     public void setBlouseIncluded(Boolean v) { this.blouseIncluded = v; }
     public BigDecimal getLengthMeters() { return lengthMeters; }
     public void setLengthMeters(BigDecimal v) { this.lengthMeters = v; }
+
+    private static final com.fasterxml.jackson.databind.ObjectMapper GALLERY_JSON = new com.fasterxml.jackson.databind.ObjectMapper();
+
+    /** Stored gallery entries (may include uploaded data: URLs). Not serialised; see publicGallery(). */
+    @JsonIgnore public java.util.List<String> getGalleryRaw() {
+        if (galleryJson == null || galleryJson.isBlank()) return java.util.List.of();
+        try {
+            return java.util.List.of(GALLERY_JSON.readValue(galleryJson, String[].class));
+        } catch (Exception e) {
+            return java.util.List.of();
+        }
+    }
+
+    public void setGalleryRaw(java.util.List<String> urls) {
+        try {
+            this.galleryJson = urls == null || urls.isEmpty() ? null : GALLERY_JSON.writeValueAsString(urls);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** Gallery as clients see it: uploaded pictures are served from a cacheable endpoint, like the main image. */
+    @JsonProperty("gallery")
+    public java.util.List<String> publicGallery() {
+        java.util.List<String> raw = getGalleryRaw();
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (int i = 0; i < raw.size(); i++) {
+            String u = raw.get(i);
+            out.add(u.startsWith("data:") ? "/api/products/" + id + "/gallery/" + i + "?v=" + Integer.toHexString(u.hashCode()) : u);
+        }
+        return out;
+    }
 
     /** Raw stored value (may be an uploaded data: URL). Not serialised; see publicImageUrl(). */
     @JsonIgnore public String getImageUrl() { return imageUrl; }

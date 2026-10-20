@@ -1,8 +1,8 @@
-// Storefront browser regression suite: guest cart -> sign-in merge -> coupon -> COD order, mini-cart,
-// search suggestions, category nav, hero spotlight, wishlist hearts, accordion, growth features, static
-// pages, mobile tab bar, mobile overflow and touch targets.
+// Storefront browser regression suite (71 checks): guest cart -> sign-in merge -> coupon -> structured
+// checkout -> confirmation page -> orders timeline; gallery, quick view, price filters, mini-cart, search,
+// wishlist, accordion, auth layout, manifest, static pages, mobile tab bar / filter sheet, touch targets.
 //
-// Run against a LOCAL, THROWAWAY stack only: it signs in as the dev demo customer and places an order.
+// LOCAL, THROWAWAY stack only: it edits product 1 through the admin API and places an order.
 //   1. Backend, dev profile with demo data (see run.ps1), with STORE_WHATSAPP=919876543210 GA_MEASUREMENT_ID=G-TEST12345
 //   2. Frontend: VITE_API_URL=http://localhost:8080/api npx vite --port 4200
 //   3. npm i --no-save puppeteer-core ; CHROME_PATH=<chrome> node e2e/storefront.e2e.mjs
@@ -20,6 +20,19 @@ const browser = await puppeteer.launch({
   headless: 'new',
   args: ['--no-sandbox'],
 });
+
+// ---------- 0. Setup (throwaway local DB): give product 1 two extra photos through the admin API
+{
+  const API = process.env.API_URL || 'http://localhost:8080/api';
+  const auth = await (await fetch(`${API}/auth/signin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'admin', password: process.env.ADMIN_PASSWORD || 'admin123' }) })).json();
+  const H = { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` };
+  const list = await (await fetch(`${API}/admin/products`, { headers: H })).json();
+  const p = list.find(x => x.id === 1);
+  const body = { ...p, categoryId: p.category.id, gallery: ['/images/sarees/banarasi-silk-saree.jpg', '/images/sarees/mysore-crepe-silk-saree.jpg'] };
+  const r = await fetch(`${API}/products/1`, { method: 'PUT', headers: H, body: JSON.stringify(body) });
+  ok('setup: admin API saves a product gallery', r.ok, `(${r.status})`);
+}
+
 let page = await browser.newPage();
 const consoleErrors = [];
 page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
@@ -92,13 +105,14 @@ await page.screenshot({ path: path.join(OUT, '02-guest-cart.png') });
 await clickText('button', 'Sign in to check out');
 await page.waitForFunction(() => location.pathname === '/login', { timeout: 8000 }).catch(() => {});
 ok('guest "Sign in to check out" goes to /login', new URL(page.url()).pathname === '/login', page.url());
+await page.waitForSelector('#username', { timeout: 10000 });
 await page.type('#username', 'customer');
 await page.type('#password', 'customer123');
 await clickText('form button[type=submit]', 'Login');
 await page.waitForFunction(() => location.pathname === '/checkout', { timeout: 10000 }).catch(() => {});
 ok('after sign-in the shopper lands on /checkout', new URL(page.url()).pathname === '/checkout', page.url());
-await page.waitForSelector('.order-summary-box', { timeout: 8000 }).catch(() => {});
-const summaryRows = await page.$$eval('.order-summary-box .order-summary-row', els => els.length);
+await page.waitForSelector('.ck-summary', { timeout: 8000 }).catch(() => {});
+const summaryRows = await page.$$eval('.ck-summary .ck-totals > div', els => els.length);
 ok('merged cart shows in checkout summary', summaryRows >= 4, `(${summaryRows} rows)`);
 const guestLeft = await page.evaluate(() => localStorage.getItem('infinity_guest_cart'));
 ok('guest cart cleared after merge', !guestLeft || guestLeft === '[]', guestLeft);
@@ -113,10 +127,10 @@ await page.setViewport({ width: 1280, height: 900 });
 await page.goto(BASE + '/', { waitUntil: 'networkidle0' });
 await page.evaluate((x) => { localStorage.setItem('infinity_token', x.t); localStorage.setItem('infinity_user', x.u); localStorage.setItem('infinity_analytics_consent', 'no'); }, session);
 await page.goto(BASE + '/checkout', { waitUntil: 'networkidle0' });
-await page.waitForSelector('.order-summary-box', { timeout: 8000 }).catch(() => {});
+await page.waitForSelector('.ck-summary', { timeout: 8000 }).catch(() => {});
 
 // ---------- 5. Coupon
-const totalBefore = await page.$eval('.order-summary-box', e => e.innerText);
+const totalBefore = await page.$eval('.ck-summary', e => e.innerText);
 await page.type('#coupon', 'nope');
 await clickText('.coupon-row button', 'Apply');
 await wait(800);
@@ -127,22 +141,39 @@ await page.type('#coupon', 'welcome10');
 await clickText('.coupon-row button', 'Apply');
 await page.waitForSelector('.coupon-applied', { timeout: 5000 }).catch(() => {});
 ok('WELCOME10 applies', await page.$('.coupon-applied'));
-const totalAfter = await page.$eval('.order-summary-box', e => e.innerText);
+const totalAfter = await page.$eval('.ck-summary', e => e.innerText);
 ok('coupon row appears and total changes', /Coupon WELCOME10/.test(totalAfter) && totalAfter !== totalBefore);
 await page.screenshot({ path: path.join(OUT, '03-checkout-coupon.png') });
 
-// ---------- 6. Place order
-await page.type('#shippingAddress', '12 MG Road, Indiranagar, Bengaluru 560038');
-await page.type('#phoneNumber', '9876543210');
-await clickText('button[type=submit]', 'Place Order');
-await page.waitForFunction(() => location.pathname === '/orders', { timeout: 10000 }).catch(() => {});
-ok('order placed -> redirected to /orders', new URL(page.url()).pathname === '/orders', page.url());
-await page.waitForSelector('.order-card', { timeout: 8000 }).catch(() => {});
-const banner = await page.$eval('.notice', e => e.innerText).catch(() => '');
-ok('confirmation banner shows order number', /INF-\d{8}-/.test(banner), banner.slice(0, 60));
-const orderText = await page.$eval('.order-card', e => e.innerText).catch(() => '');
-ok('order card present', orderText.includes('Order ID'));
-await page.screenshot({ path: path.join(OUT, '04-order-confirmation.png') });
+// ---------- 6. Place order (structured address)
+const fill = async (sel, v) => {
+  await page.click(sel);
+  await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');
+  await page.keyboard.press('Backspace');
+  await page.type(sel, v);
+};
+await fill('#ck-fullName', 'Priya Sharma');
+await fill('#ck-phone', '9876543210');
+await fill('#ck-line1', '12 MG Road, Indiranagar');
+await fill('#ck-pincode', '560038');
+await fill('#ck-city', 'Bengaluru');
+await page.select('#ck-state', 'Karnataka');
+await page.screenshot({ path: path.join(OUT, '04a-checkout.png'), fullPage: true });
+await clickText('button[type=submit]', 'Place order');
+await page.waitForFunction(() => location.pathname === '/order/success', { timeout: 10000 }).catch(() => {});
+ok('order placed -> confirmation page', new URL(page.url()).pathname === '/order/success', page.url());
+await page.waitForSelector('.success-no', { timeout: 8000 }).catch(() => {});
+const okNo = await page.$eval('.success-no', e => e.innerText).catch(() => '');
+ok('confirmation shows order number', /INF-\d{8}-/.test(okNo), okNo);
+ok('confirmation shows the delivery address', (await page.$eval('.success-ship', e => e.innerText).catch(() => '')).includes('Priya Sharma'));
+ok('confirmation shows a status timeline', await page.$('.otl li.current'));
+await page.screenshot({ path: path.join(OUT, '04-order-confirmation.png'), fullPage: true });
+await page.goto(BASE + '/orders', { waitUntil: 'networkidle0' });
+ok('orders page lists the order with a timeline', (await page.$$eval('.order .otl', e => e.length)) >= 1);
+await clickText('.order-actions button', 'Cancel order');
+ok('cancel asks for inline confirmation (no browser dialog)', await page.$('.confirm-inline'));
+await clickText('.confirm-inline button', 'Keep it');
+await page.screenshot({ path: path.join(OUT, '05-orders.png'), fullPage: true });
 
 // ---------- 6b. Wishlist heart (logged in)
 await page.goto(BASE + '/', { waitUntil: 'networkidle0' });
@@ -160,11 +191,46 @@ ok('PDP: JSON-LD Product injected', await page.evaluate(() => {
   const j = JSON.parse(t.textContent); return j['@type'] === 'Product' && j.offers.price;
 }));
 ok('PDP: related shelf rendered', await page.$('#related-title'));
+await page.goto(BASE + '/products/1', { waitUntil: 'networkidle0' });
+ok('PDP: gallery shows 3 photos with thumbnails', (await page.$$eval('.gallery-thumbs button', e => e.length)) === 3);
+await page.click('.gallery-thumbs button:nth-child(2)'); await wait(700);
+ok('PDP: thumbnail switches photo', await page.$eval('.gallery-thumbs button:nth-child(2)', e => e.classList.contains('on')));
+await page.click('.gallery-slide'); await wait(300);
+ok('PDP: photo opens full-screen viewer', await page.$('.viewer'));
+await page.keyboard.press('ArrowRight'); await wait(150);
+ok('PDP: viewer counter moves with arrow keys', /\/ 3/.test(await page.$eval('.viewer-count', e => e.innerText).catch(() => '')));
+await page.keyboard.press('Escape'); await wait(200);
+ok('PDP: Escape closes the viewer', !(await page.$('.viewer')));
+await page.screenshot({ path: path.join(OUT, '05b-pdp-gallery.png') });
+await page.goto(BASE + '/#products', { waitUntil: 'networkidle0' });
+await page.hover('.pcard'); await page.click('.pcard .pcard-qv'); await wait(400);
+ok('quick view opens from the card', await page.$('.qv'));
+await page.screenshot({ path: path.join(OUT, '05c-quickview.png') });
+await page.keyboard.press('Escape'); await wait(200);
+ok('quick view closes with Escape', !(await page.$('.qv')));
+const before = await page.$$eval('.pgrid .pcard', e => e.length);
+await clickText('.price-chips .chip', 'Under'); await wait(400);
+const after = await page.$$eval('.pgrid .pcard', e => e.length);
+ok('price filter narrows the collection', after > 0 && after < before, `(${before} -> ${after})`);
+ok('active filter chip appears', await page.$('.active-filters'));
+await clickText('.active-filters .text-link', 'Clear all'); await wait(300);
+ok('clear all restores the collection', (await page.$$eval('.pgrid .pcard', e => e.length)) === before);
+await page.goto(BASE + '/products/2', { waitUntil: 'networkidle0' });
 ok('PDP: accordion sections', (await page.$$eval('.acc details', e => e.length)) === 3);
 await page.click('.acc details:nth-child(2) summary'); await wait(200);
 ok('PDP: accordion opens on click', await page.$eval('.acc details:nth-child(2)', e => e.open));
 ok('PDP: welcome offer chip', await page.$('.offer-chip'));
 await page.screenshot({ path: path.join(OUT, '05-pdp.png'), fullPage: false });
+
+// ---------- 7b. Auth layout and installability
+const ctxAnon = await browser.createBrowserContext();
+const anon = await ctxAnon.newPage(); await anon.setViewport({ width: 1280, height: 900 });
+await anon.goto(BASE + '/login', { waitUntil: 'networkidle0' });
+ok('sign-in uses the split brand layout', await anon.$('.auth-shell .auth-art'));
+await anon.screenshot({ path: path.join(OUT, '09-login.png') });
+const mf = await anon.evaluate(async () => { const l = document.querySelector('link[rel=manifest]'); if (!l) return null; const r = await fetch(l.href); return r.ok ? (await r.json()).short_name : null; });
+ok('web app manifest is served (installable)', mf === 'InfinityStore', mf);
+await ctxAnon.close();
 
 // ---------- 8. Static pages
 for (const p of ['/shipping', '/contact', '/privacy', '/terms']) {
@@ -194,6 +260,13 @@ ok('mobile: bottom tab bar visible on home', await page.$eval('.bottomnav', e =>
 ok('mobile: category bar hidden (tab bar replaces it)', await page.$eval('.catnav', e => getComputedStyle(e).display === 'none'));
 await page.goto(BASE + '/products/2', { waitUntil: 'networkidle0' });
 ok('mobile: tab bar yields to the sticky buy bar on product pages', !(await page.$('.bottomnav')));
+await page.goto(BASE + '/#products', { waitUntil: 'networkidle0' });
+await clickText('.mobile-tools button', 'Filters'); await wait(400);
+ok('mobile: Filters opens a bottom sheet', await page.$('.catalog-controls.open'));
+await page.screenshot({ path: path.join(OUT, '08-mobile-filters.png') });
+await clickText('.sheet-foot .btn', 'Show'); await wait(300);
+ok('mobile: sheet closes with its Show button', !(await page.$('.catalog-controls.open')));
+await page.goto(BASE + '/products/2', { waitUntil: 'networkidle0' });
 await page.screenshot({ path: path.join(OUT, '06-mobile-pdp.png') });
 await page.goto(BASE + '/', { waitUntil: 'networkidle0' });
 await page.screenshot({ path: path.join(OUT, '07-mobile-home.png') });

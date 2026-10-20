@@ -28,6 +28,7 @@ public class ProductService {
     static final Set<String> SOURCES = Set.of("MANUAL", "AI_ASSISTED");
     private static final java.util.regex.Pattern SELF_IMAGE = java.util.regex.Pattern.compile("^/api/products/[0-9]+/image([?]v=[0-9a-f-]+)?$");
     static final int MAX_INLINE_IMAGE_CHARS = 7_000_000; // about 5 MB once decoded
+    private static final java.util.regex.Pattern SELF_GALLERY = java.util.regex.Pattern.compile("^/api/products/[0-9]+/gallery/([0-9]+)([?]v=[0-9a-f-]+)?$");
 
     @Autowired private ProductRepository productRepository;
     @Autowired private CategoryRepository categoryRepository;
@@ -235,6 +236,30 @@ public class ProductService {
         product.setLengthMeters(r.getLengthMeters());
         product.setCostPrice(r.getCostPrice());
         product.setSupplierName(blankToNull(r.getSupplierName()));
+        product.setGalleryRaw(resolveGallery(product.getGalleryRaw(), r.getGallery()));
+    }
+
+    /**
+     * The admin form echoes back public gallery links for photos it did not change; those map back to the
+     * stored entry. Anything else is a new photo and is validated like the main image.
+     */
+    static List<String> resolveGallery(List<String> stored, List<String> requested) {
+        List<String> out = new java.util.ArrayList<>();
+        if (requested == null) return out;
+        for (String raw : requested) {
+            if (raw == null || raw.isBlank()) continue;
+            String url = raw.trim();
+            java.util.regex.Matcher m = SELF_GALLERY.matcher(url);
+            if (m.matches()) {
+                int i = Integer.parseInt(m.group(1));
+                if (i < stored.size()) out.add(stored.get(i));
+                continue;
+            }
+            validateImage(url);
+            out.add(url);
+        }
+        if (out.size() > 6) throw new BusinessException("Up to 6 extra photos");
+        return out;
     }
 
     private void validatePricing(ProductRequest request) {

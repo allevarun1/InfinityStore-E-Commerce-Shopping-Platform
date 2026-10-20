@@ -19,7 +19,7 @@ function WishHeart({ product }) {
   );
 }
 
-export function ProductCard({ product, mode, busy, onAdd, priority = false }) {
+export function ProductCard({ product, mode, busy, onAdd, onQuickView, priority = false }) {
   const soldOut = !product.stockQuantity || product.stockQuantity <= 0;
   const onDeal = isOnDeal(product);
   const href = `/products/${product.id}`;
@@ -34,6 +34,11 @@ export function ProductCard({ product, mode, busy, onAdd, priority = false }) {
           {soldOut && <span className="pcard-soldout">Sold out</span>}
         </Link>
         {mode !== 'admin' && <WishHeart product={product} />}
+        {mode !== 'admin' && onQuickView && (
+          <button type="button" className="pcard-qv" onClick={() => onQuickView(product)} aria-label={`Quick view ${product.name}`}>
+            <i className="bi bi-eye" aria-hidden="true"></i><span>Quick view</span>
+          </button>
+        )}
         {mode !== 'admin' && !soldOut && (
           <button type="button" className="pcard-quick" disabled={busy} onClick={() => onAdd(product)}
             aria-label={`Quick add ${product.name} to cart`}>

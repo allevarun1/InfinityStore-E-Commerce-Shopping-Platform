@@ -1,4 +1,5 @@
 import { AdminCoupons } from './AdminCoupons';
+import { GalleryEditor } from './Gallery';
 import React, { useEffect, useState } from 'react';
 import { imageSrc } from '../lib/format';
 import { useSearchParams } from 'react-router-dom';
@@ -125,7 +126,8 @@ export function Admin() {
   };
 
   const editProduct = (p) => {
-    setProduct({ ...p, categoryId: p.category.id });
+    // Drafts' uploaded photos are not publicly served yet, so edit the stored copies directly.
+    setProduct({ ...p, categoryId: p.category.id, gallery: p.previewGallery || p.gallery || [] });
     setCurrentTab('management');
   };
 
@@ -275,6 +277,8 @@ export function Admin() {
                   <img className="admin-preview" src={product.previewImage || imageSrc(product.imageUrl)} alt="Product preview" />
                 )}
               </div>
+              <GalleryEditor value={product.gallery} preview={product.previewGallery}
+                onChange={(gallery) => setProduct({ ...product, gallery, previewGallery: null })} />
               <div className="field-group">
                 <label htmlFor="stock">Stock quantity</label>
                 <input id="stock" name="stock" type="number" min="0" placeholder="0" required

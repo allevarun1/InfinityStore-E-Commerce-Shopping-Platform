@@ -7,6 +7,7 @@ import { EmptyState } from './EmptyState';
 import { useCartActions } from '../lib/useCartActions';
 import { Reveal, Spotlight, CategoryTiles, OccasionStrip } from './HomeSections';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
+import { QuickView } from './QuickView';
 import { inrCompact, isOnDeal, activePrice, discountPercent } from '../lib/format';
 
 const SORTS = {
@@ -18,12 +19,23 @@ const SORTS = {
   name: { label: 'Name A–Z', fn: (a, b) => a.name.localeCompare(b.name) },
 };
 
+const PRICE_BANDS = {
+  u2: { label: 'Under ₹2,000', test: (v) => v < 2000 },
+  '2to5': { label: '₹2,000 – ₹5,000', test: (v) => v >= 2000 && v <= 5000 },
+  '5to10': { label: '₹5,000 – ₹10,000', test: (v) => v > 5000 && v <= 10000 },
+  o10: { label: 'Above ₹10,000', test: (v) => v > 10000 },
+};
+const PAGE = 12;
+
 export function Home() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  const [shown, setShown] = useState(PAGE);
+  const [sheet, setSheet] = useState(false);
+  const [quick, setQuick] = useState(null);
 
   const [params, setParams] = useSearchParams();
   const query = params.get('q') || '';
@@ -32,6 +44,7 @@ export function Home() {
   const fabric = params.get('fabric') || '';
   const occasion = params.get('occasion') || '';
   const sort = SORTS[params.get('sort')] ? params.get('sort') : 'featured';
+  const price = PRICE_BANDS[params.get('price')] ? params.get('price') : '';
 
   const { isAdmin } = useAuth();
   const { info } = useStore();
@@ -73,8 +86,19 @@ export function Home() {
       .filter(p => !occasion || p.occasion === occasion)
       .filter(p => !categoryId || String(p.category?.id) === categoryId)
       .filter(p => view !== 'deals' || isOnDeal(p))
+      .filter(p => !price || PRICE_BANDS[price].test(activePrice(p)))
       .sort(SORTS[sort].fn);
-  }, [products, query, categoryId, view, sort, fabric, occasion]);
+  }, [products, query, categoryId, view, sort, fabric, occasion, price]);
+
+  // A new filter starts the list from the top again.
+  useEffect(() => { setShown(PAGE); }, [query, categoryId, view, sort, fabric, occasion, price]);
+  useEffect(() => {
+    if (!sheet) return undefined;
+    document.body.classList.add('no-scroll');
+    const onKey = (e) => { if (e.key === 'Escape') setSheet(false); };
+    document.addEventListener('keydown', onKey);
+    return () => { document.body.classList.remove('no-scroll'); document.removeEventListener('keydown', onKey); };
+  }, [sheet]);
 
   const options = (key) => [...new Set(products.map(p => p[key]).filter(Boolean))].sort();
   const fabrics = useMemo(() => options('fabric'), [products]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -103,9 +127,19 @@ export function Home() {
     setTimeout(() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
+  const activeFilters = [
+    query && { key: 'q', label: `“${query}”` },
+    categoryId && { key: 'category', label: categories.find(c => String(c.id) === categoryId)?.name || 'Category' },
+    view === 'deals' && { key: 'view', label: 'Deals' },
+    fabric && { key: 'fabric', label: fabric },
+    occasion && { key: 'occasion', label: occasion },
+    price && { key: 'price', label: PRICE_BANDS[price].label },
+  ].filter(Boolean);
+  const filterCount = activeFilters.filter(f => f.key !== 'q').length;
+
   const activeCategory = categories.find(c => String(c.id) === categoryId);
   const heading = query ? `Results for “${query}”` : view === 'deals' ? 'Current deals' : activeCategory ? activeCategory.name : 'The collection';
-  const filtersActive = query || categoryId || view || fabric || occasion;
+  const filtersActive = query || categoryId || view || fabric || occasion || price;
 
   return (
     <>
@@ -181,7 +215,24 @@ export function Home() {
           )}
         </div>
 
-        <div className="catalog-controls">
+        <div className="mobile-tools">
+          <button type="button" className="btn btn-outline" onClick={() => setSheet(true)} aria-haspopup="dialog">
+            <i className="bi bi-sliders" aria-hidden="true"></i> Filters{filterCount > 0 && <b className="count">{filterCount}</b>}
+          </button>
+          <label className="sort-control">
+            <span className="sr-only">Sort</span>
+            <select value={sort} onChange={e => update({ sort: e.target.value === 'featured' ? '' : e.target.value })} aria-label="Sort">
+              {Object.entries(SORTS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+            </select>
+          </label>
+        </div>
+
+        {sheet && <div className="drawer-backdrop sheet-backdrop" onClick={() => setSheet(false)} aria-hidden="true"></div>}
+        <div className={`catalog-controls ${sheet ? 'open' : ''}`} role={sheet ? 'dialog' : undefined} aria-modal={sheet || undefined} aria-label={sheet ? 'Filters' : undefined}>
+          <div className="sheet-head">
+            <h2>Filters</h2>
+            <button type="button" className="drawer-close" onClick={() => setSheet(false)} aria-label="Close filters"><i className="bi bi-x-lg" aria-hidden="true"></i></button>
+          </div>
           <div className="chips" role="group" aria-label="Filter by category">
             <button type="button" className="chip" aria-pressed={!categoryId && view !== 'deals'}
               onClick={() => update({ category: '', view: '' })}>All</button>
@@ -193,6 +244,12 @@ export function Home() {
               onClick={() => update({ view: view === 'deals' ? '' : 'deals', category: '' })}>
               <i className="bi bi-tag" aria-hidden="true"></i> Deals
             </button>
+          </div>
+          <div className="chips price-chips" role="group" aria-label="Filter by price">
+            {Object.entries(PRICE_BANDS).map(([k, b]) => (
+              <button key={k} type="button" className="chip" aria-pressed={price === k}
+                onClick={() => update({ price: price === k ? '' : k })}>{b.label}</button>
+            ))}
           </div>
           <div className="filter-selects">
             {fabrics.length > 0 && (
@@ -220,7 +277,22 @@ export function Home() {
             </select>
           </label>
           </div>
+          <div className="sheet-foot">
+            <button type="button" className="text-link" onClick={() => { setParams({}, { replace: true }); }}>Clear all</button>
+            <button type="button" className="btn btn-primary" onClick={() => setSheet(false)}>Show {visible.length} {visible.length === 1 ? 'saree' : 'sarees'}</button>
+          </div>
         </div>
+
+        {activeFilters.length > 0 && (
+          <div className="active-filters" aria-label="Active filters">
+            {activeFilters.map(f => (
+              <button key={f.key} type="button" onClick={() => update({ [f.key]: '' })} aria-label={`Remove filter ${f.label}`}>
+                {f.label} <i className="bi bi-x" aria-hidden="true"></i>
+              </button>
+            ))}
+            <button type="button" className="text-link" onClick={() => setParams({}, { replace: true })}>Clear all</button>
+          </div>
+        )}
 
         {failed ? (
           <div className="notice" role="alert">
@@ -241,7 +313,7 @@ export function Home() {
           />
         ) : (
           <div className="pgrid">
-            {visible.map((p, i) => (
+            {visible.slice(0, shown).map((p, i) => (
               <ProductCard
                 key={p.id}
                 priority={i < 4}
@@ -249,10 +321,19 @@ export function Home() {
                 mode={isAdmin() ? 'admin' : 'shop'}
                 busy={busyId === p.id}
                 onAdd={addToCart}
+                onQuickView={setQuick}
               />
             ))}
           </div>
         )}
+        {!loading && !failed && visible.length > shown && (
+          <div className="load-more">
+            <p>Showing {shown} of {visible.length}</p>
+            <div className="bar" aria-hidden="true"><span style={{ width: `${(shown / visible.length) * 100}%` }}></span></div>
+            <button type="button" className="btn btn-outline" onClick={() => setShown(n => n + PAGE)}>Show more sarees</button>
+          </div>
+        )}
+        {quick && <QuickView product={quick} onClose={() => setQuick(null)} />}
       </section>
     </>
   );

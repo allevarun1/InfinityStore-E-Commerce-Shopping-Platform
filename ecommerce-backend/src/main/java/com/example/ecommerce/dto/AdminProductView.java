@@ -18,6 +18,7 @@ public class AdminProductView {
     private final Double marginPercent;
     private final List<String> readinessIssues;
     private final String previewImage;
+    private final List<String> previewGallery;
 
     public AdminProductView(Product product, Double marginPercent, List<String> readinessIssues) {
         this.product = product;
@@ -29,6 +30,8 @@ public class AdminProductView {
         // Unpublished images are not served publicly, so admins preview the stored value directly.
         String raw = product.getImageUrl();
         this.previewImage = !product.isPublished() && raw != null && raw.startsWith("data:") ? raw : null;
+        this.previewGallery = !product.isPublished() && product.getGalleryRaw().stream().anyMatch(u -> u.startsWith("data:"))
+                ? product.getGalleryRaw() : null;
     }
 
     @com.fasterxml.jackson.annotation.JsonIgnore public Product getProduct() { return product; }
@@ -38,4 +41,5 @@ public class AdminProductView {
     public Double getMarginPercent() { return marginPercent; }
     public List<String> getReadinessIssues() { return readinessIssues; }
     public String getPreviewImage() { return previewImage; }
+    public List<String> getPreviewGallery() { return previewGallery; }
 }

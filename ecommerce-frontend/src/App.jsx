@@ -20,12 +20,15 @@ import { WhatsAppFab, Newsletter, ConsentBanner } from './components/Growth';
 import { pageView } from './lib/analytics';
 import { SearchBox, CategoryNav, BottomNav } from './components/Navigation';
 import { MiniCart } from './components/MiniCart';
+import { AuthShell, ScrollChrome } from './components/Shell';
+import { OrderSuccess } from './components/OrderViews';
 import { ApiService } from './services/api';
 import { inrCompact } from './lib/format';
 import './styles.css';
 import './App.css';
 import './theme.css';
 import './ux.css';
+import './pro.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function AnnouncementBar() {
@@ -202,13 +205,14 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/login" element={<AuthShell><Login /></AuthShell>} />
+                <Route path="/register" element={<AuthShell><Register /></AuthShell>} />
+                <Route path="/reset-password" element={<AuthShell><ResetPassword /></AuthShell>} />
                 <Route path="/cart" element={<CartRoute />} />
                 <Route path="/wishlist" element={<ProtectedRoute role="USER"><Wishlist /></ProtectedRoute>} />
                 <Route path="/checkout" element={<ProtectedRoute role="USER"><Checkout /></ProtectedRoute>} />
                 <Route path="/orders" element={<ProtectedRoute role="USER"><Orders /></ProtectedRoute>} />
+                <Route path="/order/success" element={<ProtectedRoute role="USER"><OrderSuccess /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute role="USER"><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute role="ADMIN"><Admin /></ProtectedRoute>} />
                 <Route path="/privacy" element={<StaticPage page="privacy" />} />
@@ -221,6 +225,7 @@ export default function App() {
             <Footer />
             <WhatsAppFab />
             <MiniCart />
+            <ScrollChrome />
             <BottomNav />
             <ConsentBanner />
           </BrowserRouter>

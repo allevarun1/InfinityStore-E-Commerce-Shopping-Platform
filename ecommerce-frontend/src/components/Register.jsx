@@ -76,7 +76,7 @@ export function Register() {
     if (!validate()) return;
 
     setIsSubmitting(true);
-    const { confirmPassword, ...signupPayload } = form;
+    const { confirmPassword: _confirm, ...signupPayload } = form; // the API does not take the confirmation
     signup(signupPayload)
       .then(() => {
         toast.success('Registration successful. Please log in.');
