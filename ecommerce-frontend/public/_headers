@@ -1,0 +1,15 @@
+# Cloudflare Pages: security and caching headers (same policy as vercel.json / render.yaml).
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self' https:; frame-src https://www.youtube-nocookie.com; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/images/*
+  Cache-Control: public, max-age=2592000
+/videos/*
+  Cache-Control: public, max-age=604800
+/index.html
+  Cache-Control: no-cache

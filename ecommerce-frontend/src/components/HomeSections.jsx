@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Rise } from './Motion';
-import { inrCompact, isOnDeal, activePrice, discountPercent, imageSrc } from '../lib/format';
+import { inrCompact, isOnDeal, activePrice, discountPercent, imageSet } from '../lib/format';
+
+const HERO_SIZES = '(min-width: 900px) 440px, 92vw';
+const TILE_SIZES = '(min-width: 1100px) 280px, 50vw';
 
 /** Fades a section in once as it scrolls into view. Content stays visible if motion is reduced or JS is slow. */
 export function Reveal({ children, className = '', as: Tag = 'div' }) {
@@ -34,7 +37,7 @@ export function Spotlight({ products }) {
   }, [paused, reduce, slides.length]);
 
   if (!slides.length) {
-    return <img src="/images/sarees/hero-sarees.jpg" alt="A selection of folded handwoven silk sarees" width="900" height="1125" fetchPriority="high" />;
+    return <img {...imageSet("/images/sarees/hero-sarees.jpg", HERO_SIZES)} alt="A selection of folded handwoven silk sarees" width="900" height="1125" fetchPriority="high" />;
   }
   return (
     <div className="spot" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
@@ -42,7 +45,7 @@ export function Spotlight({ products }) {
       {slides.map((p, n) => (
         <Link key={p.id} to={`/products/${p.id}`} className={`spot-slide ${n === i ? 'on' : ''}`}
           aria-hidden={n !== i} tabIndex={n === i ? 0 : -1} aria-label={`${p.name}, ${inrCompact(activePrice(p))}`}>
-          <img src={imageSrc(p.imageUrl)} alt="" width="900" height="1125" loading={n === 0 ? 'eager' : 'lazy'} fetchPriority={n === 0 ? 'high' : 'auto'} />
+          <img {...imageSet(p.imageUrl, HERO_SIZES)} alt="" width="900" height="1125" loading={n === 0 ? 'eager' : 'lazy'} fetchPriority={n === 0 ? 'high' : 'auto'} />
           <span className="spot-cap">
             <small>{isOnDeal(p) ? `${discountPercent(p)}% off today` : p.category?.name}</small>
             <strong>{p.name}</strong>
@@ -75,7 +78,7 @@ export function CategoryTiles({ categories, products, onPick }) {
         {tiles.map(({ c, count, cover }, n) => (
           <Rise as="li" key={c.id} delay={n * 110}>
             <button type="button" className="tile" onClick={() => onPick(String(c.id))}>
-              <img src={imageSrc(cover.imageUrl)} alt="" loading="lazy" width="400" height="500" />
+              <img {...imageSet(cover.imageUrl, TILE_SIZES)} alt="" loading="lazy" width="400" height="500" />
               <span className="tile-label"><strong>{c.name}</strong><small>{count} {count === 1 ? 'saree' : 'sarees'}</small></span>
             </button>
           </Rise>

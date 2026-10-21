@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -8,28 +8,23 @@ import { ProductDetail } from './components/ProductDetail';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Cart } from './components/Cart';
-import { Wishlist } from './components/Wishlist';
-import { Refer } from './components/Refer';
-import { Checkout } from './components/Checkout';
-import { Orders } from './components/Orders';
-import { Profile } from './components/Profile';
-import { Admin } from './components/Admin';
-import { StaticPage } from './components/StaticPage';
-import { ResetPassword } from './components/ResetPassword';
 import { NotFound } from './components/NotFound';
 import { WhatsAppFab, Newsletter, ConsentBanner } from './components/Growth';
 import { pageView } from './lib/analytics';
 import { SearchBox, CategoryNav, BottomNav } from './components/Navigation';
 import { MiniCart } from './components/MiniCart';
 import { AuthShell, ScrollChrome } from './components/Shell';
-import { OrderSuccess } from './components/OrderViews';
 import { Stylist } from './components/Stylist';
-import { TrackOrder } from './components/TrackOrder';
-import { PersonalShopping } from './components/PersonalShopping';
 import { ApiService } from './services/api';
 import { inrCompact } from './lib/format';
 import { ScrollProgress } from './components/Motion';
 import { installRipples, installSpotlight, reducedMotion } from './lib/motion';
+import '@fontsource/cormorant-garamond/latin-500.css';
+import '@fontsource/cormorant-garamond/latin-600.css';
+import '@fontsource/cormorant-garamond/latin-700.css';
+import '@fontsource/cormorant-garamond/latin-500-italic.css';
+import '@fontsource/cormorant-garamond/latin-600-italic.css';
+import '@fontsource-variable/dm-sans/index.css';
 import './styles.css';
 import './App.css';
 import './theme.css';
@@ -42,7 +37,21 @@ import './motion.css';
 import './videos.css';
 import './refer.css';
 import './luxe.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+import './icons/bi-subset.css';
+
+// Rarely-first pages load on demand, so the home page ships a much smaller script.
+const Wishlist = lazy(() => import('./components/Wishlist').then(m => ({ default: m.Wishlist })));
+const Refer = lazy(() => import('./components/Refer').then(m => ({ default: m.Refer })));
+const Checkout = lazy(() => import('./components/Checkout').then(m => ({ default: m.Checkout })));
+const Orders = lazy(() => import('./components/Orders').then(m => ({ default: m.Orders })));
+const Profile = lazy(() => import('./components/Profile').then(m => ({ default: m.Profile })));
+const Admin = lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
+const StaticPage = lazy(() => import('./components/StaticPage').then(m => ({ default: m.StaticPage })));
+const ResetPassword = lazy(() => import('./components/ResetPassword').then(m => ({ default: m.ResetPassword })));
+const OrderSuccess = lazy(() => import('./components/OrderViews').then(m => ({ default: m.OrderSuccess })));
+const TrackOrder = lazy(() => import('./components/TrackOrder').then(m => ({ default: m.TrackOrder })));
+const PersonalShopping = lazy(() => import('./components/PersonalShopping').then(m => ({ default: m.PersonalShopping })));
+import { Loader } from './components/Loader';
 
 function AnnouncementBar() {
   const { info, offers } = useStore();
@@ -239,6 +248,7 @@ export default function App() {
             <AnnouncementBar />
             <Header />
             <main id="main" className="page" tabIndex={-1}>
+              <Suspense fallback={<Loader />}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
@@ -261,6 +271,7 @@ export default function App() {
                 <Route path="/terms" element={<StaticPage page="terms" />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </main>
             <Footer />
             <WhatsAppFab />

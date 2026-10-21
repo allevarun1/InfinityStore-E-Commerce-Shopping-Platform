@@ -27,3 +27,16 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 /** Uploaded images are served by the API (/api/products/:id/image); bundled ones live with the frontend. */
 export const imageSrc = (url) => (url && url.startsWith('/api/') ? API_BASE.replace(/\/api\/?$/, '') + url : url);
+
+const LOCAL_PHOTO = /^\/images\/sarees\/(.+)\.jpg$/;
+
+/**
+ * Props for an <img> of a catalogue photo. Bundled photos come in 400px and 800px WebP (see tools/optimize_assets.py)
+ * so a phone downloads a card-sized file, not the full picture; uploaded or external photos are used as they are.
+ */
+export const imageSet = (url, sizes) => {
+  const m = LOCAL_PHOTO.exec(url || '');
+  if (!m) return { src: imageSrc(url) };
+  const base = `/images/sarees/${m[1]}`;
+  return { src: url, srcSet: `${base}-400.webp 400w, ${base}-800.webp 800w`, sizes };
+};
