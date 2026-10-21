@@ -78,11 +78,12 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- In-memory database for integration tests only -->
+        <!-- In-memory database: integration tests, and the throw-away demo deployment (render.yaml).
+             Production stores use MySQL (DB_URL); this is never selected unless DB_URL says jdbc:h2. -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>test</scope>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 

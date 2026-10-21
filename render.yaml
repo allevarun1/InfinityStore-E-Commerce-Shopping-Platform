@@ -1,0 +1,36 @@
+# Render Blueprint: Rekha Shopping Mall demo API on the free plan.
+# DEMO ONLY: the free plan has no database and no disk, so the catalogue lives in memory and resets whenever the
+# service restarts or wakes from sleep. For a real store, create a MySQL database elsewhere and set DB_URL, DB_USERNAME,
+# DB_PASSWORD (remove SPRING_DATASOURCE_DRIVERCLASSNAME), and SEED_DEMO_CATALOG=false.
+services:
+  - type: web
+    name: rekha-shopping-mall-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./ecommerce-backend
+    dockerfilePath: ./ecommerce-backend/Dockerfile
+    healthCheckPath: /api/store/info
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DB_URL
+        value: jdbc:h2:mem:rekha;MODE=MySQL;DB_CLOSE_DELAY=-1
+      - key: DB_USERNAME
+        value: sa
+      - key: DB_PASSWORD
+        value: rekhademo
+      - key: SPRING_DATASOURCE_DRIVERCLASSNAME
+        value: org.h2.Driver
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: SEED_DEMO_CATALOG
+        value: "true"
+      - key: CORS_ORIGINS
+        value: https://rekha-shopping-mall.vercel.app
+      - key: FRONTEND_URL
+        value: https://rekha-shopping-mall.vercel.app
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1
