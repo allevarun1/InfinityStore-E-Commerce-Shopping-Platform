@@ -1,3 +1,4 @@
+import { MediaPicker } from './MediaPicker';
 import React, { useEffect, useState } from 'react';
 import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
@@ -24,12 +25,13 @@ export function AdminVideos({ products = [] }) {
   };
   const act = (fn, msg) => fn().then(() => { toast.success(msg); return load(); }).catch(() => toast.error('That did not work'));
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const [pick, setPick] = useState(null);
 
   return (
     <div className="tab-content videos-admin">
       <h2>Videos</h2>
       <p className="admin-hint">
-        Videos make sarees come alive. Upload the clip to a video host (YouTube, Cloudinary, Bunny or Cloudflare R2) and paste its link here.
+        Videos make sarees come alive. Upload a clip to your <strong>Media library</strong> and pick it with <em>From library</em>, or paste a link from a video host (YouTube, Cloudinary, Bunny or Cloudflare R2).
         Use a direct <strong>.mp4 or .webm</strong> link for clips that autoplay silently, or a <strong>YouTube</strong> link.
         Keep clips short (under 15 seconds) and light (under 4 MB); phone-shaped 9:16 works best for reels.
       </p>
@@ -42,9 +44,11 @@ export function AdminVideos({ products = [] }) {
             <option value="REEL">Reel: short vertical clip in "Sarees in motion"</option>
           </select></div>
         <div className="field-group wide"><label htmlFor="v-url">Video link (https)</label>
-          <input id="v-url" type="url" required maxLength={500} value={form.videoUrl} onChange={set('videoUrl')} placeholder="https://…/weaving.mp4 or https://youtu.be/…" /></div>
+          <div className="with-btn"><input id="v-url" type="text" inputMode="url" required maxLength={500} value={form.videoUrl} onChange={set('videoUrl')} placeholder="https://…/weaving.mp4, https://youtu.be/… or pick one you uploaded" />
+            <button type="button" className="btn btn-outline" onClick={() => setPick('VIDEO')}>From library</button></div></div>
         <div className="field-group wide"><label htmlFor="v-poster">Cover image link <span className="admin-hint">(optional, shown before it plays)</span></label>
-          <input id="v-poster" type="url" maxLength={500} value={form.posterUrl} onChange={set('posterUrl')} placeholder="https://…/cover.jpg" /></div>
+          <div className="with-btn"><input id="v-poster" type="text" inputMode="url" maxLength={500} value={form.posterUrl} onChange={set('posterUrl')} placeholder="https://…/cover.jpg" />
+            <button type="button" className="btn btn-outline" onClick={() => setPick('IMAGE')}>From library</button></div></div>
         <div className="field-group"><label htmlFor="v-prod">Link to a saree <span className="admin-hint">(optional)</span></label>
           <select id="v-prod" value={form.productId} onChange={set('productId')}>
             <option value="">None</option>
@@ -54,6 +58,8 @@ export function AdminVideos({ products = [] }) {
           <input id="v-cap" maxLength={240} value={form.caption} onChange={set('caption')} placeholder="One line about the weave" /></div>
         <button type="submit" className="btn btn-primary" disabled={busy}>Add video</button>
       </form>
+
+      {pick && <MediaPicker kind={pick} onClose={() => setPick(null)} onPick={(a) => { setForm({ ...form, [pick === 'VIDEO' ? 'videoUrl' : 'posterUrl']: a.url, ...(pick === 'VIDEO' && !form.title ? { title: a.name.replace(/\.[^.]+$/, '') } : {}) }); setPick(null); }} />}
 
       {list.length === 0 ? <p className="ap-empty">No videos yet. Until you add one, shoppers see an animated loom in "Behind the weave".</p> : (
         <ul className="offers-list videos-list">

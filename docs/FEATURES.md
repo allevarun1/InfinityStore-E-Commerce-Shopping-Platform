@@ -26,6 +26,7 @@ Every item below is built and covered by automated tests unless it says otherwis
 | Motion | Word-by-word hero, scroll reveals, fly-to-cart, heart sparkles, ticker, reading-progress line, order-confirmed confetti; all calmed by the device's reduced-motion setting |
 | Testimonials | Customer quotes shown one at a time under the catalogue; the owner curates them in the admin (sample quotes in local demos carry a visible "Sample" label); the section hides when empty |
 | Refer a friend | Every customer has a personal code: the friend gets 10% off a first order (up to Rs. 500, above Rs. 1,499); the sharer earns a Rs. 200 single-use credit that only they can redeem, once the friend's order is delivered. No credit for cancelled orders or self-referral |
+| Offer pop-up | A welcome or sale pop-up designed by the owner: headline, message, coupon code with copy button, countdown, picture, four colour themes. Shown once per visit or per day, after a delay or when the shopper is about to leave, never on checkout or sign-in, waits for the cookie choice, closes with Escape |
 | Installable | Works like an app on phones (manifest and icons) |
 
 ## For the owner
@@ -38,6 +39,10 @@ Every item below is built and covered by automated tests unless it says otherwis
 | Bulk and feeds | Import many sarees from a spreadsheet (preview first; always creates drafts), export a backup, Google Shopping / Instagram / Facebook feed link, sitemap |
 | Product Studio and Insights | Suggests listing text and price from cost; sales, margin, low stock, restock and range-gap findings from your own data |
 | Videos | Paste a link to an mp4/webm file or a YouTube clip; choose story or reel; optionally tie it to a saree; pause or remove any time. Only https links are accepted |
+| Admin console | Sidebar sections, a Today dashboard (sales, orders waiting, stock to watch, 14-day trend, shortcuts), saree cards with search and filters, an editor with a live shopper preview and a publish checklist, orders with filters and photos |
+| Photos | Drag in any number of photos: each is made crisp (smart enlargement to 1200x1500, auto light and colour, careful sharpening), stored in the library and shown as a cover plus gallery; drag or use arrows to reorder, one click to enhance again |
+| Media library | Upload photos (up to 8 MB) and videos (MP4 or WebM, up to 20 MB), preview, copy a link, delete what is unused; files are checked by their contents, never by name, and are served with a one-year cache |
+| Photo and video studio | Before/after enhance with sliders, one-click hand-off to a saree's cover or gallery, a cinematic reel recorded in the browser from one photo (push-in, two close-ups, grain, light sweep, title) and published to "Sarees in motion", and ready-to-paste briefs for AI model photos (the app does not generate images itself) |
 | Coupons and multi-buy offers | Percentage or flat coupons with caps, minimums, first-order rules, usage limits; multi-buy tiers you set |
 | Orders | Status and payment state machines, stock restored on cancel |
 

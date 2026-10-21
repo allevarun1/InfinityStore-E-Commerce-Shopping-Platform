@@ -67,7 +67,7 @@ export function VideoPlayer({ video, startMuted = true, autoplay = true, classNa
   const toggle = () => { const el = ref.current; if (!el) return; if (el.paused) start(el); else el.pause(); };
   return (
     <div className={`vp ${playing ? 'is-playing' : ''} ${className}`}>
-      <video ref={ref} src={video.videoUrl} poster={poster(video)} muted={muted} loop playsInline
+      <video ref={ref} src={imageSrc(video.videoUrl)} poster={poster(video)} muted={muted} loop playsInline
         preload={poster(video) ? 'none' : 'metadata'} aria-label={video.title}
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onClick={toggle} />
       {!playing && (
@@ -187,20 +187,23 @@ export function CraftStory({ videos }) {
 }
 
 function ReelCard({ video, onOpen }) {
-  const ref = useRef(null);
+  const btn = useRef(null);
+  const [live, setLive] = useState(false);
   const auto = canAutoplay();
+  // A poster image is shown until the card is centred on screen; only then is a real <video> mounted, and it is removed again
+  // when the card leaves. With 19 reels that keeps a handful of video layers alive instead of 19 (much lighter to scroll past).
   useEffect(() => {
-    const el = ref.current;
-    if (!el || !auto || typeof IntersectionObserver === 'undefined') return undefined;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) el.play().catch(() => {}); else el.pause(); }, { threshold: 0.7 });
+    const el = btn.current;
+    if (!el || !auto || video.youtubeId || typeof IntersectionObserver === 'undefined') return undefined;
+    const io = new IntersectionObserver(([e]) => setLive(e.isIntersecting), { threshold: 0.7 });
     io.observe(el);
     return () => io.disconnect();
-  }, [auto]);
+  }, [auto, video.youtubeId]);
+  const cover = poster(video);
   return (
-    <button type="button" className="reel" onClick={onOpen} aria-label={`Watch: ${video.title}`}>
-      {video.youtubeId
-        ? <img src={poster(video)} alt="" loading="lazy" />
-        : <video ref={ref} src={video.videoUrl} poster={poster(video)} muted loop playsInline preload={poster(video) ? 'none' : 'metadata'} tabIndex={-1} />}
+    <button type="button" className="reel" ref={btn} onClick={onOpen} aria-label={`Watch: ${video.title}`} data-video-src={video.videoUrl}>
+      {cover ? <img src={cover} alt="" loading="lazy" decoding="async" /> : <span className="reel-blank" aria-hidden="true"></span>}
+      {live && <video src={imageSrc(video.videoUrl)} poster={cover || undefined} muted loop playsInline autoPlay tabIndex={-1} aria-hidden="true" />}
       <span className="reel-play"><i className="bi bi-play-fill" aria-hidden="true"></i></span>
       <span className="reel-cap"><strong>{video.title}</strong>{video.productName && video.productName !== video.title && <small>{video.productName}</small>}
         {(!video.productName || video.productName === video.title) && video.caption && <small>{video.caption}</small>}</span>

@@ -15,7 +15,6 @@ body {
   background-image:
     radial-gradient(900px 500px at 100% 0, rgb(181 134 47 / 0.07), transparent 70%),
     radial-gradient(800px 500px at 0 40%, rgb(123 30 43 / 0.045), transparent 70%);
-  background-attachment: fixed;
 }
 
 /* ---------- Header: a thread of zari under the bar ---------- */
@@ -119,20 +118,10 @@ body {
 
 /* ---------- Motion: only for people who have not asked for less ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .site-header::after { background-size: 200% 100%; animation: thread-run 7s linear infinite; }
-  @keyframes thread-run { from { background-position: 0 0; } to { background-position: 200% 0; } }
-
-  .hero-media::before { animation: halo-spin 14s linear infinite; }
-  @keyframes halo-spin { to { transform: rotate(360deg); } }
-  .hero-x::after { animation: jaali-drift 40s linear infinite; }
-  @keyframes jaali-drift { to { background-position: 56px 56px; } }
 
   .tiles-head h2::after, .occasions h2::after, .catalog-head h2::after, .voices-head h2::after { animation: rule-draw 1s var(--ease-out, ease) 0.2s backwards; }
   @keyframes rule-draw { from { transform: scaleX(0); opacity: 0; } }
 
-  .voices-card::before, .refer-hero::before { animation: jaali-drift 60s linear infinite; }
-  .refer-code code { animation: code-glow 3.4s ease-in-out infinite; }
-  @keyframes code-glow { 50% { box-shadow: 0 0 0 6px rgb(181 134 47 / 0.14); } }
 }
 @media (prefers-reduced-motion: reduce) {
   .btn-primary::before, .primary::before, .link-button::before { display: none; }

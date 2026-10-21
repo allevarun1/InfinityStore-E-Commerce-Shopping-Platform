@@ -11,7 +11,7 @@
 .vp-bigplay {
   position: absolute; inset: 0; margin: auto; width: 72px; height: 72px; border-radius: 50%; border: 0; cursor: pointer;
   display: grid; place-items: center; background: rgb(255 255 255 / 0.92); color: var(--maroon); font-size: 2.2rem;
-  box-shadow: 0 0 0 0 rgb(255 255 255 / 0.5); animation: play-ring 2.4s ease-out infinite; transition: transform 0.3s var(--spring);
+  box-shadow: 0 0 0 0 rgb(255 255 255 / 0.5); transition: transform 0.3s var(--spring);
 }
 .vp-bigplay i { margin-left: 4px; }
 .vp-bigplay:hover { transform: scale(1.1); }
@@ -60,6 +60,8 @@
 .reel { position: relative; display: block; width: 100%; aspect-ratio: 9 / 16; padding: 0; border: 0; border-radius: var(--r-lg); overflow: hidden; cursor: pointer; background: #1b1411; transition: transform 0.45s var(--ease-out), box-shadow 0.45s; }
 .reel:hover { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-3); }
 .reel video, .reel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.reel video { position: absolute; inset: 0; }
+.reel-blank { display: block; width: 100%; height: 100%; background: var(--ink); }
 .reel::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgb(20 14 10 / 0.8), transparent 55%); pointer-events: none; }
 .reel-play { position: absolute; top: 10px; right: 10px; z-index: 1; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgb(255 255 255 / 0.9); color: var(--maroon); }
 .reel-cap { position: absolute; z-index: 1; left: 12px; right: 12px; bottom: 12px; color: #fff; display: grid; gap: 2px; text-align: left; }

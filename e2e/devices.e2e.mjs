@@ -14,7 +14,7 @@ await fetch(`${API}/cart`, { method: 'POST', headers: { 'Content-Type': 'applica
 const ROLES = {
   visitor: { session: null, pages: ['/', '/products/1', '/cart', '/track', '/personal-shopping', '/login', '/register', '/shipping', '/contact', '/privacy', '/?view=deals#products', '/nope-404'] },
   customer: { session: cust, pages: ['/checkout', '/orders', '/wishlist', '/profile', '/cart'] },
-  admin: { session: admin, pages: ['/admin', '/admin?tab=leads', '/admin?tab=catalogue', '/admin?tab=products', '/admin?tab=coupons', '/admin?tab=videos'] },
+  admin: { session: admin, pages: ['/admin', '/admin?tab=leads', '/admin?tab=catalogue', '/admin?tab=products', '/admin?tab=coupons', '/admin?tab=videos', '/admin?tab=management', '/admin?tab=studio', '/admin?tab=media', '/admin?tab=popups', '/admin?tab=orders'] },
 };
 
 const b = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--no-sandbox'] });

@@ -10,6 +10,7 @@ import { Register } from './components/Register';
 import { Cart } from './components/Cart';
 import { NotFound } from './components/NotFound';
 import { WhatsAppFab, Newsletter, ConsentBanner } from './components/Growth';
+import { PromoPopup } from './components/PromoPopup';
 import { pageView } from './lib/analytics';
 import { SearchBox, CategoryNav, BottomNav } from './components/Navigation';
 import { MiniCart } from './components/MiniCart';
@@ -37,6 +38,8 @@ import './motion.css';
 import './videos.css';
 import './refer.css';
 import './luxe.css';
+import './promo.css';
+import './perf.css';
 import './icons/bi-subset.css';
 
 // Rarely-first pages load on demand, so the home page ships a much smaller script.
@@ -275,6 +278,7 @@ export default function App() {
             </main>
             <Footer />
             <WhatsAppFab />
+            <PromoPopup />
             <Stylist />
             <MiniCart />
             <ScrollChrome />

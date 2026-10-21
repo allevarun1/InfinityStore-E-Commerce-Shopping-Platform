@@ -1,0 +1,18 @@
+/* ==========================================================================
+   Scroll performance. Loaded last. The goal is a page that scrolls like butter on a mid-range phone:
+   - no layout-shifting tricks: the header never resizes and sections never change height while you scroll
+   - the sticky header is a plain colour (a blurred glass header re-blurs everything under it on every scroll frame)
+   - big blurred layers are gone; gradients are already soft
+   ========================================================================== */
+
+.site-header { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgb(251 247 241 / 0.98); }
+.hero-dust .orb { filter: none; }
+.hero-media::before { filter: none; opacity: 0.35; }
+
+/* Deliberately NOT using content-visibility: its guessed section heights change the page height as sections are drawn,
+   which moves the content under your finger while you scroll (the "shaking"). Cards only get cheap containment. */
+.pcard { contain: layout style; }
+
+/* Images decode off the main thread and never block a scroll frame. */
+img { image-rendering: auto; }
+.marquee { contain: content; }

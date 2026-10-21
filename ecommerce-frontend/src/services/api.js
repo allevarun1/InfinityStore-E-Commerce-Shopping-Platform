@@ -74,6 +74,19 @@ export const ApiService = {
   setTestimonialActive: (id, value) => api.put(`/admin/testimonials/${id}/active`, null, { params: { value } }).then(res => res.data),
   deleteTestimonial: (id) => api.delete(`/admin/testimonials/${id}`).then(res => res.data),
   storeVideos: () => api.get('/store/videos').then(res => res.data),
+  storePopup: () => api.get('/store/popup').then(res => (res.status === 204 ? null : res.data)),
+  adminPopups: () => api.get('/admin/popups').then(res => res.data),
+  createPopup: (payload) => api.post('/admin/popups', payload).then(res => res.data),
+  updatePopup: (id, payload) => api.put(`/admin/popups/${id}`, payload).then(res => res.data),
+  setPopupActive: (id, value) => api.put(`/admin/popups/${id}/active`, null, { params: { value } }).then(res => res.data),
+  deletePopup: (id) => api.delete(`/admin/popups/${id}`).then(res => res.data),
+  adminMedia: () => api.get('/admin/media').then(res => res.data),
+  uploadMedia: (file, onProgress) => {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    return api.post('/admin/media', body, { onUploadProgress: (e) => onProgress?.(e.total ? e.loaded / e.total : 0) }).then(res => res.data);
+  },
+  deleteMedia: (id) => api.delete(`/admin/media/${id}`).then(res => res.data),
   adminVideos: () => api.get('/admin/videos').then(res => res.data),
   createVideo: (payload) => api.post('/admin/videos', payload).then(res => res.data),
   setVideoActive: (id, value) => api.put(`/admin/videos/${id}/active`, null, { params: { value } }).then(res => res.data),

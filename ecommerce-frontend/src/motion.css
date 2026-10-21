@@ -58,7 +58,7 @@
 .hero-x h1 em {
   background: linear-gradient(100deg, #e9cf95 25%, #fff7dc 45%, #e9cf95 65%) 0 0 / 220% 100%;
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; padding-right: 0.06em;
-  animation: sheen 5.5s linear 1.4s infinite;
+  animation: sheen 5.5s linear 1.4s 2;
 }
 @keyframes sheen { to { background-position: -220% 0; } }
 .hero-x .eyebrow, .hero-x p, .hero-x .hero-ctas, .hero-stats { animation: fade-up 0.9s var(--ease-out) var(--hd, 0s) backwards; }
@@ -70,7 +70,7 @@
 @keyframes fade-up { from { opacity: 0; transform: translateY(22px); } }
 @keyframes line-grow { from { transform: scaleX(0); } }
 
-.hero-x .btn-light { position: relative; animation: fade-up 0.9s var(--ease-out) 0.95s backwards, cta-glow 3.2s ease-in-out 2.4s infinite; }
+.hero-x .btn-light { position: relative; animation: fade-up 0.9s var(--ease-out) 0.95s backwards; }
 @keyframes cta-glow { 0%, 100% { box-shadow: 0 0 0 0 rgb(246 216 154 / 0); } 50% { box-shadow: 0 0 0 8px rgb(246 216 154 / 0.22); } }
 .hero-x .btn-light::after { content: "\2192"; display: inline-block; margin-left: 8px; transition: transform 0.3s var(--spring); }
 .hero-x .btn-light:hover::after { transform: translateX(6px); }
@@ -100,7 +100,7 @@
 .marquee:hover .marquee-track { animation-play-state: paused; }
 .marquee ul { display: flex; margin: 0; padding: 0; list-style: none; flex: none; }
 .marquee li { display: inline-flex; align-items: center; gap: 12px; padding: 0 30px; white-space: nowrap; font-family: var(--font-display); font-size: 1.08rem; letter-spacing: 0.04em; }
-.marquee li i { color: #e9cf95; font-size: 0.8rem; animation: twinkle 2.6s ease-in-out infinite; }
+.marquee li i { color: #e9cf95; font-size: 0.8rem;  }
 .marquee li:nth-child(even) i { animation-delay: 1.3s; }
 @keyframes marquee { to { transform: translateX(-50%); } }
 @keyframes twinkle { 50% { transform: scale(1.6) rotate(20deg); opacity: 0.55; } }
@@ -137,11 +137,9 @@
   }
   .pcard:hover .pcard-media::after { transform: translateX(130%); transition: transform 0.95s var(--ease-out); }
 }
-.pcard-badge { animation: badge-glow 2.8s ease-in-out infinite; }
 @keyframes badge-glow { 0%, 100% { box-shadow: 0 0 0 0 rgb(123 30 43 / 0); } 50% { box-shadow: 0 0 0 5px rgb(123 30 43 / 0.2); } }
 .stock-note::before {
   content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: #c2571a; vertical-align: 1px;
-  animation: dot-pulse 1.8s ease-out infinite;
 }
 @keyframes dot-pulse { 0% { box-shadow: 0 0 0 0 rgb(194 87 26 / 0.6); } 80%, 100% { box-shadow: 0 0 0 8px rgb(194 87 26 / 0); } }
 .pcard-wish { position: absolute; }
@@ -173,7 +171,7 @@
 .drawer-sugg li:nth-child(1) { animation-delay: 0.3s; } .drawer-sugg li:nth-child(2) { animation-delay: 0.4s; } .drawer-sugg li:nth-child(3) { animation-delay: 0.5s; }
 
 /* ---------- Stylist: gets noticed without nagging ---------- */
-.ai-fab { animation: fab-ring 3.4s ease-out 2s infinite; }
+.ai-fab { animation: fab-ring 3.4s ease-out 2s 3; }
 .ai-fab i { display: inline-block; animation: twinkle 2.4s ease-in-out infinite; }
 @keyframes fab-ring { 0% { box-shadow: 0 0 0 0 rgb(123 30 43 / 0.45); } 70%, 100% { box-shadow: 0 0 0 16px rgb(123 30 43 / 0); } }
 .ai-nudge { animation: ai-rise 0.5s var(--ease-out) 1s backwards, nudge-bob 4s ease-in-out 2s infinite; }

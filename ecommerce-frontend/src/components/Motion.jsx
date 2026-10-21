@@ -79,7 +79,7 @@ export function HeroDust() {
   return (
     <div className="hero-dust" aria-hidden="true">
       <span className="orb o1"></span><span className="orb o2"></span>
-      {Array.from({ length: 16 }, (_, i) => (
+      {Array.from({ length: 8 }, (_, i) => (
         <i key={i} style={{ '--x': `${(i * 37) % 100}%`, '--s': `${3 + (i % 4) * 2}px`, '--t': `${9 + (i % 5) * 3}s`, '--w': `${-(i * 1.7)}s` }}></i>
       ))}
     </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK, imageSet } from '../lib/format';
+import { inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK, imageSet, imageSrc } from '../lib/format';
 
 const CARD_SIZES = '(min-width: 1100px) 280px, (min-width: 700px) 33vw, 50vw';
 import { useWishlist } from '../lib/useWishlist';
@@ -44,7 +44,7 @@ export function ProductCard({ product, mode, busy, onAdd, onQuickView, priority 
         <Link to={href} className="pcard-media" tabIndex={-1} aria-hidden="true">
           <img {...imageSet(product.imageUrl, CARD_SIZES)} alt="" data-fly-src={product.id} loading={priority ? 'eager' : 'lazy'} decoding="async" width="600" height="800" />
           {product.gallery?.[0] && <img className="pcard-alt" {...imageSet(product.gallery[0], CARD_SIZES)} alt="" loading="lazy" decoding="async" width="600" height="800" />}
-          {preview && <video className="pcard-vid" src={preview.videoUrl} poster={preview.posterUrl || undefined} autoPlay muted loop playsInline aria-hidden="true" />}
+          {preview && <video className="pcard-vid" src={imageSrc(preview.videoUrl)} poster={preview.posterUrl ? imageSrc(preview.posterUrl) : undefined} autoPlay muted loop playsInline aria-hidden="true" />}
           {clip && <span className="pcard-play"><i className="bi bi-play-fill" aria-hidden="true"></i> Video</span>}
           {onDeal && <span className="pcard-badge">{discountPercent(product)}% off</span>}
           {soldOut && <span className="pcard-soldout">Sold out</span>}

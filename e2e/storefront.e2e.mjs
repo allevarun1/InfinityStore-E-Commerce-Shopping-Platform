@@ -178,10 +178,11 @@ await page.screenshot({ path: path.join(OUT, '05-orders.png'), fullPage: true })
 
 // ---------- 6b. Wishlist heart (logged in)
 await page.goto(BASE + '/', { waitUntil: 'networkidle0' });
-await page.click('.pcard-wish'); await wait(900);
-ok('wishlist heart shows saved state', await page.$eval('.pcard-wish', e => e.getAttribute('aria-pressed') === 'true'));
-await page.click('.pcard-wish'); await wait(900);
-ok('wishlist heart toggles off', await page.$eval('.pcard-wish', e => e.getAttribute('aria-pressed') === 'false'));
+const pressed = (v) => page.waitForFunction((x) => document.querySelector('.pcard-wish')?.getAttribute('aria-pressed') === x, { timeout: 8000 }, v).then(() => true, () => false);
+await page.click('.pcard-wish');
+ok('wishlist heart shows saved state', await pressed('true'));
+await page.click('.pcard-wish');
+ok('wishlist heart toggles off', await pressed('false'));
 
 // ---------- 7. Product page growth features
 await page.goto(BASE + '/products/2', { waitUntil: 'networkidle0' });
@@ -214,8 +215,8 @@ await clickText('.price-chips .chip', 'Under'); await wait(400);
 const after = await page.$$eval('.pgrid .pcard', e => e.length);
 ok('price filter narrows the collection', after > 0 && after < before, `(${before} -> ${after})`);
 ok('active filter chip appears', await page.$('.active-filters'));
-await clickText('.active-filters .text-link', 'Clear all'); await wait(300);
-ok('clear all restores the collection', (await page.$$eval('.pgrid .pcard', e => e.length)) === before);
+await clickText('.active-filters .text-link', 'Clear all');
+ok('clear all restores the collection', await page.waitForFunction((n) => document.querySelectorAll('.pgrid .pcard').length === n, { timeout: 6000 }, before).then(() => true, () => false));
 await page.goto(BASE + '/products/2', { waitUntil: 'networkidle0' });
 ok('PDP: accordion sections', (await page.$$eval('.acc details', e => e.length)) === 3);
 await page.click('.acc details:nth-child(2) summary'); await wait(200);

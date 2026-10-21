@@ -349,5 +349,22 @@ public class DataSeeder implements CommandLineRunner {
             welcome.setFirstOrderOnly(true);
             couponRepository.save(welcome);
         }
+
+        // Demo offer pop-up: owners design their own under Admin > Offers & pop-ups.
+        if (demoCatalog && popupRepository.count() == 0) {
+            com.example.ecommerce.model.PromoPopup popup = new com.example.ecommerce.model.PromoPopup();
+            popup.setName("Welcome offer");
+            popup.setHeadline("Welcome to Rekha Shopping Mall");
+            popup.setMessage("Take 10% off your first order of Rs. 1,499 or more. Handwoven silks, cottons and bridal sarees, delivered to your door.");
+            popup.setCouponCode("WELCOME10");
+            popup.setCtaLabel("Shop the collection");
+            popup.setCtaUrl("/#products");
+            popup.setTheme(com.example.ecommerce.model.PromoPopup.Theme.MAROON);
+            popup.setDelaySeconds(6);
+            popupRepository.save(popup);
+        }
     }
+
+    @Autowired
+    private com.example.ecommerce.repository.PromoPopupRepository popupRepository;
 }

@@ -1,0 +1,53 @@
+/* Offer pop-up shown to shoppers (and its preview in the admin). Four colour themes; transform/opacity motion only. */
+
+.promo-back { position: fixed; inset: 0; z-index: 1300; display: grid; place-items: center; padding: 16px; background: rgb(20 14 10 / 0.62); animation: promo-fade 0.3s ease both; }
+.promo-dialog { width: min(760px, 100%); max-height: calc(100vh - 32px); animation: promo-pop 0.45s var(--spring, cubic-bezier(0.2, 0.9, 0.3, 1.2)) both; }
+@keyframes promo-fade { from { opacity: 0; } }
+@keyframes promo-pop { from { opacity: 0; transform: translateY(24px) scale(0.94); } }
+
+.promo { --bg: linear-gradient(150deg, #7b1e2b, #3d0c14); --fg: #fff; --muted: rgb(255 255 255 / 0.82); --accent: #e9cf95; --cta-bg: #e9cf95; --cta-fg: #3d0c14; --chip: rgb(255 255 255 / 0.12);
+  position: relative; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); min-height: 300px; overflow: hidden; border-radius: 20px; background: var(--bg); color: var(--fg); box-shadow: 0 40px 90px -30px rgb(0 0 0 / 0.65); }
+.promo:not(:has(.promo-img)) { grid-template-columns: minmax(0, 1fr); text-align: center; }
+.promo-gold { --bg: linear-gradient(150deg, #f6dd9c, #d9a93f); --fg: #2b1a05; --muted: rgb(43 26 5 / 0.8); --accent: #7b1e2b; --cta-bg: #7b1e2b; --cta-fg: #fff; --chip: rgb(255 255 255 / 0.5); }
+.promo-emerald { --bg: linear-gradient(150deg, #1f6b4a, #0d3b29); --accent: #f2d58d; }
+.promo-night { --bg: linear-gradient(150deg, #23201d, #0b0a09); --accent: #e9cf95; }
+.promo::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(60% 70% at 100% 0, rgb(255 255 255 / 0.14), transparent 60%), radial-gradient(50% 60% at 0 100%, rgb(233 207 149 / 0.14), transparent 70%); }
+.promo-img { position: relative; min-height: 220px; }
+.promo-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.promo-img::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, transparent 60%, rgb(0 0 0 / 0.25)); }
+.promo-body { position: relative; padding: clamp(22px, 4vw, 38px); display: flex; flex-direction: column; justify-content: center; gap: 12px; align-items: flex-start; }
+.promo:not(:has(.promo-img)) .promo-body { align-items: center; }
+.promo-eyebrow { font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 700; color: var(--accent); }
+.promo h2 { margin: 0; font-family: var(--font-display); font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.05; font-weight: 600; color: var(--fg); }
+.promo p { margin: 0; color: var(--muted); font-size: 1rem; max-width: 42ch; }
+.promo-clock { display: flex; gap: 8px; }
+.promo-clock span { min-width: 58px; text-align: center; padding: 8px 6px; border-radius: 12px; background: var(--chip); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.promo-clock b { display: block; font-family: var(--font-body); font-weight: 800; font-size: 1.5rem; line-height: 1; color: var(--fg); letter-spacing: 0; }
+.promo-code { display: inline-flex; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; border-radius: 99px; background: var(--chip); border: 1px dashed var(--accent); }
+.promo-code span { font-size: 0.8rem; color: var(--muted); }
+.promo-code code { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.14em; color: var(--fg); }
+.promo-code button { border: 0; border-radius: 99px; padding: 7px 14px; background: var(--accent); color: var(--bg-text, #2b1a05); font-weight: 700; cursor: pointer; }
+.promo-gold .promo-code button { color: #fff; }
+.promo-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.promo-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 28px; border-radius: 99px; background: var(--cta-bg); color: var(--cta-fg); font-weight: 800; text-decoration: none; box-shadow: 0 10px 24px -10px rgb(0 0 0 / 0.5); transition: transform 0.25s var(--spring, ease); }
+.promo-cta:hover { transform: translateY(-2px) scale(1.03); }
+.promo-skip { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 0.9rem; }
+.promo-x { position: absolute; top: 12px; right: 12px; z-index: 3; width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; background: rgb(0 0 0 / 0.35); color: #fff; display: grid; place-items: center; transition: background-color 0.2s, transform 0.2s; }
+.promo-x:hover { background: rgb(0 0 0 / 0.6); transform: rotate(90deg); }
+.promo.compact { min-height: 0; width: 100%; max-width: 380px; grid-template-columns: minmax(0, 1fr) !important; border-radius: 16px; }
+.promo.compact .promo-img { min-height: 130px; }
+.promo.compact h2 { font-size: 1.6rem; }
+.promo.compact .promo-body { padding: 20px; }
+@media (max-width: 640px) {
+  .promo { grid-template-columns: minmax(0, 1fr); }
+  .promo-img { min-height: 150px; }
+  .promo-body { align-items: center; text-align: center; padding: 22px 18px 24px; }
+  .promo-clock span { min-width: 52px; }
+  .promo-back { align-items: end; padding: 0; }
+  .promo-dialog { width: 100%; border-radius: 20px 20px 0 0; }
+  .promo { border-radius: 20px 20px 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .promo-back, .promo-dialog { animation: none; }
+  .promo-cta:hover, .promo-x:hover { transform: none; }
+}

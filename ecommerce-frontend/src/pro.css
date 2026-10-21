@@ -10,8 +10,7 @@ img { max-width: 100%; }
 /* ---------- Header compacts on scroll ---------- */
 .site-header { transition: box-shadow 0.25s ease; }
 .is-scrolled .site-header { box-shadow: 0 8px 24px -18px rgb(30 25 21 / 0.45); }
-.is-scrolled .header-inner { padding-top: 8px; padding-bottom: 8px; }
-.header-inner { transition: padding 0.25s var(--ease-out); }
+/* The header keeps one fixed height: resizing it on scroll moved the whole page and made scrolling feel like it shook. */
 
 .to-top {
   position: fixed; left: 16px; bottom: 20px; z-index: 39; width: 44px; height: 44px; min-height: 0; padding: 0; border-radius: 50%;
@@ -128,7 +127,6 @@ img { max-width: 100%; }
 .mobile-tools, .sheet-head, .sheet-foot, .sheet-backdrop { display: none; }
 @media (max-width: 760px) {
   .mobile-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; position: sticky; top: 118px; z-index: 20; background: var(--ivory); padding: 8px 0; }
-  .is-scrolled .mobile-tools { top: 102px; }
   .mobile-tools .btn { min-height: 44px; gap: 8px; }
   .mobile-tools .count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--maroon); color: #fff; font-size: 0.72rem; }
   .mobile-tools .sort-control select { width: 100%; min-height: 44px; }

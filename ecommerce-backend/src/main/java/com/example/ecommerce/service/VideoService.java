@@ -29,6 +29,7 @@ public class VideoService {
     @Autowired private StoreVideoRepository videos;
     @Autowired private ProductRepository products;
     @Autowired private AuditService audit;
+    @Autowired private MediaService media;
 
     public record Input(String title, String caption, StoreVideo.Kind kind, String videoUrl, String posterUrl, Long productId, Integer sortOrder) {}
 
@@ -84,8 +85,8 @@ public class VideoService {
         String caption = in.caption() == null ? null : in.caption().trim();
         if (caption != null && caption.length() > 240) throw new BusinessException("Keep the caption under 240 characters");
         String url = in.videoUrl() == null ? "" : in.videoUrl().trim();
-        if (!isFile(url) && !isSiteFile(url) && youtubeId(url).isEmpty()) {
-            throw new BusinessException("Use a direct https link to an .mp4 or .webm file, a file under /videos on this site, or a YouTube link");
+        if (!isFile(url) && !isSiteFile(url) && youtubeId(url).isEmpty() && !media.isLibraryLink(url, com.example.ecommerce.model.MediaAsset.Kind.VIDEO)) {
+            throw new BusinessException("Use a direct https link to an .mp4 or .webm file, a file under /videos on this site, a video from your library, or a YouTube link");
         }
         String poster = in.posterUrl() == null || in.posterUrl().isBlank() ? null : in.posterUrl().trim();
         if (poster != null && !(poster.startsWith("/") && !poster.startsWith("//")) && !isHttps(poster)) {
