@@ -32,7 +32,24 @@ SAREES = [
     ("georgette", "designer-georgette-saree.jpg", "Designer Georgette", "PARTY EDIT  |  FLOWING FALL"),
     ("organza", "organza-zari-saree.jpg", "Organza Zari Butta", "FESTIVE  |  ZARI BUTTAS"),
     ("bridal", "bridal-red-zari-saree.jpg", "Bridal Red Zari Silk", "WEDDING DAY  |  HAND EMBELLISHED"),
+    # Openly licensed photos (see docs/CREDITS.md); framing differs for fabric flats, standing models and back views.
+    ("pochampally", "pochampally-ikat-silk.jpg", "Pochampally Ikat Silk", "TELANGANA  |  HAND-DYED IKAT", "flat"),
+    ("sambalpuri", "sambalpuri-ikat-elephant.jpg", "Sambalpuri Ikat Cotton", "ODISHA  |  ELEPHANT MOTIFS", "flat"),
+    ("sambalpuri-drape", "sambalpuri-handloom-drape.jpg", "Sambalpuri Handloom", "THE DRAPE  |  ODISHA", "model"),
+    ("paithani", "paithani-silk-peacock.jpg", "Paithani Peacock Silk", "MAHARASHTRA  |  PEACOCK PALLU", "back"),
+    ("net", "blush-net-wedding.jpg", "Blush Net Wedding Saree", "SHEER NET  |  EMBROIDERED", "model"),
+    ("patola", "patola-double-ikat.jpg", "Patola Double Ikat", "GUJARAT  |  HEIRLOOM WEAVE", "flat"),
+    ("bandhani", "banarasi-bandhani.jpg", "Banarasi Bandhani", "CRAPE SILK  |  ZARI BORDER", "flat"),
+    ("koorai", "koorai-silk-checks.jpg", "Koorai Silk Checks", "TAMIL NADU  |  WEDDING SILK", "flat"),
+    ("paisley", "red-paisley-zari-silk.jpg", "Red Paisley Zari Silk", "GOLD ZARI  |  PAISLEY BORDER", "flat"),
+    ("bandha-cotton", "sambalpuri-bandha-cotton.jpg", "Sambalpuri Bandha Cotton", "ODISHA  |  TEMPLE BORDER", "flat"),
 ]
+
+SHOT_SETS = {
+    "flat": [(1.00, 1.18, 0.50, 0.50, 0.50, 0.44), (1.90, 2.30, 0.30, 0.70, 0.30, 0.36), (1.80, 2.20, 0.70, 0.30, 0.80, 0.68)],
+    "model": [(1.00, 1.14, 0.50, 0.50, 0.50, 0.46), (1.90, 2.20, 0.50, 0.52, 0.15, 0.19), (1.70, 1.95, 0.55, 0.45, 0.72, 0.58)],
+    "back": [(1.00, 1.14, 0.50, 0.50, 0.50, 0.46), (1.80, 2.10, 0.45, 0.55, 0.78, 0.70), (1.80, 2.10, 0.50, 0.50, 0.18, 0.24)],
+}
 
 # (zoom start, zoom end, focus x start/end, focus y start/end) as fractions of the portrait crop
 SHOTS = [
@@ -71,9 +88,9 @@ def text(t, size, colour, y, start, end=None):
             f"y='{y}+34*pow(1-{a},3)':alpha='{a}'{enable}")
 
 
-def make(slug, photo, title, sub, cwd):
+def make(slug, photo, title, sub, cwd, kind=None):
     parts = []
-    for i, spec in enumerate(SHOTS):
+    for i, spec in enumerate(SHOT_SETS[kind] if kind else SHOTS):
         p = cwd / f"{slug}_{i}.mp4"
         shot(PHOTOS / photo, spec, p, cwd)
         parts.append(p)
@@ -119,10 +136,10 @@ def main():
     tmp.mkdir(exist_ok=True)
     (tmp / FONT).write_bytes(SYSTEM_FONT.read_bytes())
     only = sys.argv[1:]
-    for slug, photo, title, sub in SAREES:
+    for slug, photo, title, sub, *kind in SAREES:
         if only and slug not in only:
             continue
-        make(slug, photo, title, sub, tmp)
+        make(slug, photo, title, sub, tmp, kind[0] if kind else None)
     for p in tmp.glob("*"):
         p.unlink()
     tmp.rmdir()

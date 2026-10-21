@@ -41,7 +41,7 @@ const story = await page.$eval('.craft video', v => ({ src: v.getAttribute('src'
 ok('demo story clip loads from the site', story.src === '/videos/story-collection.mp4' && story.w === 720 && story.h === 900 && story.d > 10, JSON.stringify(story));
 ok('demo story clip is actually playing in view', !story.paused && story.t > 0.3, `t=${story.t}`);
 const reelsOk = await page.$$eval('.reel video', vs => vs.map(v => v.getAttribute('src')));
-ok('nine cinematic demo reels are present', reelsOk.length === 9 && reelsOk.every(u => u.startsWith('/videos/cine-')), JSON.stringify(reelsOk));
+ok('nineteen cinematic demo reels are present', reelsOk.length === 19 && reelsOk.every(u => u.startsWith('/videos/cine-')), JSON.stringify(reelsOk));
 await page.evaluate(() => document.querySelector('.reel').scrollIntoView({ block: 'center' }));
 await wait(2500);
 const reelV = await page.$eval('.reel video', v => ({ w: v.videoWidth, h: v.videoHeight, d: v.duration }));

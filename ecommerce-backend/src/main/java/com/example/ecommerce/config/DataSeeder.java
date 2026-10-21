@@ -47,6 +47,16 @@ public class DataSeeder implements CommandLineRunner {
         videoRepository.save(v);
     }
 
+    private Product saree(Category category, String name, String description, String price, String slug, int stock, double rating,
+                          String fabric, String weave, String occasion, String colour, String region, String dealPrice) {
+        Product p = new Product(name, description, new java.math.BigDecimal(price), "/images/sarees/" + slug + ".jpg", stock, category);
+        if (dealPrice != null) { p.setDeal(true); p.setDealPrice(new java.math.BigDecimal(dealPrice)); }
+        p.setRating(rating);
+        p.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
+        p.setFabric(fabric); p.setWeave(weave); p.setOccasion(occasion); p.setColour(colour); p.setRegion(region);
+        return productRepository.save(p);
+    }
+
     private void sampleQuote(String name, String city, String quote, int rating, Long productId, int order) {
         Testimonial t = new Testimonial();
         t.setName(name); t.setLocation(city); t.setQuote(quote); t.setRating(rating); t.setProductId(productId);
@@ -296,6 +306,29 @@ public class DataSeeder implements CommandLineRunner {
             video("Mysore Crepe Silk Saree", "Soft crepe silk that drapes beautifully", StoreVideo.Kind.REEL, "/videos/cine-mysore.mp4", "/videos/cine-mysore.jpg", mysore.getId(), 8);
             video("Chanderi Silk Cotton Saree", "Lightweight with a sheer, glowing finish", StoreVideo.Kind.REEL, "/videos/cine-chanderi.mp4", "/videos/cine-chanderi.jpg", chanderi.getId(), 9);
             video("Bengal Handloom Cotton Saree", "Hand woven and breathable", StoreVideo.Kind.REEL, "/videos/cine-bengal.mp4", "/videos/cine-bengal.jpg", bengal.getId(), 10);
+            // More sample sarees (openly licensed photos, see docs/CREDITS.md) with a cinematic reel each.
+            Product x_pochampally_ikat_silk = saree(silk, "Pochampally Ikat Silk Saree", "Hand-dyed double ikat in deep indigo with geometric diamond motifs and a teal zari border. Each design is tie-dyed thread by thread before weaving.", "7999", "pochampally-ikat-silk", 14, 4.7, "Silk", "Pochampally ikat", "Festive", "Indigo & teal", "Telangana", "6499");
+            Product x_sambalpuri_ikat_elephant = saree(cotton, "Sambalpuri Ikat Elephant Cotton Saree", "Odisha ikat cotton with a procession of elephants and trees in black and red, finished with a checked border. Breathable and easy for all-day wear.", "3999", "sambalpuri-ikat-elephant", 18, 4.6, "Cotton", "Sambalpuri ikat", "Everyday", "Red & black", "Odisha", null);
+            Product x_sambalpuri_handloom_drape = saree(cotton, "Sambalpuri Handloom Drape Saree", "Plum handloom with temple motifs and a vivid orange border and pallu. A drape that photographs beautifully and feels light on the day.", "4299", "sambalpuri-handloom-drape", 12, 4.7, "Cotton", "Sambalpuri handloom", "Temple & Onam", "Plum & orange", "Odisha", "3699");
+            Product x_paithani_silk_peacock = saree(silk, "Paithani Peacock Silk Saree", "Maharashtra paithani in turquoise and parrot green with a woven peacock pallu in gold and yellow. Heirloom weave, finished with tassels.", "15999", "paithani-silk-peacock", 6, 4.9, "Silk", "Paithani", "Wedding", "Turquoise & green", "Maharashtra", "13499");
+            Product x_blush_net_wedding = saree(designer, "Blush Net Embroidered Wedding Saree", "Sheer blush net with floral sequin embroidery and a rich border, styled over a contrast blouse. Made for sangeet nights and receptions.", "11999", "blush-net-wedding", 8, 4.8, "Net", "Embroidered", "Party", "Blush & maroon", "Mixed", null);
+            Product x_patola_double_ikat = saree(bridal, "Patola Double Ikat Saree", "Gujarat double ikat in rust red and ivory with traditional jaali and flower motifs. A true heirloom weave that holds its value.", "24999", "patola-double-ikat", 4, 5.0, "Silk", "Patola double ikat", "Wedding", "Rust & ivory", "Gujarat", "21999");
+            Product x_banarasi_bandhani = saree(designer, "Banarasi Bandhani Crape Silk Saree", "Royal blue crape silk with all-over bandhani dots and a fine zari border and pallu. Light on the shoulder, rich in the frame.", "6999", "banarasi-bandhani", 16, 4.6, "Silk", "Banarasi bandhani", "Festive", "Royal blue", "Uttar Pradesh", null);
+            Product x_koorai_silk_checks = saree(silk, "Koorai Silk Checks Saree", "Tamil Nadu wedding silk in bold purple, gold and indigo checks with a woven stripe pallu. Cheerful, durable and made for festive mornings.", "8499", "koorai-silk-checks", 10, 4.5, "Silk", "Koorai silk", "Wedding", "Purple & gold", "Tamil Nadu", null);
+            Product x_red_paisley_zari_silk = saree(silk, "Red Paisley Zari Silk Saree", "Vivid red silk with a wide gold zari border of large paisleys. A classic that works for pujas, weddings and festival evenings.", "9499", "red-paisley-zari-silk", 9, 4.7, "Silk", "Zari paisley", "Festive", "Red & gold", "Karnataka", "7999");
+            Product x_sambalpuri_bandha_cotton = saree(cotton, "Sambalpuri Bandha Cotton Saree", "Soft cotton with a temple-style border in grey, ivory and sea green. Gentle colours for office and everyday elegance.", "3499", "sambalpuri-bandha-cotton", 20, 4.4, "Cotton", "Sambalpuri bandha", "Everyday", "Ivory & grey", "Odisha", null);
+
+            video("Pochampally Ikat Silk Saree", "Hand-dyed double ikat from Telangana", StoreVideo.Kind.REEL, "/videos/cine-pochampally.mp4", "/videos/cine-pochampally.jpg", x_pochampally_ikat_silk.getId(), 11);
+            video("Sambalpuri Ikat Elephant Cotton Saree", "Odisha ikat with elephant motifs", StoreVideo.Kind.REEL, "/videos/cine-sambalpuri.mp4", "/videos/cine-sambalpuri.jpg", x_sambalpuri_ikat_elephant.getId(), 12);
+            video("Sambalpuri Handloom Drape Saree", "Plum handloom with an orange border", StoreVideo.Kind.REEL, "/videos/cine-sambalpuri-drape.mp4", "/videos/cine-sambalpuri-drape.jpg", x_sambalpuri_handloom_drape.getId(), 13);
+            video("Paithani Peacock Silk Saree", "Heirloom peacock pallu from Maharashtra", StoreVideo.Kind.REEL, "/videos/cine-paithani.mp4", "/videos/cine-paithani.jpg", x_paithani_silk_peacock.getId(), 14);
+            video("Blush Net Embroidered Wedding Saree", "Sheer net with sequin florals", StoreVideo.Kind.REEL, "/videos/cine-net.mp4", "/videos/cine-net.jpg", x_blush_net_wedding.getId(), 15);
+            video("Patola Double Ikat Saree", "An heirloom double ikat from Gujarat", StoreVideo.Kind.REEL, "/videos/cine-patola.mp4", "/videos/cine-patola.jpg", x_patola_double_ikat.getId(), 16);
+            video("Banarasi Bandhani Crape Silk Saree", "Bandhani dots with a zari border", StoreVideo.Kind.REEL, "/videos/cine-bandhani.mp4", "/videos/cine-bandhani.jpg", x_banarasi_bandhani.getId(), 17);
+            video("Koorai Silk Checks Saree", "Tamil Nadu wedding silk in bold checks", StoreVideo.Kind.REEL, "/videos/cine-koorai.mp4", "/videos/cine-koorai.jpg", x_koorai_silk_checks.getId(), 18);
+            video("Red Paisley Zari Silk Saree", "A wide gold paisley zari border", StoreVideo.Kind.REEL, "/videos/cine-paisley.mp4", "/videos/cine-paisley.jpg", x_red_paisley_zari_silk.getId(), 19);
+            video("Sambalpuri Bandha Cotton Saree", "A temple border in gentle greys", StoreVideo.Kind.REEL, "/videos/cine-bandha-cotton.mp4", "/videos/cine-bandha-cotton.jpg", x_sambalpuri_bandha_cotton.getId(), 20);
+
             sampleQuote("Priya", "Chennai", "The silk drapes beautifully and the zari border looks even better in person. Packing was neat and it arrived on time.", 5, kanchipuram.getId(), 1);
             sampleQuote("Ananya", "Bengaluru", "Ordered the kasavu for Onam. The cotton is soft and the golden border is lovely. Cash on delivery made it easy.", 5, kasavu.getId(), 2);
             sampleQuote("Meera", "Hyderabad", "The stylist chat helped me pick a saree for my sister's wedding in minutes. Exactly what I was looking for.", 5, null, 3);
