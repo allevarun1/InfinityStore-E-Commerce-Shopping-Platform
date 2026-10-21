@@ -202,7 +202,8 @@ function ReelCard({ video, onOpen }) {
         ? <img src={poster(video)} alt="" loading="lazy" />
         : <video ref={ref} src={video.videoUrl} poster={poster(video)} muted loop playsInline preload={poster(video) ? 'none' : 'metadata'} tabIndex={-1} />}
       <span className="reel-play"><i className="bi bi-play-fill" aria-hidden="true"></i></span>
-      <span className="reel-cap"><strong>{video.title}</strong>{video.productName && <small>{video.productName}</small>}</span>
+      <span className="reel-cap"><strong>{video.title}</strong>{video.productName && video.productName !== video.title && <small>{video.productName}</small>}
+        {(!video.productName || video.productName === video.title) && video.caption && <small>{video.caption}</small>}</span>
     </button>
   );
 }
@@ -211,11 +212,21 @@ function ReelCard({ video, onOpen }) {
 export function ReelsStrip({ videos }) {
   const reels = videos.filter(v => v.kind === 'REEL');
   const [open, setOpen] = useState(null);
+  const row = useRef(null);
+  const nudge = (dir) => row.current?.scrollBy({ left: dir * Math.min(720, row.current.clientWidth * 0.8), behavior: reducedMotion() ? 'auto' : 'smooth' });
   if (!reels.length) return null;
   return (
     <section className="reels" aria-labelledby="reels-title">
-      <div className="reels-head"><span className="eyebrow">Watch &amp; shop</span><h2 id="reels-title">Sarees in motion</h2></div>
-      <ul className="reels-row">
+      <div className="reels-head">
+        <div><span className="eyebrow">The cinematic edit</span><h2 id="reels-title">Sarees in motion</h2></div>
+        {reels.length > 3 && (
+          <div className="reels-nav">
+            <button type="button" onClick={() => nudge(-1)} aria-label="Previous sarees"><i className="bi bi-arrow-left" aria-hidden="true"></i></button>
+            <button type="button" onClick={() => nudge(1)} aria-label="Next sarees"><i className="bi bi-arrow-right" aria-hidden="true"></i></button>
+          </div>
+        )}
+      </div>
+      <ul className="reels-row" ref={row}>
         {reels.map((v, n) => <Rise as="li" key={v.id} delay={n * 80}><ReelCard video={v} onOpen={() => setOpen(n)} /></Rise>)}
       </ul>
       {open !== null && <ReelViewer videos={reels} start={open} onClose={() => setOpen(null)} />}

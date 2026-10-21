@@ -48,7 +48,12 @@
 
 /* ---------- Reels ---------- */
 .reels { max-width: var(--maxw); margin: 0 auto; padding: clamp(36px, 5vw, 64px) var(--gutter) 0; }
+.reels-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .reels-head h2 { margin: 6px 0 16px; }
+.reels-nav { display: none; gap: 8px; margin-bottom: 16px; }
+.reels-nav button { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--gold); background: var(--paper); color: var(--maroon); cursor: pointer; transition: background-color .2s, color .2s, transform .25s; }
+.reels-nav button:hover { background: var(--maroon); color: #fff; transform: scale(1.08); }
+@media (hover: hover) and (min-width: 900px) { .reels-nav { display: flex; } }
 .reels-row { list-style: none; margin: 0 calc(var(--gutter) * -1); padding: 4px var(--gutter) 18px; display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
 .reels-row::-webkit-scrollbar { display: none; }
 .reels-row > li { flex: none; width: clamp(160px, 22vw, 230px); scroll-snap-align: start; }

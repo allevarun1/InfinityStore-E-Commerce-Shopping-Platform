@@ -287,9 +287,15 @@ public class DataSeeder implements CommandLineRunner {
             // Demo motion-design clips (rendered by tools/make_demo_videos.py) and clearly labelled sample quotes.
             // Local demo only: a real store adds its own footage and real customer words in the admin.
             video("Silk, cotton, designer, bridal", "A look across the collection", StoreVideo.Kind.STORY, "/videos/story-collection.mp4", "/videos/story-collection.jpg", null, 1);
-            video("Kanchipuram Pure Silk Saree", "Pure mulberry silk with a gold zari border", StoreVideo.Kind.REEL, "/videos/reel-kanchipuram.mp4", "/videos/reel-kanchipuram.jpg", kanchipuram.getId(), 2);
-            video("Banarasi Katan Silk Saree", "Lustrous katan silk, brocade pallu", StoreVideo.Kind.REEL, "/videos/reel-banarasi.mp4", "/videos/reel-banarasi.jpg", banarasi.getId(), 3);
-            video("Kerala Kasavu Cotton Saree", "Pure cotton with the golden kasavu border", StoreVideo.Kind.REEL, "/videos/reel-kasavu.mp4", "/videos/reel-kasavu.jpg", kasavu.getId(), 4);
+            video("Kanchipuram Pure Silk Saree", "Mulberry silk with a gold zari border", StoreVideo.Kind.REEL, "/videos/cine-kanchipuram.mp4", "/videos/cine-kanchipuram.jpg", kanchipuram.getId(), 2);
+            video("Banarasi Katan Silk Saree", "Lustrous katan silk, brocade pallu", StoreVideo.Kind.REEL, "/videos/cine-banarasi.mp4", "/videos/cine-banarasi.jpg", banarasi.getId(), 3);
+            video("Bridal Red Zari Silk Saree", "Wedding-day red with dense gold zari", StoreVideo.Kind.REEL, "/videos/cine-bridal.mp4", "/videos/cine-bridal.jpg", bridalSaree.getId(), 4);
+            video("Kerala Kasavu Cotton Saree", "Pure cotton with the golden kasavu border", StoreVideo.Kind.REEL, "/videos/cine-kasavu.mp4", "/videos/cine-kasavu.jpg", kasavu.getId(), 5);
+            video("Designer Georgette Party Saree", "A flowing fall made for the party floor", StoreVideo.Kind.REEL, "/videos/cine-georgette.mp4", "/videos/cine-georgette.jpg", georgette.getId(), 6);
+            video("Organza Zari Butta Saree", "Sheer organza scattered with zari buttas", StoreVideo.Kind.REEL, "/videos/cine-organza.mp4", "/videos/cine-organza.jpg", organza.getId(), 7);
+            video("Mysore Crepe Silk Saree", "Soft crepe silk that drapes beautifully", StoreVideo.Kind.REEL, "/videos/cine-mysore.mp4", "/videos/cine-mysore.jpg", mysore.getId(), 8);
+            video("Chanderi Silk Cotton Saree", "Lightweight with a sheer, glowing finish", StoreVideo.Kind.REEL, "/videos/cine-chanderi.mp4", "/videos/cine-chanderi.jpg", chanderi.getId(), 9);
+            video("Bengal Handloom Cotton Saree", "Hand woven and breathable", StoreVideo.Kind.REEL, "/videos/cine-bengal.mp4", "/videos/cine-bengal.jpg", bengal.getId(), 10);
             sampleQuote("Priya", "Chennai", "The silk drapes beautifully and the zari border looks even better in person. Packing was neat and it arrived on time.", 5, kanchipuram.getId(), 1);
             sampleQuote("Ananya", "Bengaluru", "Ordered the kasavu for Onam. The cotton is soft and the golden border is lovely. Cash on delivery made it easy.", 5, kasavu.getId(), 2);
             sampleQuote("Meera", "Hyderabad", "The stylist chat helped me pick a saree for my sister's wedding in minutes. Exactly what I was looking for.", 5, null, 3);

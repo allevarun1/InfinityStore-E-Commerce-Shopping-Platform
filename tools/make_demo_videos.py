@@ -72,16 +72,7 @@ def main():
     CWD = tmp
     (tmp / FONT).write_bytes(SYSTEM_FONT.read_bytes())
 
-    reels = [
-        ("reel-kanchipuram", "kanchipuram-silk-saree.jpg", "Kanchipuram Pure Silk Saree", "PURE MULBERRY SILK  |  GOLD ZARI BORDER"),
-        ("reel-banarasi", "banarasi-silk-saree.jpg", "Banarasi Katan Silk Saree", "LUSTROUS KATAN SILK  |  BROCADE PALLU"),
-        ("reel-kasavu", "kerala-kasavu-saree.jpg", "Kerala Kasavu Cotton Saree", "PURE COTTON  |  GOLDEN KASAVU BORDER"),
-    ]
-    for name, photo, title, sub in reels:
-        segment(PHOTOS / photo, title, sub, OUT / f"{name}.mp4", 540, 960, 480, 170, 730, 34, 7)
-        cover(OUT / f"{name}.mp4", OUT / f"{name}.jpg", 1.6)
-        print("made", name)
-
+    # the per-saree reels are rendered by tools/make_cinema_videos.py
     cards = [
         ("kanchipuram-silk-saree.jpg", "Silk", "KANCHIPURAM  |  BANARASI  |  MYSORE"),
         ("bengal-handloom-cotton-saree.jpg", "Cotton", "BENGAL HANDLOOM  |  KERALA KASAVU"),
