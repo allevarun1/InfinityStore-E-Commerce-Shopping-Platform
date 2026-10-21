@@ -1,0 +1,123 @@
+/* ==========================================================================
+   Home banner: "Tradition meets Trend". A bright, warm hero after the brand boards: rose-gold light, a colonnade of
+   Mughal arches in fine gold, the saree photograph fading in from the right, rani-pink script, drifting petals.
+   Loaded after alive.css; everything is scoped to .hero-banner so other pages are untouched.
+   ========================================================================== */
+
+.hero-x.hero-banner {
+  --rani: #c2185b; --rani-deep: #8e1050; --wine: #3b0d17; --rose: #f8e1df; --cream: #fcf4ea;
+  position: relative; overflow: hidden; isolation: isolate; color: var(--wine);
+  background: linear-gradient(100deg, var(--cream) 0%, #fbeee6 38%, var(--rose) 100%);
+}
+.hero-banner::before, .hero-banner::after, .hero-banner .hero-inner::before { content: none; }
+
+/* ---------- Scenery ---------- */
+.hb-scene { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.hb-glow { position: absolute; inset: 0; background:
+  radial-gradient(60% 80% at 18% 30%, rgb(255 236 200 / 0.9), transparent 70%),
+  radial-gradient(40% 60% at 42% 100%, rgb(242 180 190 / 0.35), transparent 70%); }
+.hb-arches { position: absolute; left: 0; bottom: 0; width: 46%; height: 100%; fill: none; stroke: #c99a45; stroke-width: 1.2; opacity: 0.32;
+  -webkit-mask-image: linear-gradient(to right, #000 55%, transparent); mask-image: linear-gradient(to right, #000 55%, transparent); }
+.hb-photo { position: absolute; top: 0; right: 0; bottom: 0; width: 66%; overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, rgb(0 0 0 / 0.55) 12%, #000 26%);
+  mask-image: linear-gradient(to right, transparent 0, rgb(0 0 0 / 0.55) 12%, #000 26%); }
+.hb-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 22% 30%; display: block; transform-origin: 30% 40%; }
+.hb-sweep { position: absolute; top: -20%; bottom: -20%; left: 0; width: 34%; opacity: 0; transform: translateX(-120%) skewX(-16deg);
+  background: linear-gradient(90deg, transparent, rgb(255 244 222 / 0.5), transparent); }
+.hb-petal {
+  position: absolute; top: -40px; left: var(--x); width: 18px; height: 13px; opacity: 0;
+  border-radius: 100% 0 100% 0 / 100% 0 100% 0; background: linear-gradient(135deg, #f7a1bd, #d6336c 70%, #a8124f);
+  box-shadow: inset -2px -2px 4px rgb(120 10 50 / 0.25);
+}
+
+/* ---------- Copy ---------- */
+.hero-banner .hero-inner { min-height: clamp(500px, 74vh, 660px); grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding-top: clamp(40px, 6vw, 72px); padding-bottom: clamp(64px, 8vw, 96px); }
+.hb-copy { max-width: 560px; }
+.hero-banner .eyebrow.hb-eyebrow { color: var(--rani-deep); gap: 10px; letter-spacing: 0.26em; }
+.hero-banner .eyebrow.hb-eyebrow::before { background: #c99a45; }
+.hero-banner .eyebrow.hb-eyebrow::after { content: ""; width: 34px; height: 1px; background: #c99a45; }
+.lotus { width: 26px; height: 16px; fill: #c99a45; flex: none; order: 0; }
+.hb-eyebrow .lotus { margin-right: -2px; }
+
+.hero-banner h1.hb-title { margin: 18px 0 14px; color: var(--wine); font-weight: 600; line-height: 0.92; letter-spacing: -0.01em; font-size: clamp(3rem, 7vw, 5.6rem); }
+.hb-title .hb-l1, .hb-title .hb-l2 { display: block; }
+.hb-title .hb-l2 { display: flex; align-items: baseline; gap: 0.12em; padding-left: 0.9em; }
+.hb-title .hb-l2 > .word:first-child { font-size: 0.58em; font-weight: 500; }
+.hb-script {
+  font-family: 'Great Vibes', 'Cormorant Garamond', cursive; font-weight: 400; font-size: 1.32em; line-height: 0.8; padding: 0.08em 0.18em 0.12em 0.04em; margin-left: -0.06em;
+  background: linear-gradient(100deg, #d81b60 10%, var(--rani) 45%, var(--rani-deep) 90%); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hb-cats { display: flex; flex-wrap: wrap; align-items: center; gap: 0; margin: 4px 0 14px !important; }
+.hb-cats button { border: 0; background: none; padding: 8px 14px; min-height: 32px; cursor: pointer; font: 600 0.8rem/1 var(--font-body); letter-spacing: 0.22em; text-transform: uppercase; color: var(--wine); position: relative; }
+.hb-cats button:first-child { padding-left: 0; }
+.hb-cats button + button { border-left: 1px solid rgb(59 13 23 / 0.35); }
+.hb-cats button::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 2px; height: 1px; background: var(--rani); transform: scaleX(0); transform-origin: left; transition: transform 0.3s var(--ease-out, ease); }
+.hb-cats button:first-child::after { left: 0; }
+.hb-cats button:hover::after, .hb-cats button:focus-visible::after { transform: scaleX(1); }
+.hero-banner p.hb-lede { color: rgb(59 13 23 / 0.78); font-size: 1.04rem; max-width: 42ch; margin-bottom: 26px; }
+
+/* Buttons: a rani-pink pill and a quiet outline */
+.hero-banner .btn-light {
+  border: 0; border-radius: 99px; padding: 0 30px; min-height: 52px; color: #fff; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.86rem;
+  background: linear-gradient(135deg, #d81b60, var(--rani-deep) 70%, #6e0d33); box-shadow: 0 14px 30px -14px rgb(142 16 80 / 0.75);
+}
+.hero-banner .btn-light:hover { color: #fff; box-shadow: 0 18px 34px -14px rgb(142 16 80 / 0.85); }
+.hero-banner .btn-light::before { border-color: rgb(216 27 96 / 0.6); border-radius: 99px; }
+.hero-banner .btn-ghost-light { border-radius: 99px; min-height: 52px; padding: 0 26px; color: var(--wine); border: 1px solid rgb(59 13 23 / 0.35); background: rgb(255 255 255 / 0.35); }
+.hero-banner .btn-ghost-light:hover { background: rgb(255 255 255 / 0.7); }
+
+.hero-banner .hero-stats { border-top-color: rgb(59 13 23 / 0.14); }
+.hero-banner .hero-stats strong { color: var(--rani-deep); }
+.hero-banner .hero-stats small { color: rgb(59 13 23 / 0.62); }
+
+/* Today's pick: the product spotlight as a small framed card over the photograph */
+.hero-banner .hero-media { position: relative; justify-self: end; align-self: end; width: clamp(200px, 19vw, 250px); max-width: none; margin-bottom: -10px; }
+.hero-banner .hero-media::before, .hero-banner .hero-media::after { content: none; animation: none; }
+.hero-banner .spot { border-radius: 18px; box-shadow: 0 26px 50px -24px rgb(59 13 23 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.6); }
+.hero-banner .spot-cap strong { font-size: 1.12rem; }
+.hb-pick { position: absolute; z-index: 3; top: -13px; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 5px 14px; border-radius: 99px; background: #fff; color: var(--rani-deep); font: 700 0.68rem/1 var(--font-body); letter-spacing: 0.2em; text-transform: uppercase; box-shadow: 0 6px 16px -8px rgb(59 13 23 / 0.5); }
+
+/* ---------- Feature strip under the banner (the existing trust row, restyled) ---------- */
+.trust { transform: translateY(-36px); position: relative; z-index: 2; }
+.trust-item { background: rgb(255 255 255 / 0.94); border-color: rgb(201 154 69 / 0.35); align-items: center; }
+.trust-item i { background: none; border: 1px solid rgb(201 154 69 / 0.55); color: #a87a2c; }
+.trust-item strong { color: var(--maroon); }
+
+/* ---------- Motion ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .hb-photo img { animation: hb-push 22s ease-in-out infinite alternate; }
+  @keyframes hb-push { from { transform: scale(1.02); } to { transform: scale(1.1) translateX(-1.5%); } }
+  .hb-sweep { animation: hb-sweep 9s ease-in-out 1.6s infinite; }
+  @keyframes hb-sweep { 0% { transform: translateX(-120%) skewX(-16deg); opacity: 0; } 8% { opacity: 1; } 30%, 100% { transform: translateX(330%) skewX(-16deg); opacity: 0; } }
+  .hb-petal { animation: hb-fall var(--t) linear var(--d) infinite; }
+  @keyframes hb-fall {
+    0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(var(--s)); opacity: 0; }
+    10% { opacity: 0.9; }
+    50% { transform: translate3d(calc(var(--dx) * -0.6), 330px, 0) rotate(calc(var(--r) * 0.5)) scale(var(--s)); }
+    85% { opacity: 0.8; }
+    100% { transform: translate3d(var(--dx), 700px, 0) rotate(var(--r)) scale(var(--s)); opacity: 0; }
+  }
+  .hb-arches path { stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: hb-draw 2.4s var(--ease-out, ease) 0.3s forwards; }
+  .hb-arches g:nth-child(2) path { animation-delay: 0.55s; } .hb-arches g:nth-child(3) path { animation-delay: 0.8s; }
+  @keyframes hb-draw { to { stroke-dashoffset: 0; } }
+  .hb-photo { animation: hb-reveal 1.4s var(--ease-out, ease) both; }
+  @keyframes hb-reveal { from { opacity: 0; transform: translateX(40px); } }
+  .hero-banner .hero-media { animation: fade-up 0.9s var(--ease-out, ease) 1.1s backwards; }
+  .hero-banner.is-off .hb-photo img, .hero-banner.is-off .hb-sweep, .hero-banner.is-off .hb-petal { animation-play-state: paused; }
+}
+
+/* ---------- Phones: photograph on top, words beneath ---------- */
+@media (max-width: 760px) {
+  .hero-banner .hero-inner { min-height: 0; grid-template-columns: 1fr; padding-top: min(76vw, 360px); padding-bottom: 72px; gap: 22px; }
+  .hero-banner .eyebrow.hb-eyebrow { letter-spacing: 0.18em; font-size: 0.68rem; gap: 8px; }
+  .hero-banner .eyebrow.hb-eyebrow::before, .hero-banner .eyebrow.hb-eyebrow::after { content: none; }
+  .hb-photo { left: 0; width: 100%; bottom: auto; height: min(78vw, 380px);
+    -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent); mask-image: linear-gradient(to bottom, #000 62%, transparent); }
+  .hb-photo img { object-position: 30% 20%; }
+  .hb-arches { width: 100%; height: 60%; top: auto; opacity: 0.22; }
+  .hero-banner h1.hb-title { font-size: clamp(2.7rem, 13vw, 3.4rem); margin-top: 12px; }
+  .hb-cats button { padding: 8px 10px; font-size: 0.72rem; letter-spacing: 0.16em; }
+  .hero-banner .hero-ctas .btn { flex: 1 1 auto; }
+  .hero-banner .hero-media { justify-self: center; align-self: auto; width: min(260px, 78vw); margin: 10px 0 0; }
+  .hb-petal:nth-child(n + 8) { display: none; }
+}

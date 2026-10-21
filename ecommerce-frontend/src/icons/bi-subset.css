@@ -47,7 +47,9 @@
 .bi-eye-slash::before { content: "\f340"; }
 .bi-file-earmark-spreadsheet::before { content: "\f389"; }
 .bi-fire::before { content: "\f7f6"; }
+.bi-flower1::before { content: "\f3cd"; }
 .bi-gear::before { content: "\f3e5"; }
+.bi-gem::before { content: "\f3e6"; }
 .bi-geo-alt::before { content: "\f3e8"; }
 .bi-gift::before { content: "\f3ec"; }
 .bi-graph-up-arrow::before { content: "\f673"; }

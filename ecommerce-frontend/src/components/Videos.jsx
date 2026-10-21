@@ -201,7 +201,7 @@ function ReelCard({ video, onOpen }) {
   }, [auto, video.youtubeId]);
   const cover = poster(video);
   return (
-    <button type="button" className="reel" ref={btn} onClick={onOpen} aria-label={`Watch: ${video.title}`} data-video-src={video.videoUrl}>
+    <button type="button" className={`reel ${live ? 'live' : ''}`} ref={btn} onClick={onOpen} aria-label={`Watch: ${video.title}`} data-video-src={video.videoUrl}>
       {cover ? <img src={cover} alt="" loading="lazy" decoding="async" /> : <span className="reel-blank" aria-hidden="true"></span>}
       {live && <video src={imageSrc(video.videoUrl)} poster={cover || undefined} muted loop playsInline autoPlay tabIndex={-1} aria-hidden="true" />}
       <span className="reel-play"><i className="bi bi-play-fill" aria-hidden="true"></i></span>

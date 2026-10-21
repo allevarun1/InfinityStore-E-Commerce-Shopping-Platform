@@ -72,23 +72,6 @@
   letter-spacing: -0.02em;
 }
 
-.brand span {
-  align-items: center;
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
-  border-radius: 10px;
-  color: #ffffff;
-  display: inline-flex;
-  height: 38px;
-  justify-content: center;
-  width: 38px;
-  box-shadow: 0 4px 10px rgba(179, 142, 93, 0.3);
-  transition: var(--transition-smooth);
-}
-
-.brand:hover span {
-  transform: rotate(5deg) scale(1.05);
-}
-
 /* Navigation Links */
 nav {
   align-items: center;

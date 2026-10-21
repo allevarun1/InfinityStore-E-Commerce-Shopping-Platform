@@ -13,6 +13,7 @@
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",
     "@fontsource/cormorant-garamond": "^5.3.0",
+    "@fontsource/great-vibes": "^5.3.0",
     "axios": "^1.18.1",
     "bootstrap-icons": "^1.13.1",
     "react": "^19.2.7",

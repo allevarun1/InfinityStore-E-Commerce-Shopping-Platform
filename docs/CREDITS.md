@@ -21,3 +21,12 @@ The nine first sample sarees and their reels predate this file; confirm their so
 | Koorai Silk Checks | [Koorai silk saree 4.jpg](https://commons.wikimedia.org/wiki/File%3AKoorai_silk_saree_4.jpg) by En.saravanan | CC BY 4.0 |
 | Red Paisley Zari Silk | [Mysore Silk Saree.jpg](https://commons.wikimedia.org/wiki/File%3AMysore_Silk_Saree.jpg) by Kiranravikumar | CC BY-SA 3.0 |
 | Sambalpuri Bandha Cotton | [Sambalpuri bandha.jpg](https://commons.wikimedia.org/wiki/File%3ASambalpuri_bandha.jpg) by Nayansatya | CC BY 3.0 |
+
+## Brand and banner
+
+| Asset | Source | Licence |
+|---|---|---|
+| Home banner photograph (`public/images/banner/`) | Cropped from a banner design supplied by the store owner (an AI-generated image). Label it as AI imagery if your marketplace or ad platform asks, and swap in a real shoot when you have one | Owner-supplied |
+| RS monogram and wordmark (`public/brand/`) | Drawn from Cormorant Garamond letterforms by `tools/make_brand.py` | Cormorant Garamond, SIL Open Font License 1.1 (the licence allows use in logos) |
+| "SHOPPING MALL" lettering | DM Sans | SIL Open Font License 1.1 |
+| Script lettering ("Trend") | Great Vibes, self-hosted from @fontsource | SIL Open Font License 1.1 |

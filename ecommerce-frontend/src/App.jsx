@@ -20,12 +20,15 @@ import { ApiService } from './services/api';
 import { inrCompact } from './lib/format';
 import { ScrollProgress } from './components/Motion';
 import { installRipples, installSpotlight, reducedMotion } from './lib/motion';
+import { BrandSignature } from './components/BrandMark';
+import { LandingIntro } from './components/LandingIntro';
 import '@fontsource/cormorant-garamond/latin-500.css';
 import '@fontsource/cormorant-garamond/latin-600.css';
 import '@fontsource/cormorant-garamond/latin-700.css';
 import '@fontsource/cormorant-garamond/latin-500-italic.css';
 import '@fontsource/cormorant-garamond/latin-600-italic.css';
 import '@fontsource-variable/dm-sans/index.css';
+import '@fontsource/great-vibes/latin-400.css';
 import './styles.css';
 import './App.css';
 import './theme.css';
@@ -40,6 +43,10 @@ import './refer.css';
 import './luxe.css';
 import './promo.css';
 import './perf.css';
+import './brand.css';
+import './alive.css';
+import './banner.css';
+import './home2.css';
 import './icons/bi-subset.css';
 
 // Rarely-first pages load on demand, so the home page ships a much smaller script.
@@ -79,8 +86,18 @@ function AnnouncementBar() {
   );
 }
 
+/** The emblem traces itself in gold once per visit, not on every page. */
+function firstVisit() {
+  try {
+    if (sessionStorage.getItem('rsm_logo_drawn')) return false;
+    sessionStorage.setItem('rsm_logo_drawn', '1');
+    return true;
+  } catch { return false; }
+}
+
 function Header() {
   const [hasNewOrders, setHasNewOrders] = useState(false);
+  const [drawLogo] = useState(firstVisit);
   const { isCustomer, isAdmin, isLoggedIn, logout } = useAuth();
   const { cartCount, cartPulse } = useStore();
   const navigate = useNavigate();
@@ -105,8 +122,7 @@ function Header() {
     <header className="site-header">
       <div className="header-inner">
         <Link className="brand" to="/" aria-label="Rekha Shopping Mall home">
-          <span className="brand-mark" aria-hidden="true">R</span>
-          <span className="brand-name">Rekha Shopping Mall</span>
+          <BrandSignature draw={drawLogo} />
         </Link>
 
         <SearchBox />
@@ -157,7 +173,7 @@ function Footer() {
       <Newsletter />
       <div className="footer-inner">
         <div>
-          <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true">R</span>Rekha Shopping Mall</Link>
+          <Link className="brand" to="/" aria-label="Rekha Shopping Mall home"><BrandSignature tone="dark" /></Link>
           <p>Handwoven silk, cotton, designer and bridal sarees, sourced directly from weavers.</p>
         </div>
         <div>
@@ -279,6 +295,7 @@ export default function App() {
             <Footer />
             <WhatsAppFab />
             <PromoPopup />
+            <LandingIntro />
             <Stylist />
             <MiniCart />
             <ScrollChrome />

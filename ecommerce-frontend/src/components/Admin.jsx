@@ -17,6 +17,7 @@ import { AdminProductList } from './AdminProductList';
 import { AdminProductEditor } from './AdminProductEditor';
 import { AdminStudio } from './AdminStudio';
 import { AdminMedia } from './AdminMedia';
+import { BrandMark } from './BrandMark';
 import { AdminPopups } from './AdminPopups';
 
 const BLANK_PRODUCT = { stockQuantity: 10, deal: false, dealPrice: '', categoryId: '', status: 'DRAFT', source: 'MANUAL' };
@@ -207,7 +208,7 @@ export function Admin() {
   return (
     <section className="adm admin-panel-container">
       <aside className="adm-side">
-        <div className="adm-brand"><span className="brand-mark" aria-hidden="true">R</span><div><strong>Rekha Shopping Mall</strong><small>Store admin</small></div></div>
+        <div className="adm-brand"><BrandMark /><div><strong>Rekha Shopping Mall</strong><small>Store admin</small></div></div>
         <nav className="admin-tabs" aria-label="Admin sections">
           {NAV.map(g => (
             <div className="adm-group" key={g.group}>

@@ -1,9 +1,10 @@
 import React from 'react';
+import { BrandMark } from './BrandMark';
 
 export function Loader({ fullPage = false, message = "Loading..." }) {
   const loaderContent = (
-    <div className="loader-content">
-      <div className="spinner"></div>
+    <div className="loader-content rs-loader" role="status">
+      <BrandMark draw />
       <p>{message}</p>
     </div>
   );

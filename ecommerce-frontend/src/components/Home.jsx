@@ -1,12 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useStore } from '../contexts/StoreContext';
 import { EmptyState } from './EmptyState';
 import { useCartActions } from '../lib/useCartActions';
-import { Reveal, Spotlight, CategoryTiles, OccasionStrip } from './HomeSections';
-import { Rise, SplitWords, CountUp, Marquee, HeroDust, ThreadDivider } from './Motion';
+import { Reveal, Spotlight, CategoryTiles, OccasionStrip, PromoTrio, StyleBand } from './HomeSections';
+import { Rise, CountUp, Marquee, BannerScene, Lotus, ThreadDivider } from './Motion';
 import { CraftStory, ReelsStrip } from './Videos';
 import { Testimonials } from './Testimonials';
 import { useTilt } from '../lib/motion';
@@ -16,6 +16,7 @@ import { inrCompact, isOnDeal, activePrice, discountPercent } from '../lib/forma
 
 const SORTS = {
   featured: { label: 'Featured', fn: (a, b) => (b.stockQuantity > 0) - (a.stockQuantity > 0) || isOnDeal(b) - isOnDeal(a) || a.id - b.id },
+  new: { label: 'Newest first', fn: (a, b) => b.id - a.id },
   'price-asc': { label: 'Price: low to high', fn: (a, b) => activePrice(a) - activePrice(b) },
   'price-desc': { label: 'Price: high to low', fn: (a, b) => activePrice(b) - activePrice(a) },
   discount: { label: 'Biggest discount', fn: (a, b) => discountPercent(b) - discountPercent(a) },
@@ -55,6 +56,17 @@ export function Home() {
   const cartActions = useCartActions();
   const location = useLocation();
   const tiltRef = useTilt(6);
+  // The banner's looping motion (photo push-in, light sweep, petals) pauses once it is scrolled away: measured on a
+  // throttled phone, leaving it running cost about 15 ms of every scroll frame further down the page.
+  const heroRef = useRef(null);
+  const [heroOn, setHeroOn] = useState(true);
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+    const io = new IntersectionObserver(([e]) => setHeroOn(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -156,18 +168,33 @@ export function Home() {
 
   return (
     <>
-      <section className="hero-x full-bleed" aria-labelledby="hero-title">
-        <HeroDust />
+      <section ref={heroRef} className={`hero-x hero-banner full-bleed ${heroOn ? '' : 'is-off'}`} aria-labelledby="hero-title">
+        <BannerScene />
         <div className="hero-inner">
-          <div>
-            <span className="eyebrow">Handwoven saree collection</span>
-            <h1 id="hero-title"><SplitWords text="Drapes woven to be treasured for years." accent={['treasured']} /></h1>
-            <p>
-              Explore Kanchipuram silks, Bengal handlooms, Kerala kasavu and contemporary designer drapes,
-              sourced directly from weavers.
+          <div className="hb-copy">
+            <span className="eyebrow hb-eyebrow"><Lotus />Handwoven saree destination</span>
+            <h1 id="hero-title" className="hb-title">
+              <span className="sr-only">Tradition meets trend.</span>
+              <span className="hb-l1" aria-hidden="true"><span className="word" style={{ '--i': 0 }}>Tradition</span></span>
+              <span className="hb-l2" aria-hidden="true">
+                <span className="word" style={{ '--i': 1 }}>meets</span>
+                <span className="word hb-script" style={{ '--i': 2 }}>Trend</span>
+              </span>
+            </h1>
+            {categories.length > 0 && (
+              <p className="hb-cats">
+                {categories.slice(0, 4).map(c => (
+                  <button key={c.id} type="button" onClick={() => pickAndScroll({ category: String(c.id), view: '', q: '' })}>
+                    {c.name.replace(/ Sarees$/i, '')}
+                  </button>
+                ))}
+              </p>
+            )}
+            <p className="hb-lede">
+              Kanchipuram silks, Bengal handlooms, Kerala kasavu and designer drapes, sourced directly from weavers.
             </p>
             <div className="hero-ctas">
-              <a className="btn btn-light" href="#products">Shop the collection</a>
+              <a className="btn btn-light" href="#products">Explore the collection</a>
               <button type="button" className="btn btn-ghost-light"
                 onClick={() => { update({ view: 'deals', category: '', q: '' }); document.getElementById('products')?.scrollIntoView(); }}>
                 View deals
@@ -182,6 +209,7 @@ export function Home() {
             )}
           </div>
           <div className="hero-media" ref={tiltRef}>
+            <span className="hb-pick">Today's pick</span>
             <Spotlight products={heroProducts} />
           </div>
         </div>
@@ -212,6 +240,7 @@ export function Home() {
             <CategoryTiles categories={categories} products={products}
               onPick={(id) => pickAndScroll({ category: id, view: '', q: '' })} />
           </Reveal>
+          <PromoTrio products={products} onPick={(changes) => pickAndScroll({ q: '', ...changes })} />
           <ThreadDivider />
           <CraftStory videos={videos} />
           <ReelsStrip videos={videos} />
@@ -363,6 +392,7 @@ export function Home() {
         {quick && <QuickView product={quick} onClose={() => setQuick(null)} />}
       </section>
       {!loading && !failed && <Testimonials />}
+      <StyleBand />
     </>
   );
 }

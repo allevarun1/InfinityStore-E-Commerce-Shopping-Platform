@@ -44,6 +44,8 @@ const clickText = async (selector, text) => {
     [...document.querySelectorAll(sel)].find(el => el.textContent.trim().toLowerCase().includes(t.toLowerCase())), selector, text);
   const el = handle.asElement();
   if (!el) throw new Error(`no ${selector} with text "${text}"`);
+  // centre it first: scrolled only "into view" it can sit under the sticky header, which then takes the click
+  await el.evaluate(e => e.scrollIntoView({ block: 'center' }));
   await el.click();
 };
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
@@ -80,6 +82,23 @@ ok('Escape closes suggestions', !(await page.$('.suggest')));
 await page.$eval('.header-search input', e => { e.value = ''; });
 await page.click('.tile'); await wait(900);
 ok('clicking a category tile filters the catalogue', new URL(page.url()).searchParams.get('category'), page.url());
+await page.goto(BASE + '/', { waitUntil: 'networkidle0' });
+
+// ---------- 1c. Brand-board sections: category carousel, three editorial banners, occasion medallions, closing band
+ok('category carousel scrolls sideways', await page.$eval('.tiles-grid.car-track', e => getComputedStyle(e).overflowX === 'auto'));
+ok('carousel arrow moves the cards', await (async () => {
+  const before = await page.$eval('.car-track', e => e.scrollLeft);
+  const next = await page.$('.car-arrows button:last-child:not([disabled])');
+  if (!next) return true; // all categories fit on screen
+  await next.click(); await wait(900);
+  return (await page.$eval('.car-track', e => e.scrollLeft)) > before;
+})());
+const trio = await page.$$eval('.trio-card', e => e.length);
+ok('editorial banners show (new, festive, deals)', trio >= 2, `(${trio})`);
+ok('occasion medallions show product photos', (await page.$$eval('.occ-row .occ-pic img', e => e.length)) >= 2);
+ok('closing band links back to the collection', await page.$eval('.band .band-cta', a => a.getAttribute('href') === '#products'));
+await page.evaluate(() => [...document.querySelectorAll('.trio-card button')].find(b => /deals/i.test(b.textContent))?.click()); await wait(900);
+ok('deals banner opens the deals view', new URL(page.url()).searchParams.get('view') === 'deals', page.url());
 await page.goto(BASE + '/', { waitUntil: 'networkidle0' });
 
 // ---------- 2. Guest add to cart (hover quick-add, then the slide-in panel)
@@ -211,7 +230,8 @@ await page.screenshot({ path: path.join(OUT, '05c-quickview.png') });
 await page.keyboard.press('Escape'); await wait(200);
 ok('quick view closes with Escape', !(await page.$('.qv')));
 const before = await page.$$eval('.pgrid .pcard', e => e.length);
-await clickText('.price-chips .chip', 'Under'); await wait(400);
+await clickText('.price-chips .chip', 'Under');
+await page.waitForFunction(() => new URL(location.href).searchParams.get('price'), { timeout: 3000 }).catch(() => {}); await wait(300);
 const after = await page.$$eval('.pgrid .pcard', e => e.length);
 ok('price filter narrows the collection', after > 0 && after < before, `(${before} -> ${after})`);
 ok('active filter chip appears', await page.$('.active-filters'));

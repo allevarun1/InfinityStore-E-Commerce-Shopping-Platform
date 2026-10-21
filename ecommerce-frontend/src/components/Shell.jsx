@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../contexts/StoreContext';
 import { inrCompact } from '../lib/format';
+import { BrandSignature } from './BrandMark';
 
 /** Split-screen frame for sign-in, registration and password reset: brand panel + the form. */
 export function AuthShell({ children }) {
@@ -10,7 +11,7 @@ export function AuthShell({ children }) {
       <aside className="auth-art" aria-hidden="true">
         <img src="/images/sarees/hero-sarees.jpg" alt="" width="900" height="1125" />
         <div className="auth-art-copy">
-          <span className="eyebrow">Rekha Shopping Mall</span>
+          <BrandSignature tone="dark" />
           <p className="auth-quote">Handwoven drapes, chosen with care and delivered to your door.</p>
           <ul>
             {info && <li><i className="bi bi-truck"></i> Free shipping above {inrCompact(info.freeShippingThreshold)}</li>}

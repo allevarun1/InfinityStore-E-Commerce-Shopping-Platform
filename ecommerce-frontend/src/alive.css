@@ -1,0 +1,60 @@
+/* ==========================================================================
+   Ambient motion, rebuilt to cost nothing while you scroll.
+
+   The earlier versions animated background-position and box-shadow, which makes the browser repaint those pixels on
+   every frame (that was part of the scroll lag). Every effect here animates only `transform` or `opacity` on a small
+   element, which the graphics card does on its own without involving the page's main thread.
+   Measured, not assumed (Chrome trace while scrolling a throttled phone):
+   - every animation that is running still has its style updated on each frame the page draws, so cost grows with the
+     NUMBER of running animations. Looping the play ring on all 19 reels more than doubled style work during a scroll.
+   - so only a few small things loop forever (zari thread, logo sheen, the banner's photo push-in, light sweep and petals); everything else
+     plays a few times when it appears and then stops for good, or runs only on the one reel that is playing.
+   Loaded after perf.css. Nothing here runs for shoppers who ask their device for less motion.
+   ========================================================================== */
+
+.hero-x::after { content: none; }
+
+/* A hover glow on product cards, drawn once and faded in (opacity), instead of an animated shadow. */
+.pcard-badge::after, .reel-play::after, .vp-bigplay::after, .hero-x .btn-light::before, .refer-code code::after {
+  content: ""; position: absolute; pointer-events: none; border-radius: inherit; opacity: 0;
+}
+.pcard-badge::after { inset: 0; box-shadow: 0 0 0 5px rgb(123 30 43 / 0.26), 0 0 18px 2px rgb(181 134 47 / 0.35); }
+.reel-play::after { inset: 0; border: 2px solid rgb(255 255 255 / 0.85); }
+.vp-bigplay::after { inset: 0; border: 2px solid rgb(255 255 255 / 0.7); }
+.hero-x .btn-light::before { inset: -5px; border: 1.5px solid rgb(246 216 154 / 0.85); }
+.refer-code code { position: relative; }
+.refer-code code::after { inset: -7px; box-shadow: 0 0 0 6px rgb(181 134 47 / 0.16), 0 0 26px rgb(181 134 47 / 0.3); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Header: the zari thread under the bar flows slowly left to right. */
+  .site-header { overflow-x: clip; }
+  .site-header::after {
+    left: -100%; right: auto; width: 200%; opacity: 0.9;
+    background: repeating-linear-gradient(90deg, transparent 0, transparent 6%, #b5862f 16%, #f6dc9a 25%, #b5862f 34%, transparent 44%, transparent 50%);
+    animation: zari-flow 14s linear infinite;
+  }
+  @keyframes zari-flow { to { transform: translateX(50%); } }
+
+  /* Hero: a ring breathes out of the main button a few times. */
+  .hero-x .btn-light::before { animation: ring-out 3s ease-out 2.6s 4; }
+  @keyframes ring-out { 0% { transform: scale(0.98); opacity: 0.65; } 100% { transform: scale(1.07, 1.4); opacity: 0; } }
+
+  /* Product cards: as a card appears, its offer badge glows a few times and a sheen crosses the photo once. */
+  .pcard.in .pcard-badge::after { animation: glow-breathe 2.8s ease-in-out calc(var(--d, 0ms) + 900ms) 3; }
+  @keyframes glow-breathe { 50% { opacity: 1; } }
+  .pcard-media::before {
+    content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; transform: translateX(-130%);
+    background: linear-gradient(105deg, transparent 38%, rgb(255 248 230 / 0.38) 50%, transparent 62%);
+  }
+  .pcard.in .pcard-media::before { animation: card-sheen 1.3s var(--ease-out, ease) calc(var(--d, 0ms) + 450ms) 1 both; }
+  @keyframes card-sheen { to { transform: translateX(130%); } }
+
+  /* Reels: the play badge pulses on the reel that is playing (one or two at a time); the player's big play button too. */
+  .reel.live .reel-play::after, .vp-bigplay::after { animation: ring-pulse 2.4s ease-out infinite; }
+  @keyframes ring-pulse { 0% { transform: scale(1); opacity: 0.85; } 100% { transform: scale(1.75); opacity: 0; } }
+
+  /* Referral hero: the woven pattern drifts (moved from background-position to transform). */
+  .refer-hero::before { inset: -56px 0 0 -56px; animation: jaali-drift 40s linear infinite; }
+  @keyframes jaali-drift { to { transform: translate(56px, 56px); } }
+  .refer-code code::after { animation: glow-breathe 3.4s ease-in-out infinite; }
+}

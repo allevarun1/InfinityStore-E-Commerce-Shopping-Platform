@@ -27,16 +27,34 @@ async function open(reduce = false, mobile = false) {
   return { page, errors };
 }
 
+// ---------- Landing logo (automated browsers skip it unless asked)
+{
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1280, height: 800 });
+  await page.evaluateOnNewDocument(() => { localStorage.setItem('rsm_intro_force', '1'); localStorage.setItem('cookie-consent', 'declined'); });
+  await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.intro', { timeout: 4000 }).catch(() => {});
+  ok('landing logo shows on the first visit', await page.$('.intro .rs-mono svg'));
+  await wait(2800);
+  ok('landing logo lifts by itself', !(await page.$('.intro')));
+  await page.reload({ waitUntil: 'domcontentloaded' }); await wait(400);
+  ok('landing logo shows only once per visit', !(await page.$('.intro')));
+  await page.close();
+}
+
 // ---------- Desktop with motion
 {
   const { page, errors } = await open();
   await wait(2600);
-  ok('headline words arrive one by one and end visible', await page.$$eval('.hero-x h1 .word', w => w.length >= 6 && w.every(x => getComputedStyle(x).opacity === '1')));
-  ok('headline keeps one readable sentence for screen readers', (await page.$eval('.hero-x h1 .sr-only', e => e.textContent)).startsWith('Drapes woven to be treasured'));
+  ok('headline words arrive one by one and end visible', await page.$$eval('.hero-x h1 .word', w => w.length >= 3 && w.every(x => getComputedStyle(x).opacity === '1')));
+  ok('headline keeps one readable sentence for screen readers', (await page.$eval('.hero-x h1 .sr-only', e => e.textContent)).startsWith('Tradition meets trend'));
   const stats = await page.$eval('.hero-stats', e => e.innerText.replace(/\s+/g, ' '));
   const real = await page.evaluate(async () => (await fetch('http://localhost:8080/api/products').then(r => r.json())).length);
   ok('hero counters land on the real number of sarees', stats.startsWith(`${real} SAREES`), stats);
-  ok('gold dust and glows are decorative only', await page.$eval('.hero-dust', e => e.getAttribute('aria-hidden') === 'true' && getComputedStyle(e).pointerEvents === 'none'));
+  ok('banner scenery (photo, arches, petals) is decorative only', await page.$eval('.hb-scene', e => e.getAttribute('aria-hidden') === 'true' && getComputedStyle(e).pointerEvents === 'none'));
+  ok('banner photograph has loaded', await page.$eval('.hb-photo img', i => i.complete && i.naturalWidth > 800));
+  ok('banner category links filter the collection', await page.$$eval('.hb-cats button', b => b.length >= 2));
+  ok('header shows the RS monogram and REKHA wordmark', await page.$eval('.site-header .brand', b => !!b.querySelector('.rs-mono svg path') && /rekha/i.test(b.textContent)));
 
   const m1 = await page.$eval('.marquee-track', e => getComputedStyle(e).transform);
   await wait(900);

@@ -1,0 +1,87 @@
+/* ==========================================================================
+   Brand: the RS emblem and the Rekha wordmark (see components/BrandMark.jsx, tools/make_brand.py)
+   ========================================================================== */
+
+.rs-lockup { display: inline-flex; align-items: center; gap: 11px; color: inherit; }
+.rs-mark {
+  position: relative; display: block; flex: none; height: 48px; aspect-ratio: 100 / 134; overflow: hidden;
+  /* the sheen is clipped to the arch, so light only ever crosses the emblem itself */
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 134'%3E%3Cpath d='M8 132 V58 C8 34 30 24 41 14 C46 9.5 49 5 50 1 C51 5 54 9.5 59 14 C70 24 92 34 92 58 V132 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 134'%3E%3Cpath d='M8 132 V58 C8 34 30 24 41 14 C46 9.5 49 5 50 1 C51 5 54 9.5 59 14 C70 24 92 34 92 58 V132 Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  transition: transform 0.35s var(--spring, ease);
+}
+.rs-mark svg { display: block; width: 100%; height: 100%; }
+.rs-mark .rs-r, .rs-mark .rs-s, .rs-mono .rs-r, .rs-mono .rs-s { stroke-opacity: 0; }
+.rs-sheen {
+  position: absolute; inset: 0; pointer-events: none; transform: translateX(-120%);
+  background: linear-gradient(105deg, transparent 32%, rgb(255 246 222 / 0.62) 48%, rgb(255 246 222 / 0.1) 56%, transparent 64%);
+}
+.rs-words { display: grid; justify-items: start; line-height: 1; }
+.rs-name { font-family: var(--font-display); font-weight: 700; font-size: 2rem; line-height: 0.86; letter-spacing: 0.005em; }
+.rs-sub {
+  margin-top: 6px; padding-left: 2px; font: 600 0.6rem/1 var(--font-body); letter-spacing: 0.38em; text-transform: uppercase; color: var(--gold-ink, #85601c);
+}
+.rs-dark .rs-name { color: #fff; }
+.rs-dark .rs-sub { color: #e3c787; }
+
+/* Signature lockup (header, footer, sign-in): free-standing monogram, REKHA in capitals, "— SHOPPING MALL —" */
+.rs-signature { display: inline-flex; align-items: center; gap: 10px; }
+.rs-mono { display: block; flex: none; height: 46px; aspect-ratio: 84 / 66; transition: transform 0.35s var(--spring, ease); }
+.rs-mono svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.rs-signature .rs-words { justify-items: center; }
+.rs-signature .rs-name {
+  text-transform: uppercase; letter-spacing: 0.1em; font-size: 1.72rem; line-height: 0.95; padding-left: 0.1em;
+  background: linear-gradient(100deg, #6f4513 0%, #a87a2c 35%, #c99a45 55%, #7f5117 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.rs-signature .rs-sub { display: flex; align-items: center; gap: 6px; margin-top: 4px; padding: 0; font-size: 0.56rem; letter-spacing: 0.3em; color: var(--ink-2, #3a322c); }
+.rs-signature .rs-sub::before, .rs-signature .rs-sub::after { content: ""; width: 12px; height: 1px; background: currentColor; opacity: 0.7; }
+.rs-signature.rs-dark .rs-name { background-image: linear-gradient(100deg, #f7e3b0, #e2bf74 45%, #f1d898 70%, #c99a45); }
+.rs-signature.rs-dark .rs-sub { color: #eadfcd; }
+.brand:hover .rs-mono { transform: translateY(-2px) rotate(-3deg); }
+.footer a.brand .rs-mono { height: 54px; }
+.footer a.brand .rs-signature .rs-name { font-size: 2rem; }
+
+/* Header and footer */
+.site-header .brand { gap: 0; font-size: inherit; }
+.brand:hover .rs-mark, .brand:focus-visible .rs-mark { transform: translateY(-2px) rotate(-2deg); }
+.footer a.brand .rs-mark { height: 56px; }
+.footer a.brand .rs-name { font-size: 2.25rem; }
+@media (max-width: 760px) {
+  .site-header .rs-mark { height: 40px; }
+  .site-header .rs-name { font-size: 1.62rem; }
+  .site-header .rs-sub { font-size: 0.52rem; letter-spacing: 0.32em; }
+  .site-header .rs-lockup { gap: 9px; }
+  .site-header .rs-mono { height: 38px; }
+  .site-header .rs-signature .rs-name { font-size: 1.45rem; }
+  .site-header .rs-signature .rs-sub { font-size: 0.5rem; letter-spacing: 0.26em; }
+}
+
+/* Admin sidebar */
+.adm-brand .rs-mark { height: 46px; }
+
+/* Sign-in artwork */
+.auth-art .rs-lockup { margin-bottom: 18px; }
+
+/* Full-page loader: the emblem traces itself while the page loads */
+.rs-loader { display: grid; justify-items: center; gap: 14px; color: var(--maroon); font-weight: 600; }
+.rs-loader .rs-mark { height: 76px; }
+.rs-loader p { margin: 0; font-size: 0.92rem; letter-spacing: 0.04em; color: var(--ink-2); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* A light sheen crosses the header emblem every few seconds: transform only, so it is free for the scroll. */
+  .site-header .rs-sheen { animation: rs-sheen 7.5s cubic-bezier(0.45, 0, 0.2, 1) 2.6s infinite; }
+  .brand:hover .rs-sheen, .adm-brand:hover .rs-sheen, .footer .brand:hover .rs-sheen { animation: rs-sheen 1.6s cubic-bezier(0.45, 0, 0.2, 1) 1; }
+  @keyframes rs-sheen { 0% { transform: translateX(-120%); } 18%, 100% { transform: translateX(120%); } }
+
+  /* First visit: the arch border and the letters are traced in gold, then filled. */
+  .rs-mark.draw .rs-zari { stroke-dasharray: 1; stroke-dashoffset: 1; animation: rs-trace-line 1.3s var(--ease-out, ease) 0.15s forwards; }
+  :is(.rs-mark, .rs-mono).draw .rs-r, :is(.rs-mark, .rs-mono).draw .rs-s { stroke-dasharray: 1; stroke-dashoffset: 1; stroke-opacity: 1; fill-opacity: 0; animation: rs-trace 1.5s var(--ease-out, ease) 0.35s forwards, rs-fill 0.6s ease 1.45s forwards; }
+  :is(.rs-mark, .rs-mono).draw .rs-s { animation-delay: 0.6s, 1.6s; }
+  :is(.rs-mark, .rs-mono).draw .rs-gap, .rs-mark.draw .rs-bindu { opacity: 0; animation: rs-in 0.5s ease 1.75s forwards; }
+  @keyframes rs-trace-line { to { stroke-dashoffset: 0; } }
+  @keyframes rs-trace { 0% { stroke-dashoffset: 1; stroke-opacity: 1; } 75% { stroke-dashoffset: 0; stroke-opacity: 1; } 100% { stroke-dashoffset: 0; stroke-opacity: 0; } }
+  @keyframes rs-fill { to { fill-opacity: 1; } }
+  @keyframes rs-in { to { opacity: 1; } }
+
+  .rs-loader .rs-sheen { animation: rs-sheen 2.4s cubic-bezier(0.45, 0, 0.2, 1) 1.2s infinite; }
+}

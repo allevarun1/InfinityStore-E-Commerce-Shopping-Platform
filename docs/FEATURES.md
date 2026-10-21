@@ -39,6 +39,8 @@ Every item below is built and covered by automated tests unless it says otherwis
 | Bulk and feeds | Import many sarees from a spreadsheet (preview first; always creates drafts), export a backup, Google Shopping / Instagram / Facebook feed link, sitemap |
 | Product Studio and Insights | Suggests listing text and price from cost; sales, margin, low stock, restock and range-gap findings from your own data |
 | Videos | Paste a link to an mp4/webm file or a YouTube clip; choose story or reel; optionally tie it to a saree; pause or remove any time. Only https links are accepted |
+| Brand identity | RS monogram (gold R sweeping across a rani-pink S), a REKHA wordmark, an arch badge for app icons, favicon, share card and print/WhatsApp PNGs; see docs/BRAND.md |
+| Home banner | "Tradition meets Trend": warm rose-gold banner with the saree photograph, gold Mughal arches that draw themselves, drifting petals, a light sweep and a slow push-in; category shortcuts, a "Today's pick" product card, and a separate phone layout |
 | Admin console | Sidebar sections, a Today dashboard (sales, orders waiting, stock to watch, 14-day trend, shortcuts), saree cards with search and filters, an editor with a live shopper preview and a publish checklist, orders with filters and photos |
 | Photos | Drag in any number of photos: each is made crisp (smart enlargement to 1200x1500, auto light and colour, careful sharpening), stored in the library and shown as a cover plus gallery; drag or use arrows to reorder, one click to enhance again |
 | Media library | Upload photos (up to 8 MB) and videos (MP4 or WebM, up to 20 MB), preview, copy a link, delete what is unused; files are checked by their contents, never by name, and are served with a one-year cache |
