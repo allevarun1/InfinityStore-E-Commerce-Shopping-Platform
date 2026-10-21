@@ -30,7 +30,7 @@ export function GuestCart() {
   }, []);
 
   useEffect(() => {
-    document.title = 'Your cart | InfinityStore';
+    document.title = 'Your cart | Rekha Shopping Mall';
     load();
   }, [load]);
 

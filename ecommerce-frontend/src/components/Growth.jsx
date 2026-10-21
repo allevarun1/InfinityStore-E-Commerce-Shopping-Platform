@@ -18,7 +18,7 @@ export function WhatsAppFab() {
   if (!info?.whatsappNumber || pathname === '/checkout' || pathname.startsWith('/admin')) return null;
   return (
     <a className="wa-fab" target="_blank" rel="noopener noreferrer"
-      href={whatsappLink(info.whatsappNumber, 'Hi InfinityStore, I need help choosing a saree.')}
+      href={whatsappLink(info.whatsappNumber, 'Hi Rekha Shopping Mall, I need help choosing a saree.')}
       aria-label="Chat with us on WhatsApp">
       <i className="bi bi-whatsapp" aria-hidden="true"></i>
       <span>Chat with us</span>
@@ -30,7 +30,7 @@ export function WhatsAppFab() {
 export function WhatsAppAsk({ product }) {
   const { info } = useStore();
   if (!info?.whatsappNumber) return null;
-  const text = `Hi InfinityStore, I'm interested in "${product.name}" ${window.location.href}`;
+  const text = `Hi Rekha Shopping Mall, I'm interested in "${product.name}" ${window.location.href}`;
   return (
     <a className="btn btn-outline wa-ask" target="_blank" rel="noopener noreferrer"
       href={whatsappLink(info.whatsappNumber, text)}>
@@ -66,7 +66,7 @@ export function Newsletter() {
   return (
     <section className="newsletter" aria-labelledby="nl-title">
       <div>
-        <h2 id="nl-title">Join the InfinityStore circle</h2>
+        <h2 id="nl-title">Join the Rekha Shopping Mall circle</h2>
         <p>{pitch}</p>
       </div>
       {done ? (

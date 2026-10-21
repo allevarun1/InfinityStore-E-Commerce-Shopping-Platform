@@ -74,7 +74,7 @@ export function Profile() {
   };
 
   const deleteAccount = () => {
-    if (window.confirm('Are you sure you want to delete your InfinityStore account? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete your Rekha Shopping Mall account? This action cannot be undone.')) {
       ApiService.deleteAccount()
         .then(() => {
           toast.success('Account deleted successfully');

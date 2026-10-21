@@ -230,7 +230,7 @@ await anon.goto(BASE + '/login', { waitUntil: 'networkidle0' });
 ok('sign-in uses the split brand layout', await anon.$('.auth-shell .auth-art'));
 await anon.screenshot({ path: path.join(OUT, '09-login.png') });
 const mf = await anon.evaluate(async () => { const l = document.querySelector('link[rel=manifest]'); if (!l) return null; const r = await fetch(l.href); return r.ok ? (await r.json()).short_name : null; });
-ok('web app manifest is served (installable)', mf === 'InfinityStore', mf);
+ok('web app manifest is served (installable)', mf === 'Rekha Shopping Mall', mf);
 await ctxAnon.close();
 
 // ---------- 8. Static pages

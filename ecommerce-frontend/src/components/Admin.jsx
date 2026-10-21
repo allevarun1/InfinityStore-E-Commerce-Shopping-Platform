@@ -512,7 +512,7 @@ export function Admin() {
                   <div><strong>Customer:</strong> {order.user ? `${order.user.firstName} ${order.user.lastName} (@${order.user.username})` : 'Unknown'}</div>
                   <div><strong>Phone:</strong> {order.phoneNumber || 'N/A'}
                     {order.phoneNumber && (
-                      <> · <a href={`https://wa.me/91${order.phoneNumber}?text=${encodeURIComponent(`Hi, this is InfinityStore about your order ${order.trackingNumber}.`)}`} target="_blank" rel="noopener noreferrer">WhatsApp customer</a></>
+                      <> · <a href={`https://wa.me/91${order.phoneNumber}?text=${encodeURIComponent(`Hi, this is Rekha Shopping Mall about your order ${order.trackingNumber}.`)}`} target="_blank" rel="noopener noreferrer">WhatsApp customer</a></>
                     )}
                   </div>
                   {order.couponCode && <div><strong>Coupon:</strong> {order.couponCode} (−₹{Number(order.couponDiscountAmount || 0).toLocaleString('en-IN')})</div>}

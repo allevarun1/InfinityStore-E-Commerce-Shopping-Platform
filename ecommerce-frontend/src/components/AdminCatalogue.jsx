@@ -66,10 +66,10 @@ export function AdminCatalogue({ onDone }) {
           <li>Fix anything marked, then <strong>Import</strong>. New sarees arrive as <em>drafts</em>; you publish them.</li>
         </ol>
         <div className="cat-actions">
-          <button type="button" className="btn btn-outline" onClick={() => save(ApiService.catalogueTemplate, 'infinitystore-import-template.csv')}>
+          <button type="button" className="btn btn-outline" onClick={() => save(ApiService.catalogueTemplate, 'rekha-import-template.csv')}>
             <i className="bi bi-download" aria-hidden="true"></i> Template
           </button>
-          <button type="button" className="btn btn-outline" onClick={() => save(ApiService.catalogueExport, 'infinitystore-catalogue.csv')}>
+          <button type="button" className="btn btn-outline" onClick={() => save(ApiService.catalogueExport, 'rekha-catalogue.csv')}>
             <i className="bi bi-box-arrow-down" aria-hidden="true"></i> Export all products
           </button>
         </div>

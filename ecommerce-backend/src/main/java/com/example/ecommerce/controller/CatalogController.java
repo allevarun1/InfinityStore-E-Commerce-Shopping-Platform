@@ -64,13 +64,13 @@ public class CatalogController {
     @GetMapping("/api/admin/catalog/export")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> export() {
-        return csv("infinitystore-catalogue.csv", catalog.exportCsv());
+        return csv("rekha-catalogue.csv", catalog.exportCsv());
     }
 
     @GetMapping("/api/admin/catalog/template")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> template() {
-        return csv("infinitystore-import-template.csv", catalog.template());
+        return csv("rekha-import-template.csv", catalog.template());
     }
 
     @PostMapping(value = "/api/admin/catalog/import", consumes = {"text/csv", "text/plain", "application/octet-stream"})

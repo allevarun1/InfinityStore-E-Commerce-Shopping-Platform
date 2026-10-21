@@ -100,7 +100,7 @@ public class AutopilotService {
     @Value("${app.automation.digest-hour:8}") private int digestHour;
     @Value("${app.automation.cart-delay-hours:3}") private int cartDelayHours;
     @Value("${app.growth.welcome-code:WELCOME10}") private String welcomeCode;
-    @Value("${app.store.name:InfinityStore}") private String storeName;
+    @Value("${app.store.name:Rekha Shopping Mall}") private String storeName;
     @Value("${app.automation.enabled:false}") private boolean scheduled;
 
     // ------------------------------------------------------------------ settings

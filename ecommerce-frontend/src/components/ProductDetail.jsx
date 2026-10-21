@@ -69,7 +69,7 @@ export function ProductDetail() {
       .then(p => {
         setProduct(p);
         setStatus('ready');
-        document.title = `${p.name} | InfinityStore`;
+        document.title = `${p.name} | Rekha Shopping Mall`;
         setProductMeta(p);
         rememberViewed(p.id);
         track.viewItem(p);
@@ -122,7 +122,7 @@ export function ProductDetail() {
   };
 
   const share = async () => {
-    const data = { title: product.name, text: `${product.name} at InfinityStore`, url: window.location.href };
+    const data = { title: product.name, text: `${product.name} at Rekha Shopping Mall`, url: window.location.href };
     try {
       if (navigator.share) await navigator.share(data);
       else {

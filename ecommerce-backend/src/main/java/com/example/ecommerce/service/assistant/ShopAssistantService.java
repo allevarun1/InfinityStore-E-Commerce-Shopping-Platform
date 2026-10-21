@@ -110,7 +110,7 @@ public class ShopAssistantService {
         Filters f = merge(prior, parse(text));
         boolean greeting = f.isEmpty() && (reset || has(text, "hi", "hello", "hey", "namaste", "vanakkam", "good morning", "good evening") || raw.isBlank());
         if (greeting) {
-            return new Reply("Namaste! I'm the InfinityStore stylist. Tell me the occasion, your budget or a colour you love, and I'll pick sarees for you.",
+            return new Reply("Namaste! I'm the Rekha Shopping Mall stylist. Tell me the occasion, your budget or a colour you love, and I'll pick sarees for you.",
                     List.of(), List.of("Wedding sarees", "Under ₹3,000", "Silk sarees", "Today's deals"), f, false, "greeting", null, null, "rules");
         }
         if (f.isEmpty()) {

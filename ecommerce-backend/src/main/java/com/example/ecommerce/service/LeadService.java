@@ -43,7 +43,7 @@ public class LeadService {
     @Autowired private ProductRepository products;
     @Autowired private AuditService audit;
 
-    @Value("${app.store.name:InfinityStore}")
+    @Value("${app.store.name:Rekha Shopping Mall}")
     private String storeName;
 
     /**

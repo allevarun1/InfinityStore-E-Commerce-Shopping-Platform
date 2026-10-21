@@ -1,4 +1,4 @@
-# InfinityStore: features and how they work
+# Rekha Shopping Mall: features and how they work
 
 Every item below is built and covered by automated tests unless it says otherwise.
 

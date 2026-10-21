@@ -73,7 +73,7 @@ export function Home() {
   }, [load]);
 
   useEffect(() => {
-    document.title = 'InfinityStore — Handwoven Saree Collection';
+    document.title = 'Rekha Shopping Mall — Handwoven Saree Collection';
   }, []);
 
   useEffect(() => {
@@ -188,7 +188,7 @@ export function Home() {
       </section>
 
       {info && (
-        <section className="trust full-bleed" aria-label="Shopping with InfinityStore">
+        <section className="trust full-bleed" aria-label="Shopping with Rekha Shopping Mall">
           <Rise className="trust-item">
             <i className="bi bi-truck" aria-hidden="true"></i>
             <div><strong>Free shipping above {inrCompact(info.freeShippingThreshold)}</strong><span>Otherwise a flat {inrCompact(info.shippingFee)}</span></div>

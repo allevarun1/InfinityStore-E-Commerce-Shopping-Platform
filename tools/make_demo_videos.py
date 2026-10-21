@@ -46,7 +46,7 @@ def segment(photo, title, subtitle, out, w, h, fgs, fgy, ty, ts, dur, fades=True
         f"[v2][l2]overlay=x='{w}-{w}*min(t/0.8,1)':y={fgy + fgs + 14}[v3]",
         f"[v3][2:v]overlay=x='-{w}+{w}*t/{dur}':y={h - 6}[v4]",
         "[v4]" + ",".join([
-            text("INFINITYSTORE", 22, GOLD, 56, 0.0),
+            text("REKHA SHOPPING MALL", 22, GOLD, 56, 0.0),
             text(title, ts, "white", ty, 0.3),
             text(subtitle, 22, GOLD, ty + ts + 26, 0.6),
         ]) + (f",fade=t=in:st=0:d=0.3,fade=t=out:st={dur - 0.3}:d=0.3" if fades else "") + "[outv]",

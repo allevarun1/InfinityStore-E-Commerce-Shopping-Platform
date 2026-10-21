@@ -110,11 +110,11 @@ public class DataSeeder implements CommandLineRunner {
                     adminUsername,
                     adminEmail,
                     passwordEncoder.encode(adminPassword),
-                    "InfinityStore",
+                    "Rekha Shopping Mall",
                     "Administrator"
             );
             admin.setPhone("9999999999");
-            admin.setAddresses("InfinityStore Admin Office");
+            admin.setAddresses("Rekha Shopping Mall Admin Office");
             Set<Role> adminRoles = new HashSet<>();
             adminRoles.add(adminRole);
             adminRoles.add(customerRole);

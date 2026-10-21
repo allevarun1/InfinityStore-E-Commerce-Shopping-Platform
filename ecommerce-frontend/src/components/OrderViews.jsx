@@ -62,7 +62,7 @@ export function OrderSuccess() {
   const order = useLocation().state?.order;
   const { info, refreshCart } = useStore();
   useEffect(() => {
-    document.title = 'Order placed | InfinityStore';
+    document.title = 'Order placed | Rekha Shopping Mall';
     refreshCart();
     window.scrollTo(0, 0);
     confetti();
@@ -112,7 +112,7 @@ export function OrderSuccess() {
           </div>
           <Link className="text-link" to="/refer"><i className="bi bi-gift" aria-hidden="true"></i> Refer a friend: they save 10%, you earn Rs. 200</Link>
           {info?.whatsappNumber && (
-            <a className="text-link" href={`https://wa.me/${info.whatsappNumber}?text=${encodeURIComponent(`Hi InfinityStore, about my order ${order.trackingNumber}`)}`}
+            <a className="text-link" href={`https://wa.me/${info.whatsappNumber}?text=${encodeURIComponent(`Hi Rekha Shopping Mall, about my order ${order.trackingNumber}`)}`}
               target="_blank" rel="noopener noreferrer"><i className="bi bi-whatsapp" aria-hidden="true"></i> Questions? Chat with us</a>
           )}
         </aside>

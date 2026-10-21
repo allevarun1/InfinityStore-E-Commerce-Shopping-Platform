@@ -48,7 +48,7 @@ export function Checkout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = 'Checkout | InfinityStore';
+    document.title = 'Checkout | Rekha Shopping Mall';
     setLoading(true);
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(addressKey(currentUser)) || 'null'); } catch { saved = null; }

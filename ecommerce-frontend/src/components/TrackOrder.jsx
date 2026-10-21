@@ -26,7 +26,7 @@ export function TrackOrder() {
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
 
-  useEffect(() => { document.title = 'Track your order | InfinityStore'; }, []);
+  useEffect(() => { document.title = 'Track your order | Rekha Shopping Mall'; }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -80,7 +80,7 @@ export function TrackOrder() {
           </p>
           {info?.whatsappNumber && (
             <a className="btn btn-outline wa-ask" target="_blank" rel="noopener noreferrer"
-              href={whatsappLink(info.whatsappNumber, `Hi InfinityStore, about my order ${result.orderNumber}`)}>
+              href={whatsappLink(info.whatsappNumber, `Hi Rekha Shopping Mall, about my order ${result.orderNumber}`)}>
               <i className="bi bi-whatsapp" aria-hidden="true"></i> Ask about this order
             </a>
           )}

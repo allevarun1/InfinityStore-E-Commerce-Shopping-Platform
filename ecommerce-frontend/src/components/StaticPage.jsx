@@ -4,9 +4,9 @@ import { useStore } from '../contexts/StoreContext';
 import { inrCompact } from '../lib/format';
 import { whatsappLink } from './Growth';
 
-const PRIVACY = 'InfinityStore respects your privacy and is committed to protecting your personal information. When you use our platform, we may collect basic details such as your name, email address, contact information, order history, and usage data to improve your shopping experience. This information is used to process orders, provide customer support, enhance website performance, and ensure account security. If you subscribe to our newsletter we use your email address to send offers and new-arrival updates, and you can unsubscribe at any time. We do not sell or share your personal data with unauthorized third parties. However, limited information may be shared with trusted partners such as payment gateways for secure transactions and delivery services for order fulfillment. We use essential cookies to maintain session data and, only if you accept, analytics and advertising cookies to understand how the store is used and to measure our advertising. By using InfinityStore, you agree to the collection and use of your information as described. For any privacy-related concerns, you can contact us using the details on our Contact page.';
+const PRIVACY = 'Rekha Shopping Mall respects your privacy and is committed to protecting your personal information. When you use our platform, we may collect basic details such as your name, email address, contact information, order history, and usage data to improve your shopping experience. This information is used to process orders, provide customer support, enhance website performance, and ensure account security. If you subscribe to our newsletter we use your email address to send offers and new-arrival updates, and you can unsubscribe at any time. We do not sell or share your personal data with unauthorized third parties. However, limited information may be shared with trusted partners such as payment gateways for secure transactions and delivery services for order fulfillment. We use essential cookies to maintain session data and, only if you accept, analytics and advertising cookies to understand how the store is used and to measure our advertising. By using Rekha Shopping Mall, you agree to the collection and use of your information as described. For any privacy-related concerns, you can contact us using the details on our Contact page.';
 
-const TERMS = 'By using InfinityStore, you agree to follow our terms and conditions. You are responsible for maintaining the confidentiality of your account and activities under it. While we aim to provide accurate product information, slight variations in descriptions or images may occur. Orders paid online are confirmed after successful payment; cash-on-delivery orders are confirmed when placed and paid on delivery. InfinityStore reserves the right to cancel orders in cases of fraud, technical issues, or stock unavailability. Delivery times may vary depending on location and courier services. Returns and refunds are accepted only under valid conditions such as damaged or incorrect products, and refunds will be processed through the original payment method. Coupon codes are subject to their stated conditions and may be withdrawn. Users must not misuse the platform, attempt unauthorized access, or engage in fraudulent activities. InfinityStore may update these terms at any time without prior notice.';
+const TERMS = 'By using Rekha Shopping Mall, you agree to follow our terms and conditions. You are responsible for maintaining the confidentiality of your account and activities under it. While we aim to provide accurate product information, slight variations in descriptions or images may occur. Orders paid online are confirmed after successful payment; cash-on-delivery orders are confirmed when placed and paid on delivery. Rekha Shopping Mall reserves the right to cancel orders in cases of fraud, technical issues, or stock unavailability. Delivery times may vary depending on location and courier services. Returns and refunds are accepted only under valid conditions such as damaged or incorrect products, and refunds will be processed through the original payment method. Coupon codes are subject to their stated conditions and may be withdrawn. Users must not misuse the platform, attempt unauthorized access, or engage in fraudulent activities. Rekha Shopping Mall may update these terms at any time without prior notice.';
 
 function Shipping({ info }) {
   return (
@@ -37,7 +37,7 @@ function Contact({ info }) {
     <>
       <p>We’re happy to help you choose a saree or track an order. Please quote your order number if you have one.</p>
       <ul>
-        {wa && <li><i className="bi bi-whatsapp" aria-hidden="true"></i> <a href={whatsappLink(wa, 'Hi InfinityStore, I need help.')} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></li>}
+        {wa && <li><i className="bi bi-whatsapp" aria-hidden="true"></i> <a href={whatsappLink(wa, 'Hi Rekha Shopping Mall, I need help.')} target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a></li>}
         {phone && <li><i className="bi bi-telephone" aria-hidden="true"></i> <a href={`tel:${phone.replace(/\s+/g, '')}`}>{phone}</a></li>}
         {email && <li><i className="bi bi-envelope" aria-hidden="true"></i> <a href={`mailto:${email}`}>{email}</a></li>}
         {!wa && !phone && !email && <li>Contact details will be published here shortly.</li>}
@@ -55,8 +55,8 @@ const TITLES = {
 
 export function StaticPage({ page }) {
   const { info } = useStore();
-  const title = TITLES[page] || 'InfinityStore';
-  useEffect(() => { document.title = `${title} | InfinityStore`; }, [title]);
+  const title = TITLES[page] || 'Rekha Shopping Mall';
+  useEffect(() => { document.title = `${title} | Rekha Shopping Mall`; }, [title]);
 
   return (
     <section className="panel static-page">

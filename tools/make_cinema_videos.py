@@ -111,7 +111,7 @@ def make(slug, photo, title, sub, cwd, kind=None):
         f"[l]drawbox=x=0:y=0:w=iw:h='{bar}*min(t/0.8,1)':color=black:t=fill,"
         f"drawbox=x=0:y='ih-{bar}*min(t/0.8,1)':w=iw:h={bar}:color=black:t=fill,"
         + ",".join([
-            text("INFINITYSTORE", 20, GOLD, 34, 0.5),
+            text("REKHA SHOPPING MALL", 20, GOLD, 34, 0.5),
             text(title, 34, "white", 742, 1.0),
             text(sub, 17, GOLD, 792, 1.3),
         ]) + f",fade=t=in:st=0:d=0.35,fade=t=out:st={total - 0.4}:d=0.4[outv]",

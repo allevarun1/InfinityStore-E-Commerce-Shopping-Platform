@@ -61,7 +61,7 @@ export function AdminLeads() {
       const blob = await ApiService.exportLeads();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = 'infinitystore-leads.csv'; a.click();
+      a.href = url; a.download = 'rekha-leads.csv'; a.click();
       URL.revokeObjectURL(url);
     } catch {
       toast.error('Could not export');
@@ -109,7 +109,7 @@ export function AdminLeads() {
 function LeadCard({ lead: l, onUpdate }) {
   const [notes, setNotes] = useState(l.notes || '');
   const who = l.name || l.email || (l.phone ? `+91 ${l.phone}` : 'Shopper');
-  const mail = l.email && `mailto:${l.email}?subject=${encodeURIComponent('From InfinityStore')}&body=${encodeURIComponent(l.followUp)}`;
+  const mail = l.email && `mailto:${l.email}?subject=${encodeURIComponent('From Rekha Shopping Mall')}&body=${encodeURIComponent(l.followUp)}`;
   const contacted = () => { if (l.status === 'NEW') onUpdate(l, { status: 'CONTACTED' }); };
 
   return (

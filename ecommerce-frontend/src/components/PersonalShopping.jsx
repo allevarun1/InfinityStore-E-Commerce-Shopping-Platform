@@ -22,7 +22,7 @@ function Consent({ checked, onChange }) {
   return (
     <label className="ai-consent">
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>InfinityStore may contact me about this request.</span>
+      <span>Rekha Shopping Mall may contact me about this request.</span>
     </label>
   );
 }
@@ -113,7 +113,7 @@ export function PersonalShopping() {
   const { info } = useStore();
   const product = useLocation().state?.product || null;
   const [tab, setTab] = useState('video');
-  useEffect(() => { document.title = 'Personal shopping | InfinityStore'; }, []);
+  useEffect(() => { document.title = 'Personal shopping | Rekha Shopping Mall'; }, []);
 
   return (
     <div className="ps">
@@ -135,7 +135,7 @@ export function PersonalShopping() {
         </div>
         {tab === 'video' ? <VideoCall product={product} /> : <Enquiry />}
         {info?.whatsappNumber && (
-          <p className="ps-alt">Prefer to chat now? <a href={whatsappLink(info.whatsappNumber, 'Hi InfinityStore, I would like help choosing a saree.')} target="_blank" rel="noopener noreferrer"><i className="bi bi-whatsapp" aria-hidden="true"></i> Message us on WhatsApp</a></p>
+          <p className="ps-alt">Prefer to chat now? <a href={whatsappLink(info.whatsappNumber, 'Hi Rekha Shopping Mall, I would like help choosing a saree.')} target="_blank" rel="noopener noreferrer"><i className="bi bi-whatsapp" aria-hidden="true"></i> Message us on WhatsApp</a></p>
         )}
       </div>
     </div>

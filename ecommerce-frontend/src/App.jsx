@@ -101,9 +101,9 @@ function Header() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Link className="brand" to="/" aria-label="InfinityStore home">
-          <span className="brand-mark" aria-hidden="true">∞</span>
-          <span className="brand-name">InfinityStore</span>
+        <Link className="brand" to="/" aria-label="Rekha Shopping Mall home">
+          <span className="brand-mark" aria-hidden="true">R</span>
+          <span className="brand-name">Rekha Shopping Mall</span>
         </Link>
 
         <SearchBox />
@@ -154,7 +154,7 @@ function Footer() {
       <Newsletter />
       <div className="footer-inner">
         <div>
-          <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true">∞</span>InfinityStore</Link>
+          <Link className="brand" to="/"><span className="brand-mark" aria-hidden="true">R</span>Rekha Shopping Mall</Link>
           <p>Handwoven silk, cotton, designer and bridal sarees, sourced directly from weavers.</p>
         </div>
         <div>
@@ -188,7 +188,7 @@ function Footer() {
         </div>
       </div>
       <div className="footer-base">
-        <span>© {new Date().getFullYear()} InfinityStore. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Rekha Shopping Mall. All rights reserved.</span>
         <span>Prices in Indian rupees (₹).</span>
       </div>
     </footer>

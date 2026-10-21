@@ -16,14 +16,14 @@ export function Refer() {
   const { info } = useStore();
 
   useEffect(() => {
-    document.title = 'Refer a friend | InfinityStore';
+    document.title = 'Refer a friend | Rekha Shopping Mall';
     ApiService.referral().then(setData).catch(() => setFailed(true));
   }, []);
 
   if (failed) return <p className="refer-wrap muted">We could not load your referral code. Please try again shortly.</p>;
   if (!data) return <Loader />;
 
-  const message = `I shop sarees at InfinityStore. Use my code ${data.code} for 10% off your first order: ${window.location.origin}`;
+  const message = `I shop sarees at Rekha Shopping Mall. Use my code ${data.code} for 10% off your first order: ${window.location.origin}`;
   const copy = () => navigator.clipboard?.writeText(data.code).then(() => toast.success('Code copied'), () => toast.error('Copy did not work, please select the code'));
   const share = () => (navigator.share ? navigator.share({ text: message }).catch(() => {}) : copy());
   const live = data.rewards.filter(r => !r.used);
@@ -54,7 +54,7 @@ export function Refer() {
             ))}
           </ul>
         )}
-        {info?.whatsappNumber && <p className="muted">Questions? <a className="text-link" href={whatsappLink(info.whatsappNumber, 'Hi InfinityStore, a question about referrals.')} target="_blank" rel="noopener noreferrer">Chat with us</a></p>}
+        {info?.whatsappNumber && <p className="muted">Questions? <a className="text-link" href={whatsappLink(info.whatsappNumber, 'Hi Rekha Shopping Mall, a question about referrals.')} target="_blank" rel="noopener noreferrer">Chat with us</a></p>}
       </section>
     </div>
   );

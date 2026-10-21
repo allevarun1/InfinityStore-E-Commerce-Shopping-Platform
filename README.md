@@ -1,4 +1,4 @@
-# 🛒 InfinityStore - E-Commerce Shopping Platform
+# 🛒 Rekha Shopping Mall - E-Commerce Shopping Platform
 
 A full-stack E-Commerce Shopping Platform built using **Spring Boot**, **React.js**, and **MySQL**. The application provides secure user authentication, product browsing, shopping cart management, wishlist functionality, order processing, and an admin dashboard for managing products and categories.
 
@@ -63,7 +63,7 @@ A full-stack E-Commerce Shopping Platform built using **Spring Boot**, **React.j
 # 📂 Project Structure
 
 ```
-InfinityStore
+Rekha Shopping Mall
 │
 ├── ecommerce-backend
 │   ├── src

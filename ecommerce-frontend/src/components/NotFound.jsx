@@ -6,7 +6,7 @@ export function NotFound({
   message = 'The link may be out of date, or the page has moved.',
 }) {
   useEffect(() => {
-    document.title = 'Page not found | InfinityStore';
+    document.title = 'Page not found | Rekha Shopping Mall';
   }, []);
 
   return (

@@ -45,7 +45,7 @@ public class CatalogService {
 
     @Value("${app.frontend-url:}") private String frontendUrl;
     @Value("${app.cors.allowed-origins:}") private String corsOrigins;
-    @Value("${app.store.name:InfinityStore}") private String storeName;
+    @Value("${app.store.name:Rekha Shopping Mall}") private String storeName;
 
     // ------------------------------------------------------------------ colours
 

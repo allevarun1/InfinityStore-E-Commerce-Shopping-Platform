@@ -19,7 +19,7 @@ export function Orders() {
   const { info } = useStore();
 
   useEffect(() => {
-    document.title = 'Your orders | InfinityStore';
+    document.title = 'Your orders | Rekha Shopping Mall';
     ApiService.orders()
       .then(setOrders)
       .catch(() => setFailed(true))
@@ -90,7 +90,7 @@ export function Orders() {
                 <footer className="order-actions">
                   {info?.whatsappNumber && (
                     <a className="btn btn-outline" target="_blank" rel="noopener noreferrer"
-                      href={`https://wa.me/${info.whatsappNumber}?text=${encodeURIComponent(`Hi InfinityStore, about my order ${order.trackingNumber}`)}`}>
+                      href={`https://wa.me/${info.whatsappNumber}?text=${encodeURIComponent(`Hi Rekha Shopping Mall, about my order ${order.trackingNumber}`)}`}>
                       <i className="bi bi-whatsapp" aria-hidden="true"></i> Get help
                     </a>
                   )}

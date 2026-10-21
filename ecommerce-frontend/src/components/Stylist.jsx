@@ -11,7 +11,7 @@ const HIDDEN_ON = ['/checkout', '/admin', '/login', '/register', '/reset-passwor
 
 const WELCOME = {
   from: 'bot',
-  text: "Namaste! I'm your InfinityStore stylist. Tell me the occasion, your budget or a colour you love, and I'll pick sarees for you.",
+  text: "Namaste! I'm your Rekha Shopping Mall stylist. Tell me the occasion, your budget or a colour you love, and I'll pick sarees for you.",
   suggestions: ['Wedding sarees', 'Under ₹3,000', 'Silk sarees', "Today's deals"],
 };
 
@@ -124,9 +124,9 @@ export function Stylist() {
       {open && (
         <section className="ai-panel" role="dialog" aria-label="Shopping assistant">
           <header className="ai-head">
-            <span className="ai-avatar" aria-hidden="true">∞</span>
+            <span className="ai-avatar" aria-hidden="true">R</span>
             <div>
-              <strong>InfinityStore Stylist</strong>
+              <strong>Rekha Shopping Mall Stylist</strong>
               <small><span className="ai-dot" aria-hidden="true"></span> Online · picks from live stock</small>
             </div>
             <button type="button" className="ai-reset" onClick={() => setState({ messages: [WELCOME], filters: null })} aria-label="Start a new conversation" title="Start over">
@@ -248,7 +248,7 @@ function ContactCard({ interest }) {
       <input value={reach} onChange={(e) => setReach(e.target.value)} placeholder="WhatsApp number or email" aria-label="WhatsApp number or email" required maxLength={120} inputMode="email" />
       <label className="ai-consent">
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span>InfinityStore may contact me about this request.</span>
+        <span>Rekha Shopping Mall may contact me about this request.</span>
       </label>
       {error && <p className="ai-error" role="alert">{error}</p>}
       <button type="submit" className="btn btn-primary" disabled={busy || !consent || !reach.trim()}>{busy ? 'Sending…' : 'Request a call back'}</button>
