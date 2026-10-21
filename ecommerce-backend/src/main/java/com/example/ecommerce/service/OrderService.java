@@ -76,6 +76,9 @@ public class OrderService {
     @Autowired
     private CouponService couponService;
 
+    @Autowired
+    private ReferralService referralService;
+
     public PaymentOptions paymentOptions() {
         return new PaymentOptions(true, paymentGateway.enabled(), paymentGateway.testMode());
     }
@@ -162,6 +165,10 @@ public class OrderService {
         order.setTaxAmount(quote.tax());
         order.setShippingAmount(quote.shipping());
         order.setTotalPrice(quote.total());
+        if (quote.offerDiscount() != null && quote.offerDiscount().signum() > 0) {
+            order.setOfferLabel(quote.offerLabel());
+            order.setOfferDiscountAmount(quote.offerDiscount());
+        }
         if (priced.applied() != null) {
             order.setCouponCode(priced.applied().coupon().getCode());
             order.setCouponDiscountAmount(quote.couponDiscount());
@@ -280,7 +287,11 @@ public class OrderService {
             }
         }
         order.setStatus(next);
+        order.setStatusChangedAt(java.time.LocalDateTime.now());
         Order saved = orderRepository.save(order);
+        if ("DELIVERED".equals(next)) {
+            referralService.rewardReferrerFor(saved);
+        }
         String note = "CANCELLED".equals(next) && "PAID".equals(saved.getPaymentStatus())
                 ? " (payment is PAID: a refund must be issued and recorded)" : "";
         auditService.record("ORDER_STATUS_CHANGED", "ORDER", saved.getId(), current + " -> " + next + note);

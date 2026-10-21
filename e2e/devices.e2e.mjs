@@ -12,9 +12,9 @@ const admin = await signin('admin', 'admin123');
 await fetch(`${API}/cart`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cust.token}` }, body: JSON.stringify({ productId: 3, quantity: 1 }) });
 
 const ROLES = {
-  visitor: { session: null, pages: ['/', '/products/1', '/cart', '/login', '/register', '/shipping', '/contact', '/privacy', '/?view=deals#products', '/nope-404'] },
+  visitor: { session: null, pages: ['/', '/products/1', '/cart', '/track', '/personal-shopping', '/login', '/register', '/shipping', '/contact', '/privacy', '/?view=deals#products', '/nope-404'] },
   customer: { session: cust, pages: ['/checkout', '/orders', '/wishlist', '/profile', '/cart'] },
-  admin: { session: admin, pages: ['/admin'] },
+  admin: { session: admin, pages: ['/admin', '/admin?tab=leads', '/admin?tab=catalogue', '/admin?tab=products', '/admin?tab=coupons', '/admin?tab=videos'] },
 };
 
 const b = await puppeteer.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--no-sandbox'] });

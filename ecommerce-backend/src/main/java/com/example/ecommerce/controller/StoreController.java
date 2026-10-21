@@ -1,9 +1,8 @@
 package com.example.ecommerce.controller;
 
 import com.example.ecommerce.model.Coupon;
-import com.example.ecommerce.model.Lead;
-import com.example.ecommerce.repository.LeadRepository;
 import com.example.ecommerce.service.CouponService;
+import com.example.ecommerce.service.LeadService;
 import com.example.ecommerce.service.payment.PaymentGateway;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -16,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,7 +39,8 @@ public class StoreController {
             String supportPhone,
             String gaMeasurementId,
             String metaPixelId,
-            Offer welcomeOffer) {
+            Offer welcomeOffer,
+            BigDecimal defaultGstPercent) {
     }
 
     /** What a new subscriber gets; shown only while the underlying coupon is usable. */
@@ -58,7 +57,7 @@ public class StoreController {
     private PaymentGateway paymentGateway;
 
     @Autowired
-    private LeadRepository leads;
+    private LeadService leadService;
 
     @Autowired
     private CouponService couponService;
@@ -68,6 +67,9 @@ public class StoreController {
 
     @Value("${app.pricing.free-shipping-threshold:999}")
     private BigDecimal freeShippingThreshold;
+
+    @Value("${app.pricing.default-gst-percent:18}")
+    private BigDecimal defaultGstPercent;
 
     @Value("${app.pricing.shipping-fee:49}")
     private BigDecimal shippingFee;
@@ -98,20 +100,14 @@ public class StoreController {
                 .body(new StoreInfo(currency, freeShippingThreshold, shippingFee, false, true,
                         paymentGateway.enabled(), paymentGateway.testMode(),
                         digitsOnly(whatsapp), blankToNull(supportEmail), blankToNull(supportPhone),
-                        blankToNull(gaId), blankToNull(metaPixelId), welcomeOffer()));
+                        blankToNull(gaId), blankToNull(metaPixelId), welcomeOffer(), defaultGstPercent));
     }
 
     /** Opt-in sign-up. The response is identical for new and existing subscribers. */
     @PostMapping("/subscribe")
     public ResponseEntity<SubscribeResponse> subscribe(@Valid @RequestBody SubscribeRequest request) {
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
-        if (!leads.existsByEmailIgnoreCase(email)) {
-            try {
-                leads.save(new Lead(email, request.source() == null ? "footer" : request.source().trim()));
-            } catch (org.springframework.dao.DataIntegrityViolationException ignored) {
-                // concurrent duplicate sign-up: already subscribed
-            }
-        }
+        String source = request.source() == null || request.source().isBlank() ? "footer" : request.source().trim();
+        leadService.capture(new LeadService.Capture(null, request.email(), null, null, null, source));
         return ResponseEntity.ok(new SubscribeResponse("Thank you for subscribing!", welcomeOffer()));
     }
 

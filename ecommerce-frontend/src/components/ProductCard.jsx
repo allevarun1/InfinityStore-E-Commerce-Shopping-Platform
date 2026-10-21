@@ -1,35 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { inrCompact, isOnDeal, activePrice, discountPercent, LOW_STOCK, imageSrc } from '../lib/format';
 import { useWishlist } from '../lib/useWishlist';
+import { DemandLine } from './Shopper';
+import { useInView, reducedMotion } from '../lib/motion';
+import { useStore } from '../contexts/StoreContext';
 
 function WishHeart({ product }) {
   const { isWished, toggle } = useWishlist();
   const saved = isWished(product.id);
+  const [burst, setBurst] = useState(0);
   return (
     <button
       type="button"
       className={`pcard-wish ${saved ? 'saved' : ''}`}
       aria-pressed={saved}
       aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-      onClick={() => toggle(product)}
+      onClick={() => { if (!saved) setBurst(n => n + 1); toggle(product); }}
     >
       <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`} aria-hidden="true"></i>
+      {burst > 0 && saved && <span key={burst} className="burst" aria-hidden="true">{[0, 1, 2, 3, 4, 5].map(k => <i key={k} style={{ '--k': k }}></i>)}</span>}
     </button>
   );
 }
 
-export function ProductCard({ product, mode, busy, onAdd, onQuickView, priority = false }) {
+export function ProductCard({ product, mode, busy, onAdd, onQuickView, priority = false, index = 0 }) {
+  const [ref, seen] = useInView();
+  const { videos } = useStore();
+  const clip = videos.find(v => v.productId === product.id) || null;
+  const [hover, setHover] = useState(false);
+  const preview = hover && clip?.videoUrl && !reducedMotion() ? clip : null;
   const soldOut = !product.stockQuantity || product.stockQuantity <= 0;
   const onDeal = isOnDeal(product);
   const href = `/products/${product.id}`;
   const addLabel = soldOut ? 'Sold out' : busy ? 'Adding…' : 'Add to cart';
 
   return (
-    <article className="pcard">
+    <article ref={ref} className={`pcard rise ${seen ? 'in' : ''}`} style={{ '--d': `${(index % 4) * 90}ms` }}
+      onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHover(true); }} onPointerLeave={() => setHover(false)}>
       <div className="pcard-mediawrap">
         <Link to={href} className="pcard-media" tabIndex={-1} aria-hidden="true">
-          <img src={imageSrc(product.imageUrl)} alt="" loading={priority ? 'eager' : 'lazy'} decoding="async" width="600" height="800" />
+          <img src={imageSrc(product.imageUrl)} alt="" data-fly-src={product.id} loading={priority ? 'eager' : 'lazy'} decoding="async" width="600" height="800" />
+          {product.gallery?.[0] && <img className="pcard-alt" src={imageSrc(product.gallery[0])} alt="" loading="lazy" decoding="async" width="600" height="800" />}
+          {preview && <video className="pcard-vid" src={preview.videoUrl} poster={preview.posterUrl || undefined} autoPlay muted loop playsInline aria-hidden="true" />}
+          {clip && <span className="pcard-play"><i className="bi bi-play-fill" aria-hidden="true"></i> Video</span>}
           {onDeal && <span className="pcard-badge">{discountPercent(product)}% off</span>}
           {soldOut && <span className="pcard-soldout">Sold out</span>}
         </Link>
@@ -55,6 +69,7 @@ export function ProductCard({ product, mode, busy, onAdd, onQuickView, priority 
             <i className="bi bi-star-fill" aria-hidden="true"></i> {product.averageRating} <small>({product.reviewCount})</small>
           </span>
         )}
+        <DemandLine product={product} />
         <div className="price">
           <span className="price-now">{inrCompact(activePrice(product))}</span>
           {onDeal && <span className="price-was"><span className="sr-only">Was </span>{inrCompact(product.price)}</span>}

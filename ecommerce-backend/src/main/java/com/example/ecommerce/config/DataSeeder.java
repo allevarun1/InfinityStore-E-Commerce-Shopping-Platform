@@ -34,6 +34,26 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private com.example.ecommerce.repository.StoreVideoRepository videoRepository;
+
+    @Autowired
+    private com.example.ecommerce.repository.TestimonialRepository testimonialRepository;
+
+    private void video(String title, String caption, StoreVideo.Kind kind, String url, String poster, Long productId, int order) {
+        StoreVideo v = new StoreVideo();
+        v.setTitle(title); v.setCaption(caption); v.setKind(kind); v.setVideoUrl(url); v.setPosterUrl(poster);
+        v.setProductId(productId); v.setSortOrder(order);
+        videoRepository.save(v);
+    }
+
+    private void sampleQuote(String name, String city, String quote, int rating, Long productId, int order) {
+        Testimonial t = new Testimonial();
+        t.setName(name); t.setLocation(city); t.setQuote(quote); t.setRating(rating); t.setProductId(productId);
+        t.setSample(true); t.setSortOrder(order);
+        testimonialRepository.save(t);
+    }
+
     // Seed account credentials. Override with the ADMIN_* / CUSTOMER_* environment
     // variables when deploying; the defaults exist only for local development.
     @Value("${app.seed.admin.username}")
@@ -263,6 +283,18 @@ public class DataSeeder implements CommandLineRunner {
             bridalSaree.setStatus(com.example.ecommerce.model.ProductStatus.PUBLISHED);
             bridalSaree.setFabric("Silk"); bridalSaree.setWeave("Zari embroidered"); bridalSaree.setOccasion("Wedding"); bridalSaree.setColour("Red"); bridalSaree.setRegion("Mixed");
             productRepository.save(bridalSaree);
+
+            // Demo motion-design clips (rendered by tools/make_demo_videos.py) and clearly labelled sample quotes.
+            // Local demo only: a real store adds its own footage and real customer words in the admin.
+            video("Silk, cotton, designer, bridal", "A look across the collection", StoreVideo.Kind.STORY, "/videos/story-collection.mp4", "/videos/story-collection.jpg", null, 1);
+            video("Kanchipuram Pure Silk Saree", "Pure mulberry silk with a gold zari border", StoreVideo.Kind.REEL, "/videos/reel-kanchipuram.mp4", "/videos/reel-kanchipuram.jpg", kanchipuram.getId(), 2);
+            video("Banarasi Katan Silk Saree", "Lustrous katan silk, brocade pallu", StoreVideo.Kind.REEL, "/videos/reel-banarasi.mp4", "/videos/reel-banarasi.jpg", banarasi.getId(), 3);
+            video("Kerala Kasavu Cotton Saree", "Pure cotton with the golden kasavu border", StoreVideo.Kind.REEL, "/videos/reel-kasavu.mp4", "/videos/reel-kasavu.jpg", kasavu.getId(), 4);
+            sampleQuote("Priya", "Chennai", "The silk drapes beautifully and the zari border looks even better in person. Packing was neat and it arrived on time.", 5, kanchipuram.getId(), 1);
+            sampleQuote("Ananya", "Bengaluru", "Ordered the kasavu for Onam. The cotton is soft and the golden border is lovely. Cash on delivery made it easy.", 5, kasavu.getId(), 2);
+            sampleQuote("Meera", "Hyderabad", "The stylist chat helped me pick a saree for my sister's wedding in minutes. Exactly what I was looking for.", 5, null, 3);
+            sampleQuote("Kavya", "Mumbai", "The colours match the photos, which is rare online. The delivery date estimate was accurate too.", 4, null, 4);
+            sampleQuote("Lakshmi", "Kochi", "Good quality and fair pricing, with the GST shown clearly before paying. Will order again for the festive season.", 5, banarasi.getId(), 5);
 
             System.out.println("Seeded default saree inventory.");
         }

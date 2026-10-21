@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Rise } from './Motion';
 import { inrCompact, isOnDeal, activePrice, discountPercent, imageSrc } from '../lib/format';
 
 /** Fades a section in once as it scrolls into view. Content stays visible if motion is reduced or JS is slow. */
@@ -71,13 +72,13 @@ export function CategoryTiles({ categories, products, onPick }) {
         <div><span className="eyebrow">Browse</span><h2 id="tiles-title">Shop by category</h2></div>
       </div>
       <ul className="tiles-grid">
-        {tiles.map(({ c, count, cover }) => (
-          <li key={c.id}>
+        {tiles.map(({ c, count, cover }, n) => (
+          <Rise as="li" key={c.id} delay={n * 110}>
             <button type="button" className="tile" onClick={() => onPick(String(c.id))}>
               <img src={imageSrc(cover.imageUrl)} alt="" loading="lazy" width="400" height="500" />
               <span className="tile-label"><strong>{c.name}</strong><small>{count} {count === 1 ? 'saree' : 'sarees'}</small></span>
             </button>
-          </li>
+          </Rise>
         ))}
       </ul>
     </section>

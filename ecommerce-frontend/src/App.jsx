@@ -9,6 +9,7 @@ import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Cart } from './components/Cart';
 import { Wishlist } from './components/Wishlist';
+import { Refer } from './components/Refer';
 import { Checkout } from './components/Checkout';
 import { Orders } from './components/Orders';
 import { Profile } from './components/Profile';
@@ -22,23 +23,46 @@ import { SearchBox, CategoryNav, BottomNav } from './components/Navigation';
 import { MiniCart } from './components/MiniCart';
 import { AuthShell, ScrollChrome } from './components/Shell';
 import { OrderSuccess } from './components/OrderViews';
+import { Stylist } from './components/Stylist';
+import { TrackOrder } from './components/TrackOrder';
+import { PersonalShopping } from './components/PersonalShopping';
 import { ApiService } from './services/api';
 import { inrCompact } from './lib/format';
+import { ScrollProgress } from './components/Motion';
+import { installRipples, installSpotlight, reducedMotion } from './lib/motion';
 import './styles.css';
 import './App.css';
 import './theme.css';
 import './ux.css';
 import './pro.css';
+import './ai.css';
+import './catalog.css';
+import './shopper.css';
+import './motion.css';
+import './videos.css';
+import './refer.css';
+import './luxe.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function AnnouncementBar() {
-  const { info } = useStore();
+  const { info, offers } = useStore();
+  const [at, setAt] = useState(0);
+  const top = offers?.length ? offers[offers.length - 1] : null;
+  const lines = info ? [
+    <span key="s">Free shipping above {inrCompact(info.freeShippingThreshold)}</span>,
+    <span key="c">Cash on delivery available</span>,
+    top && <span key="o">Buy {top.minItems}+ sarees, save {Number(top.percentOff)}%</span>,
+    info.welcomeOffer && <span key="w">New here? Use code <strong>{info.welcomeOffer.code}</strong> for {info.welcomeOffer.summary.split(' on orders')[0]}</span>,
+  ].filter(Boolean) : [];
+  useEffect(() => {
+    if (lines.length < 2 || reducedMotion()) return undefined;
+    const t = setInterval(() => setAt(n => n + 1), 3800);
+    return () => clearInterval(t);
+  }, [lines.length]);
   if (!info) return null;
   return (
     <div className="announce">
-      <span>Free shipping above {inrCompact(info.freeShippingThreshold)}</span>
-      <span>Cash on delivery available</span>
-      {info.welcomeOffer && <span>New here? Use code <strong>{info.welcomeOffer.code}</strong> for {info.welcomeOffer.summary.split(' on orders')[0]}</span>}
+      {lines.map((el, i) => React.cloneElement(el, { className: i === at % lines.length ? 'on' : undefined }))}
     </div>
   );
 }
@@ -77,9 +101,9 @@ function Header() {
 
         <nav className="header-actions" aria-label="Account and cart">
           {!admin && !isLoggedIn() && (
-            <NavLink to="/cart" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}>
+            <NavLink to="/cart" data-cart-target aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}>
               <i key={cartPulse} className={`bi bi-bag ${cartPulse ? 'bump' : ''}`} aria-hidden="true"></i><span className="label">Cart</span>
-              {cartCount > 0 && <span className="badge-count" aria-hidden="true">{cartCount > 99 ? '99+' : cartCount}</span>}
+              {cartCount > 0 && <span key={`n${cartCount}`} className="badge-count" aria-hidden="true">{cartCount > 99 ? '99+' : cartCount}</span>}
             </NavLink>
           )}
           {isCustomer() && (
@@ -87,9 +111,9 @@ function Header() {
               <NavLink to="/wishlist" aria-label="Wishlist"><i className="bi bi-heart" aria-hidden="true"></i><span className="label">Wishlist</span></NavLink>
               <NavLink to="/orders" aria-label="Orders" className="hide-sm"><i className="bi bi-box-seam" aria-hidden="true"></i><span className="label">Orders</span></NavLink>
               <NavLink to="/profile" aria-label="Account"><i className="bi bi-person" aria-hidden="true"></i><span className="label">Account</span></NavLink>
-              <NavLink to="/cart" aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}>
+              <NavLink to="/cart" data-cart-target aria-label={`Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}>
                 <i key={cartPulse} className={`bi bi-bag ${cartPulse ? 'bump' : ''}`} aria-hidden="true"></i><span className="label">Cart</span>
-                {cartCount > 0 && <span className="badge-count" aria-hidden="true">{cartCount > 99 ? '99+' : cartCount}</span>}
+                {cartCount > 0 && <span key={`n${cartCount}`} className="badge-count" aria-hidden="true">{cartCount > 99 ? '99+' : cartCount}</span>}
               </NavLink>
             </>
           )}
@@ -134,7 +158,10 @@ function Footer() {
         <div>
           <h3>Help</h3>
           <ul>
+            <li><Link to="/track">Track my order</Link></li>
             <li><Link to="/orders">Your orders</Link></li>
+            <li><Link to="/personal-shopping">Personal shopping</Link></li>
+            <li><Link to="/refer">Refer a friend</Link></li>
             <li><Link to="/shipping">Shipping &amp; returns</Link></li>
             <li><Link to="/contact">Contact us</Link></li>
             <li><Link to="/privacy">Privacy policy</Link></li>
@@ -166,6 +193,15 @@ function ScrollToTop() {
   useEffect(() => {
     if (!hash) window.scrollTo(0, 0);
   }, [pathname, hash]);
+  useEffect(() => {
+    const main = document.getElementById('main');
+    if (!main || reducedMotion()) return;
+    main.classList.remove('page-enter');
+    void main.offsetWidth; // restart the animation on every route change
+    main.classList.add('page-enter');
+  }, [pathname]);
+  useEffect(() => installRipples(), []);
+  useEffect(() => installSpotlight(), []);
   return null;
 }
 
@@ -199,6 +235,7 @@ export default function App() {
           <BrowserRouter>
             <a className="skip-link" href="#main">Skip to content</a>
             <ScrollToTop />
+            <ScrollProgress />
             <AnnouncementBar />
             <Header />
             <main id="main" className="page" tabIndex={-1}>
@@ -213,8 +250,11 @@ export default function App() {
                 <Route path="/checkout" element={<ProtectedRoute role="USER"><Checkout /></ProtectedRoute>} />
                 <Route path="/orders" element={<ProtectedRoute role="USER"><Orders /></ProtectedRoute>} />
                 <Route path="/order/success" element={<ProtectedRoute role="USER"><OrderSuccess /></ProtectedRoute>} />
+                <Route path="/refer" element={<ProtectedRoute role="USER"><Refer /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute role="USER"><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute role="ADMIN"><Admin /></ProtectedRoute>} />
+                <Route path="/track" element={<TrackOrder />} />
+                <Route path="/personal-shopping" element={<PersonalShopping />} />
                 <Route path="/privacy" element={<StaticPage page="privacy" />} />
                 <Route path="/shipping" element={<StaticPage page="shipping" />} />
                 <Route path="/contact" element={<StaticPage page="contact" />} />
@@ -224,6 +264,7 @@ export default function App() {
             </main>
             <Footer />
             <WhatsAppFab />
+            <Stylist />
             <MiniCart />
             <ScrollChrome />
             <BottomNav />

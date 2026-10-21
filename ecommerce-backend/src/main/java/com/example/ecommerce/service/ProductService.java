@@ -35,6 +35,7 @@ public class ProductService {
     @Autowired private CartItemRepository cartItemRepository;
     @Autowired private ReviewRepository reviewRepository;
     @Autowired private AuditService auditService;
+    @Autowired private DemandSignals demandSignals;
 
     // ---------------------------------------------------------------- shopper reads (published only)
 
@@ -64,9 +65,10 @@ public class ProductService {
         }
         return products.stream().map(p -> {
             Object[] row = stats.get(p.getId());
-            if (row == null) return new ProductView(p, 0, null);
+            DemandSignals.Signal signal = demandSignals.forProduct(p.getId());
+            if (row == null) return new ProductView(p, 0, null, signal);
             double avg = BigDecimal.valueOf(((Number) row[2]).doubleValue()).setScale(1, RoundingMode.HALF_UP).doubleValue();
-            return new ProductView(p, ((Number) row[1]).intValue(), avg);
+            return new ProductView(p, ((Number) row[1]).intValue(), avg, signal);
         }).toList();
     }
 
@@ -101,6 +103,7 @@ public class ProductService {
         Category category = category(request.getCategoryId());
         validatePricing(request);
         validateImage(request.getImageUrl());
+        checkSku(request.getSku(), null);
 
         Product product = new Product();
         product.setDeleted(false);
@@ -123,6 +126,7 @@ public class ProductService {
         Category category = category(request.getCategoryId());
         validatePricing(request);
         validateImage(request.getImageUrl());
+        checkSku(request.getSku(), id);
 
         BigDecimal oldPrice = product.getPrice();
         // The admin form echoes back the public image link for uploaded pictures. That means "unchanged".
@@ -190,6 +194,14 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    /** A SKU identifies one colour of one design, so it can be used by only one live product. */
+    private void checkSku(String sku, Long ownId) {
+        if (sku == null || sku.isBlank()) return;
+        productRepository.findBySkuIgnoreCaseAndDeletedFalse(sku.trim()).ifPresent(other -> {
+            if (!other.getId().equals(ownId)) throw new BusinessException("SKU " + sku.trim() + " is already used by \"" + other.getName() + "\"");
+        });
+    }
+
     /** Soft delete keeps order history intact. */
     @Transactional
     public void deleteProduct(Long id) {
@@ -230,6 +242,8 @@ public class ProductService {
         product.setWeave(blankToNull(r.getWeave()));
         product.setOccasion(blankToNull(r.getOccasion()));
         product.setColour(blankToNull(r.getColour()));
+        product.setSku(blankToNull(r.getSku()));
+        product.setStyleGroup(blankToNull(r.getStyleGroup()));
         product.setRegion(blankToNull(r.getRegion()));
         product.setCareInstructions(blankToNull(r.getCareInstructions()));
         product.setBlouseIncluded(r.getBlouseIncluded());

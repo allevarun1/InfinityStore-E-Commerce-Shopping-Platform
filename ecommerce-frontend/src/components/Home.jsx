@@ -6,6 +6,10 @@ import { useStore } from '../contexts/StoreContext';
 import { EmptyState } from './EmptyState';
 import { useCartActions } from '../lib/useCartActions';
 import { Reveal, Spotlight, CategoryTiles, OccasionStrip } from './HomeSections';
+import { Rise, SplitWords, CountUp, Marquee, HeroDust, ThreadDivider } from './Motion';
+import { CraftStory, ReelsStrip } from './Videos';
+import { Testimonials } from './Testimonials';
+import { useTilt } from '../lib/motion';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { QuickView } from './QuickView';
 import { inrCompact, isOnDeal, activePrice, discountPercent } from '../lib/format';
@@ -47,9 +51,10 @@ export function Home() {
   const price = PRICE_BANDS[params.get('price')] ? params.get('price') : '';
 
   const { isAdmin } = useAuth();
-  const { info } = useStore();
+  const { info, videos } = useStore();
   const cartActions = useCartActions();
   const location = useLocation();
+  const tiltRef = useTilt(6);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -122,6 +127,14 @@ export function Home() {
     return [...deals, ...inStock.filter(p => !isOnDeal(p))].slice(0, 4);
   }, [products]);
 
+  const tickerItems = useMemo(() => {
+    const names = categories.map(c => c.name.replace(/ Sarees$/i, ''));
+    const lead = ['Handwoven by weavers', 'Cash on delivery'];
+    if (info) lead.push(`Free shipping above ${inrCompact(info.freeShippingThreshold)}`);
+    const seen = new Set();
+    return [...lead, ...fabrics.slice(0, 4), ...names].filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()));
+  }, [categories, fabrics, info]);
+
   const pickAndScroll = (changes) => {
     update(changes);
     setTimeout(() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
@@ -144,10 +157,11 @@ export function Home() {
   return (
     <>
       <section className="hero-x full-bleed" aria-labelledby="hero-title">
+        <HeroDust />
         <div className="hero-inner">
           <div>
             <span className="eyebrow">Handwoven saree collection</span>
-            <h1 id="hero-title">Drapes woven to be <em>treasured</em> for years.</h1>
+            <h1 id="hero-title"><SplitWords text="Drapes woven to be treasured for years." accent={['treasured']} /></h1>
             <p>
               Explore Kanchipuram silks, Bengal handlooms, Kerala kasavu and contemporary designer drapes,
               sourced directly from weavers.
@@ -159,8 +173,15 @@ export function Home() {
                 View deals
               </button>
             </div>
+            {!loading && products.length > 0 && (
+              <div className="hero-stats">
+                <div><strong><CountUp eager to={products.length} /></strong><small>Sarees</small></div>
+                {fabrics.length > 1 && <div><strong><CountUp eager to={fabrics.length} /></strong><small>Fabrics</small></div>}
+                <div><strong><CountUp eager to={categories.length} /></strong><small>Collections</small></div>
+              </div>
+            )}
           </div>
-          <div className="hero-media">
+          <div className="hero-media" ref={tiltRef}>
             <Spotlight products={heroProducts} />
           </div>
         </div>
@@ -168,20 +189,22 @@ export function Home() {
 
       {info && (
         <section className="trust full-bleed" aria-label="Shopping with InfinityStore">
-          <div className="trust-item">
+          <Rise className="trust-item">
             <i className="bi bi-truck" aria-hidden="true"></i>
             <div><strong>Free shipping above {inrCompact(info.freeShippingThreshold)}</strong><span>Otherwise a flat {inrCompact(info.shippingFee)}</span></div>
-          </div>
-          <div className="trust-item">
+          </Rise>
+          <Rise className="trust-item" delay={110}>
             <i className="bi bi-cash-coin" aria-hidden="true"></i>
             <div><strong>Cash on delivery</strong><span>Pay when your order arrives</span></div>
-          </div>
-          <div className="trust-item">
+          </Rise>
+          <Rise className="trust-item" delay={220}>
             <i className="bi bi-receipt" aria-hidden="true"></i>
             <div><strong>Clear, upfront pricing</strong><span>Full GST and shipping breakdown before you order</span></div>
-          </div>
+          </Rise>
         </section>
       )}
+
+      <Marquee items={tickerItems} />
 
       {!loading && !failed && (
         <>
@@ -189,6 +212,9 @@ export function Home() {
             <CategoryTiles categories={categories} products={products}
               onPick={(id) => pickAndScroll({ category: id, view: '', q: '' })} />
           </Reveal>
+          <ThreadDivider />
+          <CraftStory videos={videos} />
+          <ReelsStrip videos={videos} />
           <Reveal>
             <OccasionStrip products={products} active={occasion}
               onPick={(o) => pickAndScroll({ occasion: o })} />
@@ -317,6 +343,7 @@ export function Home() {
               <ProductCard
                 key={p.id}
                 priority={i < 4}
+                index={i}
                 product={p}
                 mode={isAdmin() ? 'admin' : 'shop'}
                 busy={busyId === p.id}
@@ -335,6 +362,7 @@ export function Home() {
         )}
         {quick && <QuickView product={quick} onClose={() => setQuick(null)} />}
       </section>
+      {!loading && !failed && <Testimonials />}
     </>
   );
 }

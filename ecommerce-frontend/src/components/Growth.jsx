@@ -15,7 +15,7 @@ export function WhatsAppFab() {
   const { info } = useStore();
   const { pathname } = useLocation();
   // Checkout keeps the bottom edge for its Place order bar.
-  if (!info?.whatsappNumber || pathname === '/checkout') return null;
+  if (!info?.whatsappNumber || pathname === '/checkout' || pathname.startsWith('/admin')) return null;
   return (
     <a className="wa-fab" target="_blank" rel="noopener noreferrer"
       href={whatsappLink(info.whatsappNumber, 'Hi InfinityStore, I need help choosing a saree.')}

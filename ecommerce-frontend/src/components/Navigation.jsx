@@ -110,9 +110,9 @@ export function BottomNav() {
         <i className="bi bi-heart" aria-hidden="true"></i><span>Saved</span>
         {wishIds.length > 0 && <b className="bn-badge">{wishIds.length}</b>}
       </NavLink>
-      <NavLink to="/cart">
+      <NavLink to="/cart" data-cart-target>
         <i key={cartPulse} className={`bi bi-bag ${cartPulse ? 'bump' : ''}`} aria-hidden="true"></i><span>Cart</span>
-        {cartCount > 0 && <b className="bn-badge">{cartCount > 99 ? '99+' : cartCount}</b>}
+        {cartCount > 0 && <b key={`n${cartCount}`} className="bn-badge">{cartCount > 99 ? '99+' : cartCount}</b>}
       </NavLink>
       <NavLink to={isLoggedIn() ? '/profile' : '/login'}><i className="bi bi-person" aria-hidden="true"></i><span>{isLoggedIn() ? 'Account' : 'Sign in'}</span></NavLink>
     </nav>

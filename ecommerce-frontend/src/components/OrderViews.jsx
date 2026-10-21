@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { inr, imageSrc } from '../lib/format';
 import { useStore } from '../contexts/StoreContext';
+import { confetti } from '../lib/motion';
 
 const STEPS = [
   ['PENDING', 'Placed', 'bi-bag-check'],
@@ -33,6 +34,7 @@ export function OrderTotals({ order }) {
     <dl className="ck-totals">
       <div><dt>Subtotal</dt><dd>{inr(order.subtotalAmount ?? order.totalPrice)}</dd></div>
       {Number(order.discountAmount) > 0 && <div className="save"><dt>Sale savings</dt><dd>−{inr(order.discountAmount)}</dd></div>}
+      {Number(order.offerDiscountAmount) > 0 && <div className="save"><dt>{order.offerLabel}</dt><dd>−{inr(order.offerDiscountAmount)}</dd></div>}
       {Number(order.couponDiscountAmount) > 0 && <div className="save"><dt>Coupon {order.couponCode}</dt><dd>−{inr(order.couponDiscountAmount)}</dd></div>}
       {order.taxAmount != null && <div><dt>GST</dt><dd>{inr(order.taxAmount)}</dd></div>}
       {order.shippingAmount != null && <div><dt>Shipping</dt><dd>{Number(order.shippingAmount) === 0 ? 'Free' : inr(order.shippingAmount)}</dd></div>}
@@ -63,6 +65,7 @@ export function OrderSuccess() {
     document.title = 'Order placed | InfinityStore';
     refreshCart();
     window.scrollTo(0, 0);
+    confetti();
   }, [refreshCart]);
   if (!order) return <Navigate to="/orders" replace />;
   const cod = order.paymentMethod === 'COD' && order.paymentStatus !== 'PAID';
@@ -76,7 +79,7 @@ export function OrderSuccess() {
       </ol>
 
       <section className="success-hero" aria-labelledby="ok-title">
-        <span className="success-check" aria-hidden="true"><i className="bi bi-check-lg"></i></span>
+        <span className="success-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path pathLength="1" d="M5.5 12.8l4.2 4.2L18.8 7.6" /></svg></span>
         <h1 id="ok-title">Thank you! Your order is placed.</h1>
         <p>Order number <strong className="success-no">{order.trackingNumber}</strong></p>
         <p className="muted">We’ve emailed your confirmation. Keep the order number handy if you contact us.</p>
@@ -107,6 +110,7 @@ export function OrderSuccess() {
             <Link className="btn btn-primary" to="/orders">Track your order</Link>
             <Link className="btn btn-outline" to="/#products">Continue shopping</Link>
           </div>
+          <Link className="text-link" to="/refer"><i className="bi bi-gift" aria-hidden="true"></i> Refer a friend: they save 10%, you earn Rs. 200</Link>
           {info?.whatsappNumber && (
             <a className="text-link" href={`https://wa.me/${info.whatsappNumber}?text=${encodeURIComponent(`Hi InfinityStore, about my order ${order.trackingNumber}`)}`}
               target="_blank" rel="noopener noreferrer"><i className="bi bi-whatsapp" aria-hidden="true"></i> Questions? Chat with us</a>

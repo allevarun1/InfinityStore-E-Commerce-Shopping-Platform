@@ -14,6 +14,8 @@ const StoreContext = createContext(null);
 export function StoreProvider({ children }) {
   const [info, setInfo] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [offers, setOffers] = useState([]);
+  const [videos, setVideos] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [cartPulse, setCartPulse] = useState(0);
   const [wishIds, setWishIds] = useState([]);
@@ -24,6 +26,8 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     ApiService.storeInfo().then((i) => { setInfo(i); configure(i); }).catch(() => setInfo(null));
     ApiService.categories().then(setCategories).catch(() => setCategories([]));
+    ApiService.offers().then(setOffers).catch(() => setOffers([]));
+    ApiService.storeVideos().then(setVideos).catch(() => setVideos([]));
   }, []);
 
   const refreshCart = useCallback(() => {
@@ -59,8 +63,8 @@ export function StoreProvider({ children }) {
   const closeAdded = useCallback(() => setAdded(null), []);
 
   const value = useMemo(() => ({
-    info, categories, cartCount, cartPulse, refreshCart, wishIds, setWishIds, added, showAdded, closeAdded,
-  }), [info, categories, cartCount, cartPulse, refreshCart, wishIds, added, showAdded, closeAdded]);
+    info, categories, offers, videos, cartCount, cartPulse, refreshCart, wishIds, setWishIds, added, showAdded, closeAdded,
+  }), [info, categories, offers, videos, cartCount, cartPulse, refreshCart, wishIds, added, showAdded, closeAdded]);
 
   return (
     <StoreContext.Provider value={value}>

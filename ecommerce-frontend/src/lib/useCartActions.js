@@ -5,6 +5,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useStore } from '../contexts/StoreContext';
 import { guestCart } from './guestCart';
 import { track } from './analytics';
+import { flyToCart } from './motion';
 
 /**
  * One place that adds to the cart for both visitors (browser cart) and signed-in customers (server
@@ -21,14 +22,14 @@ export function useCartActions() {
       guestCart.add(product.id, quantity, product.stockQuantity || 0);
       track.addToCart(product, quantity);
       refreshCart();
-      if (!quiet) showAdded(product, quantity);
+      if (!quiet) flyToCart(product.id).then(() => showAdded(product, quantity));
       return true;
     }
     try {
       await ApiService.addToCart(product.id, quantity);
       track.addToCart(product, quantity);
       refreshCart();
-      if (!quiet) showAdded(product, quantity);
+      if (!quiet) flyToCart(product.id).then(() => showAdded(product, quantity));
       return true;
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not add this item');

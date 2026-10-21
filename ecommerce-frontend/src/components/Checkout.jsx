@@ -269,6 +269,7 @@ export function Checkout() {
           <dl className="ck-totals">
             <div><dt>Subtotal</dt><dd>{inr(quote.subtotal)}</dd></div>
             {Number(quote.discount) > 0 && <div className="save"><dt>Sale savings</dt><dd>−{inr(quote.discount)}</dd></div>}
+            {Number(quote.offerDiscount) > 0 && <div className="save"><dt>{quote.offerLabel}</dt><dd>−{inr(quote.offerDiscount)}</dd></div>}
             {Number(quote.couponDiscount) > 0 && <div className="save"><dt>Coupon {quote.couponCode}</dt><dd>−{inr(quote.couponDiscount)}</dd></div>}
             <div><dt>GST</dt><dd>{inr(quote.tax)}</dd></div>
             <div><dt>Shipping</dt><dd>{Number(quote.shipping) === 0 ? 'Free' : inr(quote.shipping)}</dd></div>

@@ -53,7 +53,7 @@ export function ProductGallery({ product }) {
             <button key={src + i} type="button" className={`gallery-slide ${zoom && i === index ? 'zoomed' : ''}`}
               onPointerMove={moveZoom} onPointerLeave={() => setZoom(null)} onClick={() => { setIndex(i); setViewer(true); }}
               aria-label={`Open photo ${i + 1} full screen`}>
-              <img src={src} alt={i === 0 ? product.name : `${product.name}, photo ${i + 1}`} width="900" height="1125"
+              <img src={src} alt={i === 0 ? product.name : `${product.name}, photo ${i + 1}`} data-fly-src={product.id} width="900" height="1125"
                 loading={i === 0 ? 'eager' : 'lazy'} style={zoom && i === index ? { transformOrigin: zoom } : undefined} />
             </button>
           ))}

@@ -77,6 +77,10 @@ public class Product {
     @Column(length = 60) private String weave;
     @Column(length = 60) private String occasion;
     @Column(length = 40) private String colour;
+    /** Shop's own code for this exact colour, e.g. KAN-RED-01. Unique across the catalogue when set. */
+    @Column(length = 40) private String sku;
+    /** Colours of the same design share a style group; each colour keeps its own stock, photos and SKU. */
+    @Column(name = "style_group", length = 60) private String styleGroup;
     @Column(length = 60) private String region;
     @Column(name = "care_instructions", length = 500) private String careInstructions;
     @Column(name = "blouse_included") private Boolean blouseIncluded;
@@ -209,6 +213,10 @@ public class Product {
     public ProductStatus getStatus() { return status == null ? ProductStatus.PUBLISHED : status; }
     public void setStatus(ProductStatus status) { this.status = status; }
     @JsonIgnore public boolean isPublished() { return !Boolean.TRUE.equals(deleted) && getStatus() == ProductStatus.PUBLISHED; }
+    public String getSku() { return sku; }
+    public void setSku(String v) { this.sku = v; }
+    public String getStyleGroup() { return styleGroup; }
+    public void setStyleGroup(String v) { this.styleGroup = v; }
     public String getFabric() { return fabric; }
     public void setFabric(String v) { this.fabric = v; }
     public String getWeave() { return weave; }

@@ -87,6 +87,7 @@ await page.hover('.pcard');
 await page.click('.pcard .pcard-quick');
 await page.waitForSelector('.drawer', { timeout: 4000 }).catch(() => {});
 ok('add to cart opens the slide-in mini-cart', await page.$('.drawer'));
+await page.waitForSelector('.drawer-sugg li', { timeout: 3000 }).catch(() => {});
 ok('mini-cart offers matching sarees', (await page.$$eval('.drawer-sugg li', e => e.length)) >= 1);
 await page.keyboard.press('Escape'); await wait(300);
 ok('Escape closes the mini-cart', !(await page.$('.drawer')));

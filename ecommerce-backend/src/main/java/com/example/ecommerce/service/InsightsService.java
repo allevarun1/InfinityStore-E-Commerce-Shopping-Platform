@@ -88,8 +88,14 @@ public class InsightsService {
             mix.merge(o.getPaymentMethod() == null ? "UNKNOWN" : o.getPaymentMethod(), 1, Integer::sum);
 
             BigDecimal orderNet = BigDecimal.ZERO;
+            // Coupons and multi-buy offers reduce what the shop earned: share them across the lines.
+            BigDecimal gross = BigDecimal.ZERO;
+            for (OrderItem it : o.getOrderItems()) gross = gross.add(it.getPrice().multiply(BigDecimal.valueOf(it.getQuantity())));
+            BigDecimal off = nz(o.getCouponDiscountAmount()).add(nz(o.getOfferDiscountAmount()));
+            BigDecimal factor = gross.signum() > 0 && off.signum() > 0
+                    ? gross.subtract(off).max(BigDecimal.ZERO).divide(gross, 8, RoundingMode.HALF_UP) : BigDecimal.ONE;
             for (OrderItem it : o.getOrderItems()) {
-                BigDecimal line = it.getPrice().multiply(BigDecimal.valueOf(it.getQuantity()));
+                BigDecimal line = it.getPrice().multiply(BigDecimal.valueOf(it.getQuantity())).multiply(factor).setScale(2, RoundingMode.HALF_UP);
                 orderNet = orderNet.add(line);
                 units += it.getQuantity();
                 Long pid = it.getProduct().getId();

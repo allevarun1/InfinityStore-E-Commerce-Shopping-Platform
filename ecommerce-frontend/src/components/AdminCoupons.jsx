@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
+import { AdminOffers } from './AdminOffers';
 
 const BLANK = { code: '', description: '', kind: 'percent', amount: '', maxDiscount: '', minSubtotal: '', firstOrderOnly: false, expiresOn: '', usageLimit: '' };
 
@@ -46,6 +47,7 @@ export function AdminCoupons() {
 
   return (
     <div className="tab-content">
+      <AdminOffers />
       <h2>Coupons</h2>
       <p style={{ color: 'var(--text-muted)' }}>
         Codes are applied after sale prices and before GST. The newsletter sign-up advertises the code set in <code>WELCOME_CODE</code> (default WELCOME10).

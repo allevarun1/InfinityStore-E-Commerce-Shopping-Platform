@@ -20,6 +20,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Optional<Product> findByIdAndDeletedFalse(Long id);
 
+    Optional<Product> findBySkuIgnoreCaseAndDeletedFalse(String sku);
+
+    @Query("select p from Product p where p.styleGroup = :group and " + PUBLIC + " order by p.id")
+    List<Product> findPublicByStyleGroup(@Param("group") String group);
+
+    List<Product> findByStyleGroupAndDeletedFalse(String group);
+
     // ---- Shopper-facing: published only
     @Query("select p from Product p where " + PUBLIC)
     List<Product> findPublic();

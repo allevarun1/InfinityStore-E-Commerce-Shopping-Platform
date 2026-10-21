@@ -9,7 +9,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-/** Per-client-IP throttling of the unauthenticated account endpoints. */
+/** Per-client-IP throttling of the unauthenticated endpoints (accounts, sign-ups, the shopping assistant). */
 public class RateLimitFilter extends OncePerRequestFilter {
     private record Rule(String path, int limit, long windowMillis) {
     }
@@ -25,7 +25,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 new Rule("/api/auth/signup", 10 * multiplier, 60 * minute),
                 new Rule("/api/auth/forgot-password", 5 * multiplier, 15 * minute),
                 new Rule("/api/auth/reset-password", 10 * multiplier, 15 * minute),
-                new Rule("/api/store/subscribe", 5 * multiplier, 60 * minute));
+                new Rule("/api/store/subscribe", 5 * multiplier, 60 * minute),
+                new Rule("/api/store/leads", 10 * multiplier, 60 * minute),
+                new Rule("/api/store/track", 15 * multiplier, 15 * minute),
+                new Rule("/api/assistant/chat", 40 * multiplier, 5 * minute));
     }
 
     @Override

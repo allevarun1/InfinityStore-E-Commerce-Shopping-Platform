@@ -24,6 +24,10 @@ public class Order {
     @Column(nullable = false)
     private String status; // PENDING, SHIPPED, DELIVERED, CANCELLED
 
+    /** When the delivery status last changed (null for orders placed before this was recorded). */
+    @Column(name = "status_changed_at")
+    private LocalDateTime statusChangedAt;
+
     // Final amount payable (subtotal - discount + tax + shipping) when pricingVersion >= 1.
     // Legacy orders (pricingVersion null) stored the tax-exclusive subtotal here.
     @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
@@ -49,6 +53,12 @@ public class Order {
 
     @Column(name = "coupon_code", length = 40)
     private String couponCode;
+
+    @Column(name = "offer_label", length = 60)
+    private String offerLabel;
+
+    @Column(name = "offer_discount_amount", precision = 12, scale = 2)
+    private BigDecimal offerDiscountAmount;
 
     @Column(name = "coupon_discount_amount", precision = 12, scale = 2)
     private BigDecimal couponDiscountAmount;
@@ -204,4 +214,12 @@ public class Order {
     public void setPaymentReference(String paymentReference) { this.paymentReference = paymentReference; }
     public String getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+
+    public LocalDateTime getStatusChangedAt() { return statusChangedAt; }
+    public void setStatusChangedAt(LocalDateTime statusChangedAt) { this.statusChangedAt = statusChangedAt; }
+
+    public String getOfferLabel() { return offerLabel; }
+    public void setOfferLabel(String offerLabel) { this.offerLabel = offerLabel; }
+    public BigDecimal getOfferDiscountAmount() { return offerDiscountAmount; }
+    public void setOfferDiscountAmount(BigDecimal offerDiscountAmount) { this.offerDiscountAmount = offerDiscountAmount; }
 }

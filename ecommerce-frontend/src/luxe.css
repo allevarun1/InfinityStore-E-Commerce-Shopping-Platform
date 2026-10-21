@@ -1,0 +1,142 @@
+/* ==========================================================================
+   Luxe layer: the finishing touches that make the store feel like a boutique.
+   Zari shimmer, woven textures, cursor light, depth on hover, ornamental dividers.
+   Loaded last. Movement is transform/opacity only and all of it stops under reduced motion.
+   ========================================================================== */
+
+:root {
+  --zari: linear-gradient(110deg, #8a6420 0%, #d9b25c 28%, #fff1c7 50%, #d9b25c 72%, #8a6420 100%);
+  --glow-gold: 0 0 0 1px rgb(181 134 47 / 0.35), 0 18px 40px -18px rgb(181 134 47 / 0.55);
+  --jaali: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23b5862f' stroke-opacity='.16' stroke-width='1'%3E%3Cpath d='M28 4l24 24-24 24L4 28z'/%3E%3Cpath d='M28 16l12 12-12 12-12-12z'/%3E%3Ccircle cx='28' cy='28' r='3'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ---------- Page ground: a faint woven texture and a soft warm wash ---------- */
+body {
+  background-image:
+    radial-gradient(900px 500px at 100% 0, rgb(181 134 47 / 0.07), transparent 70%),
+    radial-gradient(800px 500px at 0 40%, rgb(123 30 43 / 0.045), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* ---------- Header: a thread of zari under the bar ---------- */
+.site-header { position: sticky; }
+.site-header::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #b5862f 20%, #f1d58f 50%, #b5862f 80%, transparent);
+  opacity: 0.85;
+}
+.header-actions a, .header-actions button { transition: background-color 0.2s, transform 0.25s var(--spring, ease), color 0.2s; }
+.header-actions a:hover i, .header-actions button:hover i { transform: translateY(-2px) scale(1.12); }
+.header-actions i { transition: transform 0.25s var(--spring, ease); display: inline-block; }
+
+/* ---------- Hero: woven pattern, light that follows the cursor, shimmering gold word ---------- */
+.hero-x::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image: var(--jaali); background-size: 56px; opacity: 0.55;
+  -webkit-mask-image: radial-gradient(70% 90% at 80% 20%, #000, transparent 75%);
+  mask-image: radial-gradient(70% 90% at 80% 20%, #000, transparent 75%);
+}
+.hero-x { --mx: 70%; --my: 30%; }
+.hero-x .hero-inner::before {
+  content: ""; position: absolute; inset: -40px -20px; pointer-events: none; z-index: -1;
+  background: radial-gradient(520px circle at var(--mx) var(--my), rgb(241 213 143 / 0.16), transparent 60%);
+}
+.hero-media { isolation: isolate; transition: transform 0.4s var(--ease-out, ease); }
+.hero-media img { box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(241 213 143 / 0.25); }
+.hero-media::before {
+  content: ""; position: absolute; inset: -6px; border-radius: calc(var(--r-lg) + 6px); z-index: -1;
+  background: conic-gradient(from 0deg, rgb(241 213 143 / 0.55), rgb(123 30 43 / 0.5), rgb(241 213 143 / 0.55));
+  filter: blur(22px); opacity: 0.45;
+}
+
+/* ---------- Buttons: a sweep of light, a lift, a gold edge ---------- */
+.btn-primary, .primary, .link-button { position: relative; overflow: hidden; isolation: isolate; box-shadow: 0 8px 20px -10px rgb(123 30 43 / 0.7); }
+.btn-primary::before, .primary::before, .link-button::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; transform: translateX(-120%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.32), transparent); width: 55%;
+}
+.btn-primary:hover::before, .primary:hover::before, .link-button:hover::before { transform: translateX(260%) skewX(-18deg); transition: transform 0.8s var(--ease-out, ease); }
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0) scale(0.98); }
+.btn-light { box-shadow: 0 10px 28px -12px rgb(241 213 143 / 0.7); }
+
+/* ---------- Headings: an ornamental rule with a gold diamond ---------- */
+.tiles-head, .occasions h2, .catalog-head, .voices-head, .craft h2 { position: relative; }
+.eyebrow { letter-spacing: 0.22em; text-transform: uppercase; font-size: 0.74rem; font-weight: 700; color: var(--gold-ink); }
+.voices-head, .tiles-head { text-align: left; }
+.tiles-head h2::after, .occasions h2::after, .catalog-head h2::after { display: none; }
+.tiles-head h2, .occasions h2, .catalog-head h2, .voices-head h2 { display: inline-flex; flex-direction: column; gap: 10px; }
+.tiles-head h2::before, .occasions h2::before, .catalog-head h2::before, .voices-head h2::before { content: none; }
+.tiles-head h2::after, .occasions h2::after, .catalog-head h2::after, .voices-head h2::after {
+  display: block; content: ""; height: 12px; width: 150px;
+  background:
+    linear-gradient(90deg, #b5862f, transparent) left center / 58px 1px no-repeat,
+    linear-gradient(270deg, #b5862f, transparent) right center / 58px 1px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M6 0l6 6-6 6-6-6z' fill='%23b5862f'/%3E%3C/svg%3E") center / 12px 12px no-repeat;
+  transform-origin: left; width: 150px; height: 12px;
+}
+
+/* ---------- Category tiles: depth, a gold frame and light that follows the cursor ---------- */
+.tile { position: relative; overflow: hidden; border-radius: var(--r-lg); transition: transform 0.45s var(--ease-out, ease), box-shadow 0.45s; --mx: 50%; --my: 50%; }
+.tile img { transition: transform 0.9s var(--ease-out, ease); }
+.tile::before {
+  content: ""; position: absolute; inset: 10px; z-index: 2; pointer-events: none; border: 1px solid rgb(241 213 143 / 0);
+  border-radius: calc(var(--r-lg) - 6px); transition: border-color 0.4s, inset 0.4s var(--ease-out, ease);
+}
+.tile:hover { transform: translateY(-6px); box-shadow: var(--glow-gold); }
+.tile:hover img { transform: scale(1.08); }
+.tile:hover::before { border-color: rgb(241 213 143 / 0.85); inset: 14px; }
+
+/* ---------- Product cards: lift, gold glow, cursor light, bold price ---------- */
+.pcard { --mx: 50%; --my: 50%; transition: transform 0.4s var(--ease-out, ease); }
+.pcard-media { position: relative; border-radius: var(--r-md); overflow: hidden; transition: box-shadow 0.4s; }
+.pcard-media::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.35s;
+  background: radial-gradient(240px circle at var(--mx) var(--my), rgb(255 241 199 / 0.3), transparent 65%);
+}
+.pcard:hover { transform: translateY(-6px); }
+.pcard:hover .pcard-media { box-shadow: var(--glow-gold); }
+.pcard:hover .pcard-media::after { opacity: 1; }
+
+/* ---------- Trust strip, marquee, voices, refer, order success ---------- */
+.trust-item i { transition: transform 0.4s var(--spring, ease); }
+.trust-item:hover i { transform: translateY(-3px) rotate(-8deg) scale(1.1); }
+.voices-card { position: relative; overflow: hidden; --mx: 50%; --my: 0%;
+  background: linear-gradient(160deg, #fff, var(--gold-50)); border: 1px solid rgb(181 134 47 / 0.35); box-shadow: 0 30px 60px -40px rgb(123 30 43 / 0.45); }
+.voices-card::before { content: ""; position: absolute; inset: 0; background-image: var(--jaali); background-size: 56px; opacity: 0.6; pointer-events: none;
+  -webkit-mask-image: radial-gradient(60% 80% at 100% 0, #000, transparent 80%); mask-image: radial-gradient(60% 80% at 100% 0, #000, transparent 80%); }
+.voices-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(360px circle at var(--mx) var(--my), rgb(241 213 143 / 0.22), transparent 65%); }
+.voices-mark { background: var(--zari); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.refer-hero { --mx: 50%; --my: 0%; position: relative; overflow: hidden; }
+.refer-hero::before { content: ""; position: absolute; inset: 0; background-image: var(--jaali); background-size: 56px; opacity: 0.8; pointer-events: none; }
+.refer-hero::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(420px circle at var(--mx) var(--my), rgb(255 255 255 / 0.55), transparent 65%); }
+.refer-hero > * { position: relative; z-index: 1; }
+.refer-code code { background: linear-gradient(#fff, #fff) padding-box, var(--zari) border-box; border: 2px solid transparent; }
+.reel { transition: transform 0.4s var(--ease-out, ease), box-shadow 0.4s; }
+.reel:hover { transform: translateY(-6px) scale(1.015); box-shadow: var(--glow-gold); }
+.footer { position: relative; }
+.footer::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--zari); }
+
+/* ---------- Motion: only for people who have not asked for less ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .site-header::after { background-size: 200% 100%; animation: thread-run 7s linear infinite; }
+  @keyframes thread-run { from { background-position: 0 0; } to { background-position: 200% 0; } }
+
+  .hero-media::before { animation: halo-spin 14s linear infinite; }
+  @keyframes halo-spin { to { transform: rotate(360deg); } }
+  .hero-x::after { animation: jaali-drift 40s linear infinite; }
+  @keyframes jaali-drift { to { background-position: 56px 56px; } }
+
+  .tiles-head h2::after, .occasions h2::after, .catalog-head h2::after, .voices-head h2::after { animation: rule-draw 1s var(--ease-out, ease) 0.2s backwards; }
+  @keyframes rule-draw { from { transform: scaleX(0); opacity: 0; } }
+
+  .voices-card::before, .refer-hero::before { animation: jaali-drift 60s linear infinite; }
+  .refer-code code { animation: code-glow 3.4s ease-in-out infinite; }
+  @keyframes code-glow { 50% { box-shadow: 0 0 0 6px rgb(181 134 47 / 0.14); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary::before, .primary::before, .link-button::before { display: none; }
+}
+@media (hover: none) {
+  .pcard:hover, .tile:hover, .reel:hover, .btn:hover { transform: none; }
+}

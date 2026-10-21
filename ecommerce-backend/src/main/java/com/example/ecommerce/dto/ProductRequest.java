@@ -125,6 +125,8 @@ public class ProductRequest {
     @Size(max = 60) private String weave;
     @Size(max = 60) private String occasion;
     @Size(max = 40) private String colour;
+    @Size(max = 40) @jakarta.validation.constraints.Pattern(regexp = "^[A-Za-z0-9._-]*$", message = "SKU may use letters, numbers, dot, dash and underscore") private String sku;
+    @Size(max = 60) private String styleGroup;
     @Size(max = 60) private String region;
     @Size(max = 500) private String careInstructions;
     private Boolean blouseIncluded;
@@ -136,6 +138,10 @@ public class ProductRequest {
     /** Optional lifecycle target applied after save; defaults to staying in DRAFT. */
     private String status;
 
+    public String getSku() { return sku; }
+    public void setSku(String v) { this.sku = v; }
+    public String getStyleGroup() { return styleGroup; }
+    public void setStyleGroup(String v) { this.styleGroup = v; }
     public String getFabric() { return fabric; }
     public void setFabric(String v) { this.fabric = v; }
     public String getWeave() { return weave; }

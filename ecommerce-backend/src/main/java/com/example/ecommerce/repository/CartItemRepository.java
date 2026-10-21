@@ -27,4 +27,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Transactional
     @Query("DELETE FROM CartItem c WHERE c.product.id = :productId")
     void deleteByProductId(@Param("productId") Long productId);
+
+    /** Bag lines touched since the given time, oldest first. */
+    List<CartItem> findByUpdatedAtAfterOrderByUpdatedAtAsc(java.time.LocalDateTime after);
 }

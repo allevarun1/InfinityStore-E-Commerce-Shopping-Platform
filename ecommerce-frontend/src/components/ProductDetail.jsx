@@ -13,6 +13,10 @@ import { useCartActions } from '../lib/useCartActions';
 import { track } from '../lib/analytics';
 import { useWishlist } from '../lib/useWishlist';
 import { ProductGallery } from './Gallery';
+import { NotifyMe } from './NotifyMe';
+import { ColourSwatches } from './ColourSwatches';
+import { WatchButton } from './Videos';
+import { DeliveryCheck, OfferStrip, PriceBreakup, DemandLine, VideoCallLink } from './Shopper';
 
 // Search engines that run JavaScript read this to show price and availability in results.
 function setProductMeta(p) {
@@ -161,12 +165,16 @@ export function ProductDetail() {
         <div className="pdp-info">
           <span className="eyebrow">{product.category.name}</span>
           <h1>{product.name}</h1>
+          <DemandLine product={product} />
+          <WatchButton productId={product.id} />
           {product.reviewCount > 0 && (
             <a className="rating-summary" href="#reviews" aria-label={`Rated ${product.averageRating} out of 5 from ${product.reviewCount} ${product.reviewCount === 1 ? 'review' : 'reviews'}`}>
               <StarRating rating={product.averageRating} />
               <span>{product.averageRating} · {product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'}</span>
             </a>
           )}
+
+          <ColourSwatches product={product} />
 
           <div className="pdp-price">
             <div className="price">
@@ -215,14 +223,20 @@ export function ProductDetail() {
                   <i className={`bi ${isWished(product.id) ? 'bi-heart-fill' : 'bi-heart'}`} aria-hidden="true"></i> {isWished(product.id) ? 'Saved to wishlist' : 'Save to wishlist'}
                 </button>
               </div>
+              {soldOut && <NotifyMe product={product} />}
               <div className="pdp-actions-row">
                 <WhatsAppAsk product={product} />
+                <VideoCallLink product={product} />
                 <button type="button" className="btn btn-outline share-btn" onClick={share}>
                   <i className="bi bi-share" aria-hidden="true"></i> Share
                 </button>
               </div>
             </>
           )}
+
+          {!soldOut && <DeliveryCheck />}
+          <OfferStrip />
+          <PriceBreakup product={product} />
 
           {info && (
             <ul className="facts">

@@ -40,7 +40,7 @@ export function QuickView({ product, onClose }) {
       <div className="qv" role="dialog" aria-modal="true" aria-labelledby="qv-title">
         <button ref={closeRef} type="button" className="drawer-close qv-close" onClick={onClose} aria-label="Close"><i className="bi bi-x-lg" aria-hidden="true"></i></button>
         <div className="qv-media">
-          <img src={photos[i]} alt={product.name} width="600" height="750" />
+          <img src={photos[i]} alt={product.name} data-fly-src={product.id} width="600" height="750" />
           {photos.length > 1 && (
             <div className="qv-thumbs">
               {photos.map((src, n) => (

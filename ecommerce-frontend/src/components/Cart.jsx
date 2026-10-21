@@ -8,6 +8,7 @@ import { GuestCart } from './GuestCart';
 import { useAuth } from '../contexts/AuthContext';
 import { EmptyState } from './EmptyState';
 import { inr, inrCompact, isOnDeal, imageSrc } from '../lib/format';
+import { DeliveryCheck, OfferProgress, CartCrossSell } from './Shopper';
 
 export function Cart() {
   const { isLoggedIn } = useAuth();
@@ -131,19 +132,25 @@ function ServerCart() {
                 </div>
               </div>
             )}
+            <OfferProgress units={units} saving={Number(quote.offerDiscount) || null} />
             <div className="summary-row"><span>Subtotal</span><span>{inr(quote.subtotal)}</span></div>
             {Number(quote.discount) > 0 && (
               <div className="summary-row" style={{ color: 'var(--success)' }}><span>Savings</span><span>−{inr(quote.discount)}</span></div>
             )}
+            {Number(quote.offerDiscount) > 0 && (
+              <div className="summary-row" style={{ color: 'var(--success)' }}><span>{quote.offerLabel}</span><span>−{inr(quote.offerDiscount)}</span></div>
+            )}
             <div className="summary-row"><span>GST</span><span>{inr(quote.tax)}</span></div>
             <div className="summary-row"><span>Shipping</span><span>{Number(quote.shipping) === 0 ? 'Free' : inr(quote.shipping)}</span></div>
             <div className="summary-row total"><span>Total</span><span>{inr(quote.total)}</span></div>
+            <DeliveryCheck compact />
             <Link className="btn btn-primary" to="/checkout">Proceed to checkout</Link>
             <p className="secure-note"><i className="bi bi-cash-coin" aria-hidden="true"></i> Cash on delivery available</p>
             <p style={{ textAlign: 'center', marginTop: 8 }}><Link to="/#products">Continue shopping</Link></p>
           </aside>
         )}
       </div>
+      <CartCrossSell inCartIds={items.map(i => i.product.id)} categoryIds={items.map(i => i.product.category?.id).filter(Boolean)} onAdded={() => { refreshCart(); load(); }} />
     </div>
   );
 }

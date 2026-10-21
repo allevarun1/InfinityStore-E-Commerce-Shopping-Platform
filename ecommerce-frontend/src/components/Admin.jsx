@@ -1,4 +1,9 @@
 import { AdminCoupons } from './AdminCoupons';
+import { AdminAutopilot } from './AdminAutopilot';
+import { AdminLeads } from './AdminLeads';
+import { AdminCatalogue } from './AdminCatalogue';
+import { AdminVideos } from './AdminVideos';
+import { AdminTestimonials } from './AdminTestimonials';
 import { GalleryEditor } from './Gallery';
 import React, { useEffect, useState } from 'react';
 import { imageSrc } from '../lib/format';
@@ -32,7 +37,9 @@ const margin = (p) => {
 };
 
 export function Admin() {
-  const [currentTab, setCurrentTab] = useState('management');
+  const [searchParams] = useSearchParams();
+  // The owner lands on Autopilot (today's to-do); links such as /admin?tab=leads open a tab directly.
+  const [currentTab, setCurrentTab] = useState(() => searchParams.get('tab') || (searchParams.get('editId') ? 'management' : 'autopilot'));
   
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -43,7 +50,6 @@ export function Admin() {
   const [product, setProduct] = useState(BLANK_PRODUCT);
   const [category, setCategory] = useState({ name: '', description: '' });
   
-  const [searchParams] = useSearchParams();
   const toast = useToast();
 
   const load = () => {
@@ -129,6 +135,22 @@ export function Admin() {
     // Drafts' uploaded photos are not publicly served yet, so edit the stored copies directly.
     setProduct({ ...p, categoryId: p.category.id, gallery: p.previewGallery || p.gallery || [] });
     setCurrentTab('management');
+  };
+
+  const [colourFor, setColourFor] = useState(null);
+
+  const addColour = (e) => {
+    e.preventDefault();
+    const colour = colourFor.colour.trim();
+    if (!colour) return;
+    ApiService.addColour(colourFor.id, colour)
+      .then(copy => {
+        toast.success(`${colour} added as a draft. Add its photos and stock, then publish.`);
+        setColourFor(null);
+        load();
+        editProduct(copy);
+      })
+      .catch(err => toast.error(err.response?.data?.message || 'Could not add the colour'));
   };
 
   const saveCategory = (e) => {
@@ -220,11 +242,23 @@ export function Admin() {
         <h1>Admin Panel</h1>
         
         <nav className="admin-tabs">
+          <button className={currentTab === 'autopilot' ? 'active' : ''} onClick={() => setCurrentTab('autopilot')}>
+            <i className="bi bi-robot"></i> Autopilot
+          </button>
+          <button className={currentTab === 'leads' ? 'active' : ''} onClick={() => setCurrentTab('leads')}>
+            <i className="bi bi-person-lines-fill"></i> Leads
+          </button>
           <button className={currentTab === 'management' ? 'active' : ''} onClick={() => setCurrentTab('management')}>
-            <i className="bi bi-plus-circle"></i> New product / category
+            <i className="bi bi-plus-circle"></i> Add product
           </button>
           <button className={currentTab === 'insights' ? 'active' : ''} onClick={() => setCurrentTab('insights')}>
             <i className="bi bi-graph-up-arrow"></i> Insights
+          </button>
+          <button className={currentTab === 'catalogue' ? 'active' : ''} onClick={() => setCurrentTab('catalogue')}>
+            <i className="bi bi-file-earmark-spreadsheet"></i> Bulk &amp; feeds
+          </button>
+          <button className={currentTab === 'videos' ? 'active' : ''} onClick={() => setCurrentTab('videos')}>
+            <i className="bi bi-camera-video"></i> Videos &amp; quotes
           </button>
           <button className={currentTab === 'products' ? 'active' : ''} onClick={() => setCurrentTab('products')}>
             <i className="bi bi-box-seam"></i> Products ({products.length})
@@ -305,6 +339,8 @@ export function Admin() {
                     <datalist id="occasions"><option>Wedding</option><option>Festive</option><option>Party</option><option>Everyday</option><option>Office</option></datalist></div>
                   <div className="field-group"><label htmlFor="colour">Colour</label>
                     <input id="colour" value={product.colour || ''} onChange={e => setProduct({...product, colour: e.target.value})} /></div>
+                  <div className="field-group"><label htmlFor="sku">SKU (your own code)</label>
+                    <input id="sku" maxLength={40} placeholder="KAN-RED-01" value={product.sku || ''} onChange={e => setProduct({...product, sku: e.target.value.replace(/[^A-Za-z0-9._-]/g, '')})} /></div>
                   <div className="field-group"><label htmlFor="region">Region of origin</label>
                     <input id="region" placeholder="Tamil Nadu" value={product.region || ''} onChange={e => setProduct({...product, region: e.target.value})} /></div>
                   <div className="field-group"><label htmlFor="len">Length (metres)</label>
@@ -418,9 +454,19 @@ export function Admin() {
                     <button key={to} className={to === 'PUBLISHED' ? 'primary' : ''} onClick={() => step(p, to)}>{label}</button>
                   ))}
                   <button onClick={() => editProduct(p)}>Edit</button>
+                  <button onClick={() => setColourFor({ id: p.id, colour: '' })}>Add colour</button>
                   <button onClick={() => toggleStock(p)}>{p.stockQuantity === 0 ? 'Mark in-stock' : 'Mark out-of-stock'}</button>
                   <button className="danger-btn" onClick={() => deleteProduct(p)}>Delete</button>
                 </div>
+                {colourFor?.id === p.id && (
+                  <form className="add-colour" onSubmit={addColour}>
+                    <label htmlFor={`nc-${p.id}`}>New colour of this design</label>
+                    <input id={`nc-${p.id}`} autoFocus maxLength={40} placeholder="e.g. Emerald green" value={colourFor.colour}
+                      onChange={e => setColourFor({ ...colourFor, colour: e.target.value })} />
+                    <button type="submit" className="primary">Create draft</button>
+                    <button type="button" onClick={() => setColourFor(null)}>Cancel</button>
+                  </form>
+                )}
               </div>
             ))}
           </div>
@@ -442,6 +488,10 @@ export function Admin() {
         )}
 
         {currentTab === 'coupons' && <AdminCoupons />}
+        {currentTab === 'autopilot' && <AdminAutopilot onNavigate={setCurrentTab} />}
+        {currentTab === 'leads' && <AdminLeads />}
+        {currentTab === 'catalogue' && <AdminCatalogue onDone={load} />}
+        {currentTab === 'videos' && (<><AdminVideos products={products} /><AdminTestimonials products={products} /></>)}
 
         {currentTab === 'orders' && (
           <div className="tab-content">

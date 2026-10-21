@@ -25,6 +25,13 @@ public class PricingService {
     private final BigDecimal freeShippingThreshold;
     private final BigDecimal shippingFee;
     private final String currency;
+    private MultiBuyService multiBuy;
+
+    /** Optional so the engine can still be built on its own in unit tests. */
+    @Autowired(required = false)
+    public void setMultiBuy(MultiBuyService multiBuy) {
+        this.multiBuy = multiBuy;
+    }
 
     @Autowired
     public PricingService(
@@ -57,11 +64,25 @@ public class PricingService {
      * spread across lines in proportion to their value so GST is charged on what the customer pays.
      */
     public PriceQuote quote(List<CartItem> items, BigDecimal couponDiscount, String couponCode) {
-        BigDecimal coupon = couponDiscount == null ? BigDecimal.ZERO : couponDiscount;
+        BigDecimal couponOnly = couponDiscount == null ? BigDecimal.ZERO : couponDiscount;
         BigDecimal netTotal = BigDecimal.ZERO;
+        int itemCount = 0;
         for (CartItem item : items) {
             netTotal = netTotal.add(money(activePrice(item.getProduct())).multiply(BigDecimal.valueOf(item.getQuantity())));
+            itemCount += item.getQuantity();
         }
+        // Multi-buy tier first (percentage of the sale-price total), then the coupon on what is left.
+        BigDecimal offer = BigDecimal.ZERO;
+        String offerLabel = null;
+        if (multiBuy != null && itemCount > 0) {
+            var tier = multiBuy.bestFor(itemCount);
+            if (tier.isPresent()) {
+                offer = netTotal.multiply(tier.get().getPercentOff()).divide(HUNDRED, 2, RoundingMode.HALF_UP);
+                offerLabel = tier.get().label();
+            }
+        }
+        // The offer and coupon are spread across lines together so GST is charged on what the customer pays.
+        BigDecimal coupon = offer.add(couponOnly);
         BigDecimal couponLeft = coupon;
         List<PriceQuote.Line> lines = new ArrayList<>();
         BigDecimal subtotal = BigDecimal.ZERO;
@@ -96,7 +117,7 @@ public class PricingService {
                 ? BigDecimal.ZERO.setScale(2) : money(shippingFee);
         BigDecimal total = taxable.add(tax).add(shipping);
         return new PriceQuote(lines, subtotal, discount, taxable, tax, shipping, total, currency,
-                coupon.signum() > 0 ? couponCode : null, coupon);
+                couponOnly.signum() > 0 ? couponCode : null, couponOnly, offer.signum() > 0 ? offerLabel : null, offer);
     }
 
     private static BigDecimal money(BigDecimal value) {

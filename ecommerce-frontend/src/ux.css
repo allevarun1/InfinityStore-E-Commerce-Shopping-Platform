@@ -203,9 +203,7 @@ body.no-scroll { overflow: hidden; }
 
 /* Phones: one announcement line, and a hero that gets the featured saree on screen sooner */
 @media (max-width: 760px) {
-  .announce span:not(:last-child) { display: none; }
-  .announce span + span::before { content: none; }
-  .hero-x .hero-inner { padding-top: 28px; padding-bottom: 36px; gap: 22px; }
+    .hero-x .hero-inner { padding-top: 28px; padding-bottom: 36px; gap: 22px; }
   .hero-x p { font-size: 1rem; margin-bottom: 20px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 }
 

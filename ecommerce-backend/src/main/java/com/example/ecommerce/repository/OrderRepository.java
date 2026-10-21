@@ -28,6 +28,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("select count(o) from Order o where o.user.id = :userId and o.status <> 'CANCELLED'")
     long countActiveByUser(@Param("userId") Long userId);
 
+    Optional<Order> findByTrackingNumber(String trackingNumber);
+
     long countByStatus(String status);
 
     @Query("select count(o) > 0 from Order o join o.orderItems i where o.user.id = :userId and i.product.id = :productId and o.status = 'DELIVERED'")
@@ -35,4 +37,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("select distinct o from Order o left join fetch o.orderItems where o.orderDate >= :from order by o.orderDate")
     List<Order> findSince(@Param("from") java.time.LocalDateTime from);
+
+    boolean existsByUserAndOrderDateAfter(User user, java.time.LocalDateTime after);
+
+    List<Order> findByStatus(String status);
 }

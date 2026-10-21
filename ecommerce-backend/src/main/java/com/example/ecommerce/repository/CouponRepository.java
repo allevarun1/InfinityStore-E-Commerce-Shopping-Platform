@@ -17,6 +17,10 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
     List<Coupon> findAllByOrderByCreatedAtDesc();
 
+    Optional<Coupon> findFirstByDescriptionStartingWith(String prefix);
+
+    List<Coupon> findByDescriptionStartingWithOrderByCreatedAtDesc(String prefix);
+
     /** Row lock so concurrent checkouts cannot exceed a usage limit. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from Coupon c where upper(c.code) = upper(:code)")

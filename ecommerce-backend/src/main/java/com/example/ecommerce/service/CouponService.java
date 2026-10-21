@@ -47,6 +47,13 @@ public class CouponService {
         }
         Coupon c = (lock ? coupons.lockByCode(code) : coupons.findByCodeIgnoreCase(code))
                 .orElseThrow(() -> new BusinessException(GENERIC_INVALID));
+        Long owner = ReferralService.ownerOf(c);
+        if (owner != null && ReferralService.isReward(c) && !owner.equals(user.getId())) {
+            throw new BusinessException(GENERIC_INVALID); // credit belongs to the referrer only
+        }
+        if (owner != null && !ReferralService.isReward(c) && owner.equals(user.getId())) {
+            throw new BusinessException("You can't use your own referral code. Share it with a friend instead");
+        }
         LocalDateTime now = LocalDateTime.now();
         if (!c.isActive() || (c.getStartsAt() != null && c.getStartsAt().isAfter(now))) {
             throw new BusinessException(GENERIC_INVALID);

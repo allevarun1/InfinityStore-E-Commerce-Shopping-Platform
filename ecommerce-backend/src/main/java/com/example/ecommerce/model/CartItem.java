@@ -22,6 +22,11 @@ public class CartItem {
     @Column(nullable = false)
     private Integer quantity;
 
+    /** Last time the shopper touched this line; Autopilot uses it to spot abandoned bags. */
+    @Column(name = "updated_at")
+    @JsonIgnore
+    private java.time.LocalDateTime updatedAt = java.time.LocalDateTime.now();
+
     public CartItem() {}
 
     public CartItem(User user, Product product, Integer quantity) {
@@ -60,5 +65,14 @@ public class CartItem {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+        this.updatedAt = java.time.LocalDateTime.now();
+    }
+
+    public java.time.LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

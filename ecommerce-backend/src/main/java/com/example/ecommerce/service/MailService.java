@@ -45,6 +45,11 @@ public class MailService {
                 "- InfinityStore Team");
     }
 
+    /** True when an SMTP server is configured, so Autopilot knows whether email can really go out. */
+    public boolean configured() {
+        return mailSender != null && fromEmail != null && !fromEmail.isBlank();
+    }
+
     @Async
     public void send(String to, String subject, String body) {
         if (mailSender == null || to == null || to.isBlank()) {

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { guestCart, MAX_PER_LINE } from '../lib/guestCart';
+import { DeliveryCheck, OfferProgress } from './Shopper';
 import { inr, inrCompact, isOnDeal, activePrice, imageSrc } from '../lib/format';
 import { useStore } from '../contexts/StoreContext';
 import { Loader } from './Loader';
@@ -109,8 +110,10 @@ export function GuestCart() {
               </div>
             </div>
           )}
+          <OfferProgress units={lines.reduce((n, l) => n + l.quantity, 0)} />
           <div className="summary-row total"><span>Subtotal</span><span>{inr(subtotal)}</span></div>
           <p className="secure-note">GST and shipping are added at checkout, where you can also apply a coupon.</p>
+          <DeliveryCheck compact />
           <button type="button" className="btn btn-primary"
             onClick={() => navigate('/login', { state: { from: { pathname: '/checkout' } } })}>
             Sign in to check out
