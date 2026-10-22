@@ -68,16 +68,23 @@ export function Home() {
     return () => io.disconnect();
   }, []);
 
+  // The free server sleeps when idle and can take up to a minute to wake; while it wakes it may answer with an error.
+  // So: retry a few times before giving up, and tell the shopper what is happening instead of showing nothing.
+  const [slow, setSlow] = useState(false);
   const load = useCallback(() => {
     setLoading(true);
     setFailed(false);
-    Promise.all([ApiService.products(), ApiService.categories()])
+    setSlow(false);
+    const slowTimer = setTimeout(() => setSlow(true), 3500);
+    const attempt = (n) => Promise.all([ApiService.products(), ApiService.categories()])
+      .catch((e) => (n < 4 ? new Promise(r => setTimeout(r, 4000)).then(() => attempt(n + 1)) : Promise.reject(e)));
+    attempt(1)
       .then(([p, c]) => {
         setProducts(p);
         setCategories(c);
       })
       .catch(() => setFailed(true))
-      .finally(() => setLoading(false));
+      .finally(() => { clearTimeout(slowTimer); setSlow(false); setLoading(false); });
   }, []);
 
   useEffect(() => {
@@ -88,10 +95,21 @@ export function Home() {
     document.title = 'Rekha Shopping Mall — Handwoven Saree Collection';
   }, []);
 
+  // Arriving at /#products: the sections above the grid (carousel, banners, films, occasions) appear only after the
+  // sarees load and keep growing as their pictures and videos arrive, which pushed the grid off screen. Keep the grid
+  // pinned to the top while that settles, and let go the moment the shopper scrolls, taps or presses a key.
   useEffect(() => {
-    if (location.hash === '#products' && !loading) {
-      document.getElementById('products')?.scrollIntoView({ block: 'start' });
-    }
+    if (location.hash !== '#products' || loading) return undefined;
+    const pin = () => document.getElementById('products')?.scrollIntoView({ block: 'start' });
+    pin();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(pin);
+    ro.observe(document.body);
+    const stop = () => { ro.disconnect(); clearTimeout(t); EVENTS.forEach(ev => window.removeEventListener(ev, stop)); };
+    const EVENTS = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+    EVENTS.forEach(ev => window.addEventListener(ev, stop, { passive: true }));
+    const t = setTimeout(stop, 5000);
+    return stop;
   }, [location, loading]);
 
   const visible = useMemo(() => {
@@ -355,9 +373,17 @@ export function Home() {
             <button type="button" className="btn btn-outline" onClick={load}>Retry</button>
           </div>
         ) : loading ? (
+          <>
+          {slow && (
+            <p className="waking" role="status">
+              <span className="waking-dot" aria-hidden="true"></span>
+              Opening the store for you. The first visit after a quiet spell can take up to a minute.
+            </p>
+          )}
           <div className="pgrid" aria-busy="true" aria-label="Loading products">
             {Array.from({ length: 8 }, (_, i) => <ProductCardSkeleton key={i} />)}
           </div>
+          </>
         ) : visible.length === 0 ? (
           <EmptyState
             icon="bi-search"

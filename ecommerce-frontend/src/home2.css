@@ -116,3 +116,8 @@
 .intro .intro-name, .intro .intro-sub, .intro .lotus { animation: fade-up 0.8s var(--ease-out, ease) backwards; }
 .intro .intro-name { animation-delay: 0.7s; } .intro .intro-sub { animation-delay: 0.95s; } .intro .lotus { animation-delay: 1.15s; }
 .intro.lifting { opacity: 0; transform: translateY(-3%); transition: opacity 0.6s ease, transform 0.7s var(--ease-out, ease); pointer-events: none; }
+
+/* ---------- "Opening the store" note while the free server wakes ---------- */
+.waking { display: flex; align-items: center; gap: 12px; margin: 0 0 18px; padding: 12px 16px; border-radius: 12px; background: #fff; border: 1px solid rgb(181 134 47 / 0.35); color: var(--ink-2); font-size: 0.92rem; }
+.waking-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #c2185b; animation: glow-breathe 1.4s ease-in-out infinite; opacity: 0.4; }
+@keyframes glow-breathe { 50% { opacity: 1; } }
