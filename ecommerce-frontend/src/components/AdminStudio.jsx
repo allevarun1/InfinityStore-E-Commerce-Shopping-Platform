@@ -45,7 +45,7 @@ export function AdminStudio({ products, initial, initialProductId, onUseOnProduc
   useEffect(() => {
     if (!product) return;
     setReel(r => ({ ...r, title: r.title || product.name, subtitle: r.subtitle || [product.fabric, product.region].filter(Boolean).join('  |  ') || 'Handwoven' }));
-    if (!src && cover(product)) choose({ url: imageSrc(cover(product)), name: product.name });
+    if (cover(product)) choose({ url: imageSrc(cover(product)), name: product.name });
   }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const run = async () => {
@@ -70,7 +70,7 @@ export function AdminStudio({ products, initial, initialProductId, onUseOnProduc
     }
   };
 
-  const useOnProduct = async (mode) => {
+  const applyToProduct = async (mode) => {
     if (!product) { toast.error('Choose the saree first'); return; }
     const asset = await saveToLibrary();
     if (asset) onUseOnProduct(product.id, asset.url, mode);
@@ -131,7 +131,7 @@ export function AdminStudio({ products, initial, initialProductId, onUseOnProduc
           <div className="field-group inline">
             <label htmlFor="st-prod">Saree</label>
             <select id="st-prod" value={productId} onChange={e => setProductId(e.target.value)}>
-              <option value="">Choose a saree…</option>
+              <option value="">Choose a sareeâ€¦</option>
               {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
@@ -155,8 +155,8 @@ export function AdminStudio({ products, initial, initialProductId, onUseOnProduc
                 <label><input type="radio" name="st-mode" checked={opts.mode === 'cover'} onChange={() => setOpts({ ...opts, mode: 'cover' })} /> Fill the frame (4:5)</label>
                 <label><input type="radio" name="st-mode" checked={opts.mode === 'contain'} onChange={() => setOpts({ ...opts, mode: 'contain' })} /> Show the whole photo</label>
               </fieldset>
-              <button type="button" className="btn btn-primary" onClick={run} disabled={working}>{working ? 'Working…' : <><i className="bi bi-stars" aria-hidden="true"></i> Enhance photo</>}</button>
-              <p className="admin-hint">Smart enlargement to 1200×1500, automatic light and colour correction and careful sharpening. It improves what is in the photo; it does not invent detail, so start from the best picture you have.</p>
+              <button type="button" className="btn btn-primary" onClick={run} disabled={working}>{working ? 'Workingâ€¦' : <><i className="bi bi-stars" aria-hidden="true"></i> Enhance photo</>}</button>
+              <p className="admin-hint">Smart enlargement to 1200Ã—1500, automatic light and colour correction and careful sharpening. It improves what is in the photo; it does not invent detail, so start from the best picture you have.</p>
             </div>
             <div className="studio-view">
               {result ? (
@@ -168,13 +168,13 @@ export function AdminStudio({ products, initial, initialProductId, onUseOnProduc
                   </div>
                   <input type="range" min="0" max="100" value={split} onChange={e => setSplit(Number(e.target.value))} aria-label="Compare before and after" />
                   <ul className="stats">
-                    <li><strong>{result.width}×{result.height}</strong><small>from {result.from.w}×{result.from.h}</small></li>
+                    <li><strong>{result.width}Ã—{result.height}</strong><small>from {result.from.w}Ã—{result.from.h}</small></li>
                     <li><strong>{gain > 0 ? `+${gain}%` : 'Same'}</strong><small>crispness</small></li>
                     <li><strong>{kb(result.blob.size)}</strong><small>{result.blob.type.split('/')[1]}</small></li>
                   </ul>
                   <div className="studio-actions">
-                    <button type="button" className="btn btn-primary" onClick={() => useOnProduct('cover')} disabled={!product}>Use as cover of this saree</button>
-                    <button type="button" className="btn btn-outline" onClick={() => useOnProduct('gallery')} disabled={!product}>Add to its gallery</button>
+                    <button type="button" className="btn btn-primary" onClick={() => applyToProduct('cover')} disabled={!product}>Use as cover of this saree</button>
+                    <button type="button" className="btn btn-outline" onClick={() => applyToProduct('gallery')} disabled={!product}>Add to its gallery</button>
                     <button type="button" className="btn btn-outline" onClick={saveToLibrary}>Save to library</button>
                     <a className="btn btn-outline" href={result.url} download={`${slug(product?.name || 'saree')}.${result.blob.type === 'image/webp' ? 'webp' : 'jpg'}`}>Download</a>
                   </div>
@@ -201,7 +201,7 @@ export function AdminStudio({ products, initial, initialProductId, onUseOnProduc
                 <label><input type="radio" name="rl-focus" checked={reel.focus === 'B'} onChange={() => setReel({ ...reel, focus: 'B' })} /> Close-up 2: fabric and fall</label>
               </fieldset>
               <p className="admin-hint">Click on the photo to choose what each close-up looks at.</p>
-              <button type="button" className="btn btn-primary" onClick={startReel} disabled={reel.making || !format}>{reel.making ? `Recording… ${Math.round(reel.pct * 100)}%` : <><i className="bi bi-camera-reels" aria-hidden="true"></i> Create reel ({REEL.seconds} seconds)</>}</button>
+              <button type="button" className="btn btn-primary" onClick={startReel} disabled={reel.making || !format}>{reel.making ? `Recordingâ€¦ ${Math.round(reel.pct * 100)}%` : <><i className="bi bi-camera-reels" aria-hidden="true"></i> Create reel ({REEL.seconds} seconds)</>}</button>
               <p className="admin-hint">Keep this tab open and visible while it records.</p>
             </div>
             <div className="studio-view reel-view">
@@ -219,7 +219,7 @@ export function AdminStudio({ products, initial, initialProductId, onUseOnProduc
           </div>
           {reel.url && (
             <div className="studio-actions">
-              <button type="button" className="btn btn-primary" onClick={publishReel} disabled={reel.publishing || !product}>{reel.publishing ? 'Publishing…' : 'Publish to "Sarees in motion"'}</button>
+              <button type="button" className="btn btn-primary" onClick={publishReel} disabled={reel.publishing || !product}>{reel.publishing ? 'Publishingâ€¦' : 'Publish to "Sarees in motion"'}</button>
               <a className="btn btn-outline" href={reel.url} download={`${slug(reel.title)}-reel.${reel.blob.type.includes('mp4') ? 'mp4' : 'webm'}`}>Download</a>
               {!product && <span className="admin-hint">Choose the saree in step 1 to publish.</span>}
             </div>

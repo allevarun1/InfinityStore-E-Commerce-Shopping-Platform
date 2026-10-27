@@ -120,6 +120,8 @@ export const ApiService = {
   deleteAccount: () => api.delete('/user/profile').then(res => res.data),
   
   adminUsers: () => api.get('/admin/users').then(res => res.data),
+  adminCustomers: () => api.get('/admin/customers').then(res => res.data),
+  shareAudience: (productId) => api.get('/admin/share/audience', { params: { productId } }).then(res => res.data),
   adminProducts: () => api.get('/admin/products').then(res => res.data),
   setProductStatus: (id, to) => api.put(`/products/${id}/status?to=${to}`).then(res => res.data),
   insightsDashboard: (days) => api.get(`/admin/insights/dashboard?days=${days}`).then(res => res.data),

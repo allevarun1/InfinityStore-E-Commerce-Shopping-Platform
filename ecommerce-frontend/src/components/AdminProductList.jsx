@@ -18,7 +18,7 @@ function nextSteps(p) {
 const FILTERS = [['ALL', 'All'], ['PUBLISHED', 'Published'], ['DRAFT', 'Drafts'], ['REVIEW', 'In review'], ['STOCK', 'Needs stock']];
 
 /** Every saree as a card, with search and quick filters. */
-export function AdminProductList({ products, onStep, onEdit, onStock, onDelete, colourFor, setColourFor, onAddColour, onStudio, onNew }) {
+export function AdminProductList({ products, onStep, onEdit, onStock, onDelete, colourFor, setColourFor, onAddColour, onStudio, onNew, onShare }) {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('ALL');
   const [sure, setSure] = useState(null);
@@ -68,6 +68,11 @@ export function AdminProductList({ products, onStep, onEdit, onStock, onDelete, 
                 {p.status !== 'PUBLISHED' && p.readinessIssues?.length > 0 && <p className="admin-warn">To publish: {p.readinessIssues.join('; ')}</p>}
               </div>
               <div className="admin-row-actions">
+                {p.status === 'PUBLISHED' && onShare && (
+                  <button type="button" className="wa-btn" onClick={() => onShare(p)} aria-label={`Share ${p.name} on WhatsApp`}>
+                    <i className="bi bi-whatsapp" aria-hidden="true"></i> Share
+                  </button>
+                )}
                 {nextSteps(p).map(([to, label]) => <button key={to} className={to === 'PUBLISHED' ? 'primary' : ''} onClick={() => onStep(p, to)}>{label}</button>)}
                 <button onClick={() => onEdit(p)}>Edit</button>
                 <button onClick={() => onStudio(p)}>Studio</button>

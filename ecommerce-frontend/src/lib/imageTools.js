@@ -200,7 +200,13 @@ export async function toBlob(c, quality = 0.9) {
   return (await tryType('image/webp')) || (await tryType('image/jpeg')) || new Promise((resolve) => c.toBlob(resolve, 'image/png'));
 }
 
-const toDataUrl = async (c) => URL.createObjectURL(await toBlob(c, 0.85));
+const toDataUrl = async (c) => {
+  try {
+    return c.toDataURL('image/jpeg', 0.85);
+  } catch {
+    return URL.createObjectURL(await toBlob(c, 0.85));
+  }
+};
 
 /** A photo straight from a phone, made upload-friendly: right way up and at most 2000px on the long side. */
 export async function shrinkForUpload(file) {

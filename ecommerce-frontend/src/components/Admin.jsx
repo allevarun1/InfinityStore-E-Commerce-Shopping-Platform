@@ -5,6 +5,7 @@ import { useToast } from '../contexts/ToastContext';
 import { imageSrc, inr } from '../lib/format';
 import { Loader } from './Loader';
 import '../admin2.css';
+import '../admin3.css';
 import { AdminCoupons } from './AdminCoupons';
 import { AdminAutopilot } from './AdminAutopilot';
 import { AdminLeads } from './AdminLeads';
@@ -19,6 +20,9 @@ import { AdminStudio } from './AdminStudio';
 import { AdminMedia } from './AdminMedia';
 import { BrandMark } from './BrandMark';
 import { AdminPopups } from './AdminPopups';
+import { AdminCustomers } from './AdminCustomers';
+import { ShareSheet } from './ShareSheet';
+import { orderMessages, waLink } from '../lib/share';
 
 const BLANK_PRODUCT = { stockQuantity: 10, deal: false, dealPrice: '', categoryId: '', status: 'DRAFT', source: 'MANUAL' };
 const STATUS_LABEL = { DRAFT: 'Draft', READY_FOR_REVIEW: 'Ready for review', APPROVED: 'Approved', PUBLISHED: 'Published' };
@@ -53,7 +57,8 @@ export function Admin() {
   const [studioProductId, setStudioProductId] = useState('');
   const [orderFilter, setOrderFilter] = useState('ALL');
   const [orderQ, setOrderQ] = useState('');
-  const [sureUser, setSureUser] = useState(null);
+  const [share, setShare] = useState(null);          // { products, template } while the WhatsApp share sheet is open
+  const [justPublished, setJustPublished] = useState(null);
 
   const toast = useToast();
 
@@ -100,8 +105,9 @@ export function Admin() {
       status: !product.id && publish ? 'PUBLISHED' : 'DRAFT',
     };
     ApiService.saveProduct(payload)
-      .then(() => {
+      .then((saved) => {
         toast.success(publish && !product.id ? 'Saree published' : 'Saree saved');
+        if (publish && !product.id && saved?.id) setJustPublished(saved);
         setProduct(BLANK_PRODUCT);
         setCurrentTab('products');
         load();
@@ -111,7 +117,7 @@ export function Admin() {
 
   const step = (p, to) => {
     ApiService.setProductStatus(p.id, to)
-      .then(() => { toast.success(`${p.name}: ${STATUS_LABEL[to].toLowerCase()}`); load(); })
+      .then(() => { toast.success(`${p.name}: ${STATUS_LABEL[to].toLowerCase()}`); if (to === 'PUBLISHED') setJustPublished(p); load(); })
       .catch(err => toast.error(err.response?.data?.message || 'Could not change the status'));
   };
 
@@ -154,11 +160,11 @@ export function Admin() {
       .catch(() => toast.error('Failed to delete the saree'));
   };
 
-  const deleteUser = (u) => {
-    ApiService.deleteUser(u.id)
-      .then(() => { toast.success('Customer deleted'); setSureUser(null); load(); })
-      .catch(() => toast.error('Failed to delete the customer'));
-  };
+  const deleteUser = (u) => ApiService.deleteUser(u.id)
+    .then(() => { toast.success('Customer deleted'); load(); })
+    .catch((err) => toast.error(err.response?.data?.message || 'Failed to delete the customer'));
+
+  const openShare = (list, template) => setShare({ products: Array.isArray(list) ? list : [list], template });
 
   // Mirrors the server's payment state machine; the server remains the authority.
   const paymentOptionsFor = (order) => {
@@ -236,9 +242,18 @@ export function Admin() {
           </div>
         </header>
 
+        {justPublished && (
+          <div className="pub-nudge" role="status">
+            <i className="bi bi-whatsapp" aria-hidden="true"></i>
+            <span><b>{justPublished.name}</b> is live. Tell your customers now: new arrivals sell best in their first two days.</span>
+            <button type="button" className="btn btn-wa sm" onClick={() => { openShare(products.find(x => x.id === justPublished.id) || justPublished, 'new'); setJustPublished(null); }}>Share on WhatsApp</button>
+            <button type="button" className="pub-x" onClick={() => setJustPublished(null)} aria-label="Dismiss"><i className="bi bi-x-lg" aria-hidden="true"></i></button>
+          </div>
+        )}
+
         {currentTab === 'autopilot' && (
           <>
-            <AdminDashboard orders={orders} products={products} onNavigate={go} />
+            <AdminDashboard orders={orders} products={products} onNavigate={go} onShare={openShare} />
             <AdminAutopilot onNavigate={go} />
           </>
         )}
@@ -252,7 +267,7 @@ export function Admin() {
         {currentTab === 'products' && (
           <AdminProductList products={products} onStep={step} onEdit={editProduct} onStock={toggleStock} onDelete={deleteProduct}
             colourFor={colourFor} setColourFor={setColourFor} onAddColour={addColour} onNew={() => { setProduct(BLANK_PRODUCT); go('management'); }}
-            onStudio={openStudio} />
+            onStudio={openStudio} onShare={(p) => openShare(p)} />
         )}
 
         {currentTab === 'studio' && <AdminStudio products={products} initial={studioPhoto} initialProductId={studioProductId} onUseOnProduct={useOnProduct} onVideosChanged={() => {}} />}
@@ -268,23 +283,7 @@ export function Admin() {
           </div>
         )}
 
-        {currentTab === 'users' && (
-          <div className="tab-content">
-            <h2>Registered customers</h2>
-            {users.length === 0 && <p className="ap-empty">No customers have signed up yet.</p>}
-            <div className="user-list">
-              {users.map(u => (
-                <div className="list-row user-row" key={u.id}>
-                  <span className="avatar" aria-hidden="true">{(u.username || '?')[0].toUpperCase()}</span>
-                  <div><strong>{u.username}</strong><p>{u.email}</p></div>
-                  {sureUser === u.id
-                    ? <span><button className="danger-btn" onClick={() => deleteUser(u)}>Yes, delete</button> <button onClick={() => setSureUser(null)}>Keep</button></span>
-                    : <button className="danger-btn" onClick={() => setSureUser(u.id)}>Delete</button>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {currentTab === 'users' && <AdminCustomers onDelete={deleteUser} />}
 
         {currentTab === 'coupons' && <AdminCoupons />}
         {currentTab === 'leads' && <AdminLeads />}
@@ -319,9 +318,7 @@ export function Admin() {
                 <div className="ord-grid">
                   <div className="ord-info">
                     <p><i className="bi bi-person" aria-hidden="true"></i> {order.user ? `${order.user.firstName} ${order.user.lastName} (@${order.user.username})` : 'Unknown customer'}</p>
-                    <p><i className="bi bi-telephone" aria-hidden="true"></i> {order.phoneNumber || 'N/A'}
-                      {order.phoneNumber && <> · <a href={`https://wa.me/91${order.phoneNumber}?text=${encodeURIComponent(`Hi, this is Rekha Shopping Mall about your order ${order.trackingNumber}.`)}`} target="_blank" rel="noopener noreferrer">WhatsApp</a></>}
-                    </p>
+                    <p><i className="bi bi-telephone" aria-hidden="true"></i> {order.phoneNumber || 'N/A'}</p>
                     <p><i className="bi bi-geo-alt" aria-hidden="true"></i> {order.shippingAddress}</p>
                     <p><i className="bi bi-credit-card" aria-hidden="true"></i> {order.paymentMethod} ({order.paymentStatus}){order.couponCode && <> · coupon {order.couponCode} (−{inr(order.couponDiscountAmount || 0, { decimals: 0 })})</>}</p>
                   </div>
@@ -333,6 +330,22 @@ export function Admin() {
                       </li>
                     ))}
                   </ul>
+                </div>
+                <div className="ord-do">
+                  {order.phoneNumber && (
+                    <div className="ord-wa" role="group" aria-label="WhatsApp the customer">
+                      <i className="bi bi-whatsapp" aria-hidden="true"></i>
+                      {orderMessages(order).map(m => (
+                        <a key={m.key} className={m.key === 'confirm' || m.key === 'shipped' ? 'hot' : ''} href={waLink(order.phoneNumber, m.text)} target="_blank" rel="noopener noreferrer">{m.label}</a>
+                      ))}
+                    </div>
+                  )}
+                  <div className="ord-next">
+                    {order.nextStatuses?.includes('CONFIRMED') && <button type="button" className="btn btn-outline sm" onClick={() => delivery(order, 'CONFIRMED')}>Mark confirmed</button>}
+                    {order.nextStatuses?.includes('SHIPPED') && <button type="button" className="btn btn-primary sm" onClick={() => delivery(order, 'SHIPPED')}>Mark shipped</button>}
+                    {order.nextStatuses?.includes('DELIVERED') && <button type="button" className="btn btn-primary sm" onClick={() => delivery(order, 'DELIVERED')}>Mark delivered</button>}
+                    {order.paymentMethod === 'COD' && order.paymentStatus === 'PENDING' && order.status === 'DELIVERED' && <button type="button" className="btn btn-outline sm" onClick={() => payment(order, 'PAID')}>Cash received</button>}
+                  </div>
                 </div>
                 <footer>
                   <div className="field-group"><label>Order status</label>
@@ -349,6 +362,7 @@ export function Admin() {
           </div>
         )}
       </div>
+      {share && <ShareSheet products={share.products} startTemplate={share.template} onClose={() => setShare(null)} />}
     </section>
   );
 }

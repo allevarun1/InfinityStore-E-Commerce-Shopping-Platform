@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { inr } from '../lib/format';
+import { imageSrc, inr, isOnDeal, discountPercent } from '../lib/format';
 
 const DAY = 24 * 3600 * 1000;
 
 /** The owner's morning glance: sales, orders waiting, stock to watch, a two-week trend and one-tap shortcuts. */
-export function AdminDashboard({ orders, products, onNavigate }) {
+export function AdminDashboard({ orders, products, onNavigate, onShare }) {
   const d = useMemo(() => {
     const real = orders.filter(o => o.status !== 'CANCELLED' && !o.testPayment);
     const now = Date.now();
@@ -28,6 +28,9 @@ export function AdminDashboard({ orders, products, onNavigate }) {
       out: published.filter(p => p.stockQuantity === 0),
       days,
       recent: [...orders].sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate)).slice(0, 5),
+      newest: [...published].filter(p => p.stockQuantity > 0).sort((a, b) => b.id - a.id).slice(0, 6),
+      bestDeal: published.filter(p => p.stockQuantity > 0 && isOnDeal(p)).sort((a, b) => discountPercent(b) - discountPercent(a))[0],
+      codToConfirm: orders.filter(o => o.status === 'PENDING' && o.paymentMethod === 'COD').length,
     };
   }, [orders, products]);
 
@@ -74,6 +77,30 @@ export function AdminDashboard({ orders, products, onNavigate }) {
         <button type="button" onClick={() => onNavigate('media')}><i className="bi bi-cloud-arrow-up" aria-hidden="true"></i><span>Upload photos or videos</span></button>
         <button type="button" onClick={() => onNavigate('popups')}><i className="bi bi-megaphone" aria-hidden="true"></i><span>Create an offer pop-up</span></button>
       </div>
+
+      {onShare && d.newest.length > 0 && (
+        <div className="wa-card card">
+          <div className="wa-card-copy">
+            <span className="eyebrow"><i className="bi bi-whatsapp" aria-hidden="true"></i> Sell on WhatsApp</span>
+            <h3>Tell your customers what's new</h3>
+            <p>One message with your newest sarees and their links, ready for your broadcast list. Or share a single saree with a Status picture.</p>
+            <div className="wa-card-actions">
+              <button type="button" className="btn btn-wa" onClick={() => onShare(d.newest.slice(0, 5), 'new')}><i className="bi bi-whatsapp" aria-hidden="true"></i> Share new arrivals</button>
+              {d.bestDeal && <button type="button" className="btn btn-outline" onClick={() => onShare(d.bestDeal, 'deal')}>Share today's best deal ({discountPercent(d.bestDeal)}% off)</button>}
+            </div>
+            {d.codToConfirm > 0 && (
+              <p className="wa-card-tip"><i className="bi bi-shield-check" aria-hidden="true"></i>
+                {d.codToConfirm} cash-on-delivery {d.codToConfirm === 1 ? 'order needs' : 'orders need'} a quick WhatsApp confirmation. Confirmed COD orders are refused far less often at the door.
+                <button type="button" className="linklike" onClick={() => onNavigate('orders')}>Confirm now</button></p>
+            )}
+          </div>
+          <ul className="wa-card-pics">
+            {d.newest.slice(0, 6).map(p => (
+              <li key={p.id}><button type="button" onClick={() => onShare(p, 'new')} aria-label={`Share ${p.name}`}><img src={imageSrc(p.previewImage || p.imageUrl)} alt="" loading="lazy" /></button></li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {d.recent.length > 0 && (
         <div className="recent card">

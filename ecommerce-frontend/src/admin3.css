@@ -1,0 +1,106 @@
+/* ==========================================================================
+   Admin: selling on WhatsApp (share sheet, people to message, order messages), customer list, Today's share card.
+   ========================================================================== */
+
+.btn-wa { background: #1f9d55; border: 1px solid #1f9d55; color: #fff; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.btn-wa:hover { background: #17834a; border-color: #17834a; color: #fff; }
+.btn.sm, .btn-wa.sm { min-height: 36px; padding: 0 14px; font-size: 0.85rem; border-radius: 99px; }
+.wa-btn { color: #17834a !important; border-color: rgb(31 157 85 / 0.45) !important; background: #effaf3 !important; font-weight: 700; }
+.wa-btn i { margin-right: 4px; }
+
+/* ---------- "Just published" nudge ---------- */
+.pub-nudge { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; padding: 12px 14px 12px 16px; border-radius: 14px;
+  background: linear-gradient(100deg, #effaf3, #fff); border: 1px solid rgb(31 157 85 / 0.35); }
+.pub-nudge > i { font-size: 1.4rem; color: #1f9d55; }
+.pub-nudge span { flex: 1 1 260px; }
+.pub-x { border: 0; background: none; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; color: var(--muted); }
+.pub-x:hover { background: var(--sand); }
+
+/* ---------- Share sheet ---------- */
+.sh-back { position: fixed; inset: 0; z-index: 1400; background: rgb(20 14 10 / 0.55); display: grid; place-items: center; padding: 16px; }
+.share { width: min(1040px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; background: var(--paper, #fff); border-radius: 22px; box-shadow: 0 40px 90px -30px rgb(0 0 0 / 0.6); padding: 22px 24px 24px; }
+.share-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.share-head h2 { margin: 4px 0 0; font-size: 1.6rem; }
+.share-head .eyebrow i { color: #1f9d55; }
+.share-x { border: 0; background: var(--sand, #f3ece2); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; flex: none; }
+.share-body { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 22px; }
+.share-pic img, .share-pic-wait { width: 100%; aspect-ratio: 9 / 16; border-radius: 16px; display: block; object-fit: cover; box-shadow: 0 16px 36px -22px rgb(59 13 23 / 0.6); }
+.share-pic-wait { background: linear-gradient(110deg, #f4ebe0 30%, #fbf6ef 50%, #f4ebe0 70%) 0 0 / 200% 100%; animation: skeleton-move 1.4s linear infinite; }
+@keyframes skeleton-move { to { background-position: -200% 0; } }
+.share-pic-actions { display: grid; gap: 8px; margin-top: 12px; }
+.share-pic-actions .btn { justify-content: center; }
+.share-msg { display: grid; gap: 12px; align-content: start; }
+.share-msg textarea { width: 100%; min-height: 220px; resize: vertical; font: 0.95rem/1.5 var(--font-body); padding: 14px; border-radius: 14px; border: 1px solid var(--line); background: #fbfaf7; }
+.share-send { display: flex; gap: 10px; flex-wrap: wrap; }
+.share-send .btn-wa { min-height: 48px; padding: 0 22px; border-radius: 99px; font-weight: 700; }
+.share-hint { margin: 0; font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+.share-hint i { color: #b5862f; margin-right: 4px; }
+.share-hint.small { margin-top: 10px; font-size: 0.8rem; }
+.share-people { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.share-people-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.share-people-head h3 { margin: 0; font-size: 1.25rem; }
+.share-people-head h3 small { font: 700 0.75rem/1 var(--font-body); background: #effaf3; color: #17834a; border-radius: 99px; padding: 4px 9px; margin-left: 6px; vertical-align: middle; }
+.share-people-head p { margin: 4px 0 0; font-size: 0.86rem; color: var(--muted); }
+.people { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.people li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.people li.sent { background: #f7fbf8; }
+.people-who { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.people-why { display: flex; flex-wrap: wrap; gap: 4px; }
+.people-why em { font-style: normal; font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--gold-50, #f6eedc); color: var(--gold-ink, #85601c); }
+.people-who small { color: var(--muted); font-size: 0.78rem; }
+.people-sent { font-size: 0.78rem; color: #17834a; white-space: nowrap; }
+.share-strip { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.share-strip li { display: grid; gap: 6px; font-size: 0.78rem; }
+.share-strip img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 10px; }
+@media (max-width: 760px) {
+  .sh-back { padding: 0; align-items: end; }
+  .share { border-radius: 20px 20px 0 0; max-height: 94dvh; padding: 18px 16px 22px; }
+  .share-body { grid-template-columns: 1fr; }
+  .share-pic { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: start; }
+  .share-pic-actions { margin-top: 0; }
+  .people li { flex-wrap: wrap; }
+}
+
+/* ---------- Orders: WhatsApp messages and one-tap next steps ---------- */
+.ord-do { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 0 0; margin-top: 12px; border-top: 1px dashed var(--line); }
+.ord-wa { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.ord-wa > i { color: #1f9d55; font-size: 1.15rem; margin-right: 2px; }
+.ord-wa a { font-size: 0.82rem; font-weight: 600; text-decoration: none; padding: 6px 12px; border-radius: 99px; border: 1px solid rgb(31 157 85 / 0.4); color: #17834a; background: #fff; }
+.ord-wa a.hot { background: #1f9d55; color: #fff; border-color: #1f9d55; }
+.ord-wa a:hover { background: #effaf3; }
+.ord-wa a.hot:hover { background: #17834a; }
+.ord-next { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- Customers ---------- */
+.cust-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 6px 0 16px; }
+.cust-stats div { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 2px; }
+.cust-stats b { font-family: var(--font-body); font-weight: 800; font-size: 1.5rem; line-height: 1; color: var(--maroon); }
+.cust-stats span { font-size: 0.8rem; color: var(--muted); }
+.list-row.cust { align-items: center; }
+.cust-who { flex: 1; min-width: 0; }
+.cust-who strong { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cust-who p { margin: 2px 0 0; }
+.cust-facts { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.82rem; color: var(--muted); margin-top: 6px !important; }
+.cust-facts b { color: var(--ink); }
+.cust-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.cust-staff { margin-top: 18px; color: var(--muted); font-size: 0.88rem; }
+.cust-staff summary { cursor: pointer; font-weight: 600; }
+@media (max-width: 760px) { .cust-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .list-row.cust { flex-wrap: wrap; } .cust-actions { width: 100%; justify-content: flex-start; } }
+
+/* ---------- Today: sell on WhatsApp ---------- */
+.wa-card { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; align-items: center; padding: 22px; margin-top: 18px; border-radius: 20px;
+  background: linear-gradient(120deg, #f2fbf5, #fff 60%); border: 1px solid rgb(31 157 85 / 0.25); }
+.wa-card .eyebrow { color: #17834a; display: inline-flex; gap: 6px; align-items: center; }
+.wa-card h3 { margin: 6px 0 6px; font-size: 1.5rem; }
+.wa-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.wa-card-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.wa-card-actions .btn { min-height: 44px; border-radius: 99px; }
+.wa-card-tip { margin-top: 14px !important; padding: 10px 12px; border-radius: 12px; background: #fff8e6; color: #6b4a10 !important; font-size: 0.85rem !important; }
+.wa-card-tip i { color: #b5862f; margin-right: 4px; }
+.wa-card-tip .linklike { margin-left: 6px; }
+.wa-card-pics { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.wa-card-pics button { display: block; width: 100%; padding: 0; border: 0; border-radius: 12px; overflow: hidden; cursor: pointer; aspect-ratio: 4 / 5; background: var(--sand); }
+.wa-card-pics img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s var(--ease-out, ease); }
+.wa-card-pics button:hover img { transform: scale(1.06); }
+@media (max-width: 900px) { .wa-card { grid-template-columns: 1fr; } .wa-card-pics { grid-template-columns: repeat(6, 1fr); } }
+@media (max-width: 520px) { .wa-card-pics { grid-template-columns: repeat(3, 1fr); } }

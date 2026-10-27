@@ -62,6 +62,7 @@
 .bi-images::before { content: "\f42b"; }
 .bi-inbox::before { content: "\f42d"; }
 .bi-info-circle::before { content: "\f431"; }
+.bi-lightbulb::before { content: "\f46b"; }
 .bi-lightning-charge::before { content: "\f46d"; }
 .bi-link-45deg::before { content: "\f470"; }
 .bi-megaphone::before { content: "\f484"; }
