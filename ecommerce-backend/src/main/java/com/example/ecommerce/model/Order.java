@@ -71,6 +71,10 @@ public class Order {
     @Column(name = "payment_reference", length = 100)
     private String paymentReference;
 
+    // The provider's id for the captured payment (Razorpay pay_...), needed for refunds.
+    @Column(name = "payment_id", length = 64)
+    private String paymentId;
+
     @Column(name = "idempotency_key", length = 100, unique = true)
     private String idempotencyKey;
 
@@ -212,6 +216,8 @@ public class Order {
     public void setTestPayment(Boolean testPayment) { this.testPayment = testPayment; }
     public String getPaymentReference() { return paymentReference; }
     public void setPaymentReference(String paymentReference) { this.paymentReference = paymentReference; }
+    public String getPaymentId() { return paymentId; }
+    public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
     public String getIdempotencyKey() { return idempotencyKey; }
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
 

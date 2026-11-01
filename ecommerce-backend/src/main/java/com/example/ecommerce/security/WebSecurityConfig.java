@@ -90,6 +90,8 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.POST, "/api/store/leads").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/store/track").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/assistant/chat").permitAll()
+                    // Razorpay server-to-server; every call is checked against the webhook signature.
+                    .requestMatchers(HttpMethod.POST, "/api/payments/razorpay/webhook").permitAll()
                     .requestMatchers("/error").permitAll()
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated()

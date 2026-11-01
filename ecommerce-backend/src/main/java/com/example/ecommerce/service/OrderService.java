@@ -11,13 +11,17 @@ import com.example.ecommerce.service.payment.PaymentGateway;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +35,10 @@ import java.util.Set;
 @Transactional
 public class OrderService {
     public static final int PRICING_VERSION = 1;
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
+    /** An online order not paid within this time is cancelled and its stock goes back on sale. */
+    public static final Duration PAYMENT_WINDOW = Duration.ofMinutes(45);
 
     // Fulfilment state machine. DELIVERED and CANCELLED are terminal.
     private static final Map<String, Set<String>> ORDER_TRANSITIONS = Map.of(
@@ -262,13 +270,127 @@ public class OrderService {
                 throw new BusinessException("A cancelled order cannot be marked as paid");
             }
         }
+        String refundNote = "";
+        if ("REFUNDED".equals(next) && order.getPaymentId() != null) {
+            // Paid online: the money goes back through the provider, not just a status change.
+            refundNote = " refund=" + paymentGateway.refund(order.getPaymentId(), PaymentGateway.paise(order.getTotalPrice()));
+        }
         order.setPaymentStatus(next);
         Order saved = orderRepository.save(order);
-        auditService.record("PAYMENT_STATUS_CHANGED", "ORDER", saved.getId(), current + " -> " + next);
+        auditService.record("PAYMENT_STATUS_CHANGED", "ORDER", saved.getId(), current + " -> " + next + refundNote);
         if ("PAID".equals(next)) {
             afterCommit(() -> mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved));
         }
         return saved;
+    }
+
+    /** Details for opening the payment window for an online order that is still waiting to be paid. */
+    public PaymentGateway.CheckoutSession paymentSession(User user, Long orderId) {
+        Order order = ownOrder(user, orderId);
+        if (!"ONLINE".equals(order.getPaymentMethod()) || !"PENDING".equals(order.getPaymentStatus())
+                || !"PENDING".equals(order.getStatus())) {
+            throw new BusinessException("This order is not waiting for an online payment");
+        }
+        if (!paymentGateway.enabled()) {
+            throw new BusinessException("Online payment is not available right now");
+        }
+        if (order.getOrderDate().isBefore(LocalDateTime.now().minus(PAYMENT_WINDOW))) {
+            throw new BusinessException("The time to pay for this order has run out. Please place the order again.");
+        }
+        if (order.getPaymentReference() == null || order.getPaymentReference().isBlank()) {
+            order.setPaymentReference(paymentGateway.initiate(order).reference());
+            orderRepository.save(order);
+        }
+        return paymentGateway.checkoutSession(order);
+    }
+
+    /** The storefront's success callback: trusted only when the provider's signature checks out. */
+    public Order confirmPayment(User user, Long orderId, String providerOrderId, String paymentId, String signature) {
+        Order order = orderRepository.lockById(orderId)
+                .filter(o -> o.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new BusinessException("Order not found"));
+        if ("PAID".equals(order.getPaymentStatus()) || "REFUNDED".equals(order.getPaymentStatus())) {
+            return order;
+        }
+        if (!"ONLINE".equals(order.getPaymentMethod()) || order.getPaymentReference() == null
+                || !order.getPaymentReference().equals(providerOrderId)
+                || !paymentGateway.verifyPayment(providerOrderId, paymentId, signature)) {
+            auditService.record("PAYMENT_SIGNATURE_REJECTED", "ORDER", order.getId(), "payment=" + paymentId);
+            throw new BusinessException("We could not verify this payment. If money was taken, it will be confirmed automatically within a few minutes.");
+        }
+        return markPaid(order, paymentId, "checkout");
+    }
+
+    /** Provider webhook (already signature-checked): marks the matching order paid. Unknown orders are ignored. */
+    public void paymentCaptured(String providerOrderId, String paymentId) {
+        orderRepository.findByPaymentReference(providerOrderId)
+                .flatMap(o -> orderRepository.lockById(o.getId()))
+                .ifPresentOrElse(o -> markPaid(o, paymentId, "webhook"),
+                        () -> log.info("Payment {} for unknown provider order {} ignored", paymentId, providerOrderId));
+    }
+
+    private Order markPaid(Order order, String paymentId, String source) {
+        if ("PAID".equals(order.getPaymentStatus()) || "REFUNDED".equals(order.getPaymentStatus())) {
+            return order;
+        }
+        long amount = PaymentGateway.paise(order.getTotalPrice());
+        if (!paymentGateway.capture(paymentId, order.getPaymentReference(), amount)) {
+            auditService.record("PAYMENT_MISMATCH", "ORDER", order.getId(), "payment=" + paymentId + " source=" + source);
+            throw new BusinessException("This payment does not match the order. Please contact support.");
+        }
+        order.setPaymentStatus("PAID");
+        order.setPaymentId(paymentId);
+        order.setTestPayment(paymentGateway.testMode());
+        String note = "payment=" + paymentId + " source=" + source;
+        if ("CANCELLED".equals(order.getStatus())) {
+            // Paid after the order was cancelled or timed out: the items may be gone, so give the money back.
+            try {
+                note += " refund=" + paymentGateway.refund(paymentId, amount) + " (order was cancelled)";
+                order.setPaymentStatus("REFUNDED");
+            } catch (RuntimeException e) {
+                note += " (order was cancelled: refund it from the Razorpay dashboard)";
+            }
+        }
+        Order saved = orderRepository.save(order);
+        auditService.record("PAYMENT_CAPTURED", "ORDER", saved.getId(), note);
+        if ("PAID".equals(saved.getPaymentStatus()) && !saved.isTestPayment()) {
+            afterCommit(() -> mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved));
+        }
+        return saved;
+    }
+
+    /**
+     * Online orders left unpaid past the payment window: if the customer did pay (and we never heard back),
+     * mark them paid; otherwise cancel them so the reserved stock and coupon are released.
+     */
+    @Scheduled(initialDelayString = "${app.payment.expiry-initial-delay-ms:180000}", fixedDelayString = "${app.payment.expiry-interval-ms:600000}")
+    public void releaseUnpaidOnlineOrders() {
+        if (!paymentGateway.enabled()) {
+            return;
+        }
+        for (Order order : orderRepository.findUnpaidOnlineBefore(LocalDateTime.now().minus(PAYMENT_WINDOW))) {
+            try {
+                String paid = order.getPaymentReference() == null ? null : paymentGateway.findCapturedPayment(order.getPaymentReference());
+                if (paid != null) {
+                    markPaid(order, paid, "reconcile");
+                } else {
+                    applyOrderStatus(order, "CANCELLED");
+                    order.setPaymentStatus("FAILED");
+                    orderRepository.save(order);
+                    auditService.record("PAYMENT_EXPIRED", "ORDER", order.getId(), "not paid within " + PAYMENT_WINDOW.toMinutes() + " minutes");
+                }
+            } catch (RuntimeException e) {
+                log.warn("Could not settle unpaid order {}: {}", order.getTrackingNumber(), e.getMessage());
+            }
+        }
+    }
+
+    private Order ownOrder(User user, Long orderId) {
+        Order order = getOrderById(orderId);
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new BusinessException("Order not found");
+        }
+        return order;
     }
 
     public List<String> nextStatuses(Order order) {

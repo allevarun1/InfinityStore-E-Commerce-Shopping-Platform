@@ -41,4 +41,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     boolean existsByUserAndOrderDateAfter(User user, java.time.LocalDateTime after);
 
     List<Order> findByStatus(String status);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from Order o where o.id = :id")
+    Optional<Order> lockById(@Param("id") Long id);
+
+    Optional<Order> findByPaymentReference(String paymentReference);
+
+    /** Online orders still waiting for payment that were placed before the cut-off. */
+    @Query("select o from Order o where o.paymentMethod = 'ONLINE' and o.paymentStatus = 'PENDING' and o.status = 'PENDING' and o.orderDate < :before")
+    List<Order> findUnpaidOnlineBefore(@Param("before") java.time.LocalDateTime before);
 }

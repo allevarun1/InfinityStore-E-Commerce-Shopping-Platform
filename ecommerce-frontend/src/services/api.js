@@ -113,6 +113,8 @@ export const ApiService = {
     headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
   }).then(res => res.data),
   cancelOrder: (id) => api.post(`/orders/${id}/cancel`).then(res => res.data),
+  payOrder: (id) => api.post(`/orders/${id}/pay`).then(res => res.data),
+  verifyPayment: (id, payload) => api.post(`/orders/${id}/pay/verify`, payload).then(res => res.data),
   orders: () => api.get('/orders/history').then(res => res.data),
   
   profile: () => api.get('/user/profile').then(res => res.data),

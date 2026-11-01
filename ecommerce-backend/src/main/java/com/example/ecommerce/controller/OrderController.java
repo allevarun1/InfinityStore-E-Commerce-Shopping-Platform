@@ -82,6 +82,26 @@ public class OrderController {
         }
     }
 
+    public record PaymentConfirmation(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max = 64) String razorpayOrderId,
+                                      @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max = 64) String razorpayPaymentId,
+                                      @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max = 256) String razorpaySignature) {
+    }
+
+    /** Opens (or reopens) the payment window for an online order that is still unpaid. */
+    @PostMapping("/{id}/pay")
+    @PreAuthorize("hasRole('CUSTOMER') and !hasRole('ADMIN')")
+    public ResponseEntity<com.example.ecommerce.service.payment.PaymentGateway.CheckoutSession> pay(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.paymentSession(getAuthenticatedUser(), id));
+    }
+
+    @PostMapping("/{id}/pay/verify")
+    @PreAuthorize("hasRole('CUSTOMER') and !hasRole('ADMIN')")
+    public ResponseEntity<OrderResponse> verifyPayment(@PathVariable Long id, @Valid @RequestBody PaymentConfirmation body) {
+        Order order = orderService.confirmPayment(getAuthenticatedUser(), id,
+                body.razorpayOrderId(), body.razorpayPaymentId(), body.razorpaySignature());
+        return ResponseEntity.ok(customerView(order));
+    }
+
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasRole('CUSTOMER') and !hasRole('ADMIN')")
     public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id) {

@@ -5,6 +5,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader } from './Loader';
 import { track } from '../lib/analytics';
+import { payForOrder, PaymentDismissed } from '../lib/razorpay';
 import { inr, imageSrc } from '../lib/format';
 
 const INDIAN_STATES = [
@@ -208,6 +209,22 @@ export function Checkout() {
         // Saved to the account, so it is offered again on any phone or computer.
         if (remember) ApiService.saveAddress({ ...addr, line2: addr.line2.trim() || undefined }).catch(() => {});
         try { localStorage.removeItem(addressKey(currentUser)); } catch { /* storage unavailable */ }
+        if (order.paymentMethod === 'ONLINE' && order.paymentStatus === 'PENDING') {
+          // The order (and its stock) is held while the customer pays in Razorpay's window.
+          return payForOrder(order, { name: addr.fullName, email: currentUser?.email, phone: addr.phone })
+            .then((paid) => {
+              track.purchase(paid);
+              navigate('/order/success', { state: { order: paid } });
+            })
+            .catch((err) => {
+              if (err instanceof PaymentDismissed) {
+                toast.info('Payment not completed. Your order is saved: tap "Pay now" in your orders within 45 minutes.');
+              } else {
+                toast.error(err.response?.data?.message || err.message || 'Payment failed. You can try again from your orders.');
+              }
+              navigate('/orders');
+            });
+        }
         track.purchase(order);
         navigate('/order/success', { state: { order } });
       })
@@ -372,7 +389,7 @@ export function Checkout() {
           </dl>
 
           <button type="submit" className="btn btn-primary ck-place" disabled={isSubmitting}>
-            {isSubmitting ? 'Placing order…' : `Place order · ${inr(quote.total)}`}
+            {isSubmitting ? (paymentMethod === 'ONLINE' ? 'Opening payment…' : 'Placing order…') : `${paymentMethod === 'ONLINE' ? 'Pay' : 'Place order'} · ${inr(quote.total)}`}
           </button>
           <ul className="ck-trust">
             <li><i className="bi bi-shield-check" aria-hidden="true"></i> Prices and stock are confirmed by our server when you order</li>

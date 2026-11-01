@@ -6,6 +6,8 @@ import { useToast } from '../contexts/ToastContext';
 import { useStore } from '../contexts/StoreContext';
 import { OrderTimeline, OrderItems, OrderTotals } from './OrderViews';
 import { inr } from '../lib/format';
+import { useAuth } from '../contexts/AuthContext';
+import { payForOrder, PaymentDismissed } from '../lib/razorpay';
 
 const dateFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -15,6 +17,8 @@ export function Orders() {
   const [failed, setFailed] = useState(false);
   const [cancelling, setCancelling] = useState(null);
   const [confirming, setConfirming] = useState(null);
+  const [paying, setPaying] = useState(null);
+  const { currentUser } = useAuth();
   const toast = useToast();
   const { info } = useStore();
 
@@ -25,6 +29,20 @@ export function Orders() {
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }, []);
+
+  const pay = (order) => {
+    setPaying(order.id);
+    const name = [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ');
+    payForOrder(order, { name, email: currentUser?.email, phone: order.phoneNumber })
+      .then((paid) => {
+        setOrders(list => list.map(o => (o.id === paid.id ? paid : o)));
+        toast.success('Payment received. Thank you!');
+      })
+      .catch((err) => {
+        if (!(err instanceof PaymentDismissed)) toast.error(err.response?.data?.message || err.message || 'Payment failed');
+      })
+      .finally(() => setPaying(null));
+  };
 
   const cancel = (order) => {
     setCancelling(order.id);
@@ -56,6 +74,7 @@ export function Orders() {
         <div className="orders-list">
           {orders.map(order => {
             const cancellable = order.status === 'PENDING' && order.paymentStatus !== 'PAID';
+            const awaitingPayment = order.paymentMethod === 'ONLINE' && order.paymentStatus === 'PENDING' && order.status === 'PENDING';
             return (
               <article className="order" key={order.id} aria-labelledby={`o-${order.id}`}>
                 <header className="order-top">
@@ -66,7 +85,8 @@ export function Orders() {
                   <div className="order-amount">
                     <strong>{inr(order.totalPrice)}</strong>
                     <span className={`pill ${order.paymentStatus === 'PAID' ? 'ok' : ''}`}>
-                      {order.paymentMethod === 'COD' ? (order.paymentStatus === 'PAID' ? 'Paid · COD' : 'Pay on delivery') : order.paymentStatus}
+                      {order.paymentMethod === 'COD' ? (order.paymentStatus === 'PAID' ? 'Paid · COD' : 'Pay on delivery')
+                        : ({ PENDING: 'Awaiting payment', PAID: 'Paid online', FAILED: 'Payment not received', REFUNDED: 'Refunded' }[order.paymentStatus] || order.paymentStatus)}
                     </span>
                     {order.testPayment && <span className="pill">Test</span>}
                   </div>
@@ -88,6 +108,11 @@ export function Orders() {
                 </details>
 
                 <footer className="order-actions">
+                  {awaitingPayment && (
+                    <button type="button" className="btn btn-primary" onClick={() => pay(order)} disabled={paying === order.id}>
+                      <i className="bi bi-credit-card" aria-hidden="true"></i> {paying === order.id ? 'Opening payment…' : `Pay now · ${inr(order.totalPrice)}`}
+                    </button>
+                  )}
                   {info?.whatsappNumber && (
                     <a className="btn btn-outline" target="_blank" rel="noopener noreferrer"
                       href={`https://wa.me/${info.whatsappNumber}?text=${encodeURIComponent(`Hi Rekha Shopping Mall, about my order ${order.trackingNumber}`)}`}>
