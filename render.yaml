@@ -1,7 +1,7 @@
-# Render Blueprint: Rekha Shopping Mall demo API on the free plan.
-# DEMO ONLY: the free plan has no database and no disk, so the catalogue lives in memory and resets whenever the
-# service restarts or wakes from sleep. For a real store, create a MySQL database elsewhere and set DB_URL, DB_USERNAME,
-# DB_PASSWORD (remove SPRING_DATASOURCE_DRIVERCLASSNAME), and SEED_DEMO_CATALOG=false.
+# Render Blueprint: Rekha Shopping Mall API on the free plan.
+# The free plan has no disk, so the catalogue lives in an external MySQL database. DB_URL, DB_USERNAME and DB_PASSWORD
+# are set in the Render dashboard (sync: false keeps them out of git and stops a Blueprint sync overwriting them).
+# DB_URL looks like jdbc:mysql://HOST:PORT/DBNAME?sslMode=REQUIRED
 services:
   - type: web
     name: rekha-shopping-mall-api
@@ -15,19 +15,17 @@ services:
       - key: APP_ENV
         value: production
       - key: DB_URL
-        value: jdbc:h2:mem:rekha;MODE=MySQL;DB_CLOSE_DELAY=-1
+        sync: false
       - key: DB_USERNAME
-        value: sa
+        sync: false
       - key: DB_PASSWORD
-        value: rekhademo
-      - key: SPRING_DATASOURCE_DRIVERCLASSNAME
-        value: org.h2.Driver
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_PASSWORD
         generateValue: true
       - key: SEED_DEMO_CATALOG
-        value: "true"
+        value: "false"
       - key: CORS_ORIGINS
         value: https://rekha-shopping-mall.pages.dev,https://rekha-shopping-mall.onrender.com
       - key: FRONTEND_URL
