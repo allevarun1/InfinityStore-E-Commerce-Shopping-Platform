@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -48,12 +49,19 @@ public class FirebasePhoneVerifier {
     private volatile Map<String, PublicKey> keys = Map.of();
     private volatile Instant keysExpireAt = Instant.EPOCH;
 
+    public FirebasePhoneVerifier(String projectId, String apiKey, String authDomain) {
+        this(projectId, apiKey, authDomain, true);
+    }
+
+    /** switchedOn lets the shop hide OTP login (PHONE_LOGIN_ENABLED=false) while keeping the Firebase settings in place. */
+    @Autowired
     public FirebasePhoneVerifier(
             @Value("${app.firebase.project-id:}") String projectId,
             @Value("${app.firebase.api-key:}") String apiKey,
-            @Value("${app.firebase.auth-domain:}") String authDomain) {
-        this.projectId = projectId == null ? "" : projectId.trim();
-        this.apiKey = apiKey == null ? "" : apiKey.trim();
+            @Value("${app.firebase.auth-domain:}") String authDomain,
+            @Value("${app.firebase.phone-login-enabled:false}") boolean switchedOn) {
+        this.projectId = projectId == null || !switchedOn ? "" : projectId.trim();
+        this.apiKey = apiKey == null || !switchedOn ? "" : apiKey.trim();
         this.authDomain = authDomain == null || authDomain.isBlank() ? this.projectId + ".firebaseapp.com" : authDomain.trim();
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(4));

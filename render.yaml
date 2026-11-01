@@ -25,6 +25,9 @@ services:
         sync: false
       - key: FIREBASE_API_KEY
         sync: false
+      # On hold: Firebase sends OTP SMS only on its paid Blaze plan. Set to "true" once billing is enabled there.
+      - key: PHONE_LOGIN_ENABLED
+        value: "false"
       - key: JWT_SECRET
         generateValue: true
       - key: ADMIN_PASSWORD
