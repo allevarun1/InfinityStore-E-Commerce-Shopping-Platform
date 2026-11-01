@@ -22,6 +22,8 @@ public class AccountService {
     @Autowired
     private WishlistItemRepository wishlistItemRepository;
     @Autowired
+    private com.example.ecommerce.repository.SavedAddressRepository savedAddressRepository;
+    @Autowired
     private AuditService auditService;
 
     /**
@@ -39,6 +41,7 @@ public class AccountService {
         }
         cartItemRepository.deleteByUser(target);
         wishlistItemRepository.deleteByUser(target);
+        savedAddressRepository.deleteByUser(target);
         userRepository.delete(target);
         auditService.record("ACCOUNT_DELETED", "USER", userId, "username=" + target.getUsername());
     }

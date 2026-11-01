@@ -327,3 +327,31 @@ img { max-width: 100%; }
 /* Text-style secondary actions in the sign-in form (e.g. "Forgot password?") */
 .auth-form .ghost { border: 0 !important; background: none !important; color: var(--maroon) !important; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; min-height: 40px; box-shadow: none !important; }
 .auth-form .ghost:hover { color: var(--maroon-700) !important; background: none !important; }
+
+/* Login with mobile number + OTP (PhoneLogin.jsx) */
+.otp-title { margin: 0 0 16px !important; }
+.otp-login form { display: flex; flex-direction: column; gap: 12px; }
+.otp-login label { font-weight: 600; color: var(--ink); }
+.otp-mobile { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); }
+.otp-mobile:focus-within { border-color: var(--maroon); box-shadow: 0 0 0 3px rgb(123 30 43 / 0.14); }
+.otp-mobile span { display: flex; align-items: center; padding: 0 12px; font-weight: 600; color: var(--ink-2); background: var(--sand); border-right: 1px solid var(--line); }
+.otp-mobile input { flex: 1; min-width: 0; border: 0; border-radius: 0; box-shadow: none; font-size: 1.05rem; letter-spacing: 0.04em; }
+.otp-mobile input:focus { box-shadow: none; }
+.otp-code { font-size: 1.5rem; letter-spacing: 0.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.otp-help { margin: 0; font-size: 0.85rem; color: var(--muted); }
+.otp-link { background: none; border: 0; padding: 0; min-height: 0; color: var(--maroon); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; box-shadow: none; }
+.otp-link:disabled { color: var(--muted); text-decoration: none; cursor: default; }
+.otp-resend { align-self: center; min-height: 40px; }
+.otp-or { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; color: var(--muted); font-size: 0.85rem; }
+.otp-or::before, .otp-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* Checkout: saved addresses and "Use my current location" */
+.ck-saved { display: grid; gap: 10px; margin-bottom: 16px; }
+.ck-saved-opt { display: flex; align-items: flex-start; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--paper); }
+.ck-saved-opt.on { border-color: var(--maroon); box-shadow: 0 0 0 1px var(--maroon); background: var(--maroon-50); }
+.ck-saved-opt label, .ck-saved-new { flex: 1; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.92rem; line-height: 1.45; color: var(--ink-2); min-width: 0; overflow-wrap: anywhere; }
+.ck-saved-opt input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--maroon); flex: none; }
+.ck-saved-opt b { color: var(--ink); }
+.ck-forget { flex: none; background: none; border: 0; color: var(--muted); padding: 6px; min-height: 0; cursor: pointer; border-radius: 8px; }
+.ck-forget:hover { color: var(--maroon); background: var(--sand); }
+.ck-locate { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 16px; }

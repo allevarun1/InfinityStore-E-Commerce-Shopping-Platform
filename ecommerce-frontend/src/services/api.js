@@ -116,6 +116,9 @@ export const ApiService = {
   orders: () => api.get('/orders/history').then(res => res.data),
   
   profile: () => api.get('/user/profile').then(res => res.data),
+  addresses: () => api.get('/user/addresses').then(res => res.data),
+  saveAddress: (address) => api.post('/user/addresses', address).then(res => res.data),
+  deleteAddress: (id) => api.delete(`/user/addresses/${id}`),
   updateProfile: (payload) => api.put('/user/profile', payload).then(res => res.data),
   deleteAccount: () => api.delete('/user/profile').then(res => res.data),
   

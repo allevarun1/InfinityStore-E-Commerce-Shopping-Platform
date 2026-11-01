@@ -6,11 +6,15 @@ import com.example.ecommerce.model.Role;
 import com.example.ecommerce.model.User;
 import com.example.ecommerce.repository.RoleRepository;
 import com.example.ecommerce.repository.UserRepository;
+import com.example.ecommerce.security.FirebasePhoneVerifier;
 import com.example.ecommerce.security.jwt.JwtUtils;
 import com.example.ecommerce.security.services.UserDetailsImpl;
 import com.example.ecommerce.service.LoginAttemptService;
 import com.example.ecommerce.service.PasswordResetService;
+import com.example.ecommerce.service.PhoneLoginService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -51,6 +55,15 @@ public class AuthController {
     @Autowired
     LoginAttemptService loginAttempts;
 
+    @Autowired
+    FirebasePhoneVerifier phoneVerifier;
+
+    @Autowired
+    PhoneLoginService phoneLogins;
+
+    public record PhoneLoginRequest(@NotBlank @Size(max = 4096) String idToken) {
+    }
+
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         loginAttempts.checkAllowed(loginRequest.getUsername());
@@ -67,18 +80,32 @@ public class AuthController {
 
         String jwt = jwtUtils.generateJwtToken(authentication);
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        return ResponseEntity.ok(jwtResponse(jwt, (UserDetailsImpl) authentication.getPrincipal()));
+    }
+
+    /**
+     * Sign in (or sign up) with a mobile number. The storefront sends the OTP through Firebase and posts the
+     * resulting ID token here; the account is found or created by the verified number.
+     */
+    @PostMapping("/phone")
+    public ResponseEntity<JwtResponse> phoneLogin(@Valid @RequestBody PhoneLoginRequest request) {
+        UserDetailsImpl details = phoneLogins.signIn(phoneVerifier.verify(request.idToken())).user();
+        String jwt = jwtUtils.generateJwtToken(
+                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities()));
+        return ResponseEntity.ok(jwtResponse(jwt, details));
+    }
+
+    private static JwtResponse jwtResponse(String jwt, UserDetailsImpl userDetails) {
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
-
-        return ResponseEntity.ok(new JwtResponse(jwt,
+        return new JwtResponse(jwt,
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getEmail(),
                 userDetails.getFirstName(),
                 userDetails.getLastName(),
-                roles));
+                roles);
     }
 
     @PostMapping("/signup")

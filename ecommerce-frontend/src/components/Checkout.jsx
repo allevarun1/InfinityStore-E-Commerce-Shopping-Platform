@@ -23,6 +23,29 @@ const newKey = () =>
 const BLANK = { fullName: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '' };
 const addressKey = (user) => `infinity_address_${user?.id ?? 'me'}`;
 
+const fromSaved = (s) => ({ fullName: s.fullName, phone: s.phone, line1: s.line1, line2: s.line2 || '', city: s.city, state: s.state, pincode: s.pincode });
+
+/** "Use my current location": OpenStreetMap's free reverse geocoder turns the GPS position into area, city, state and PIN. */
+function locate() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) { reject(new Error('Location is not available on this device')); return; }
+    navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error('Allow location access to fill your address')),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  }).then(({ coords }) =>
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=en&lat=${coords.latitude}&lon=${coords.longitude}`)
+      .then(r => { if (!r.ok) throw new Error('Could not look up your location'); return r.json(); }))
+    .then(({ address: a = {} }) => {
+      const area = [a.road, a.neighbourhood || a.suburb || a.quarter || a.village].filter(Boolean);
+      const pin = String(a.postcode || '').replace(/\s/g, '');
+      return {
+        line2: [...new Set(area)].join(', ').slice(0, 160),
+        city: (a.city || a.town || a.state_district || a.county || a.village || '').slice(0, 60),
+        state: INDIAN_STATES.find(st => st.toLowerCase() === String(a.state || '').toLowerCase()) || '',
+        pincode: /^[1-9]\d{5}$/.test(pin) ? pin : '',
+      };
+    });
+}
+
 /** One readable block for the courier label; the server stores it as the order's shipping address. */
 const composeAddress = (a) =>
   [a.fullName.trim(), a.line1.trim(), a.line2.trim(), `${a.city.trim()}, ${a.state} - ${a.pincode.trim()}`]
@@ -42,6 +65,9 @@ export function Checkout() {
   const [couponBusy, setCouponBusy] = useState(false);
   const [remember, setRemember] = useState(true);
   const [pinHint, setPinHint] = useState('');
+  const [saved, setSaved] = useState([]);
+  const [chosen, setChosen] = useState(null); // id of the saved address in use, or null for the form
+  const [locating, setLocating] = useState(false);
   // One key per checkout attempt: a double click or retry can never create two orders.
   const idempotencyKey = useRef(newKey());
   const toast = useToast();
@@ -54,11 +80,20 @@ export function Checkout() {
     try { saved = JSON.parse(localStorage.getItem(addressKey(currentUser)) || 'null'); } catch { saved = null; }
     const name = [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ');
     setAddr({ ...BLANK, fullName: name, ...(saved || {}) });
-    Promise.all([ApiService.cartQuote(), ApiService.paymentOptions(), ApiService.profile().catch(() => null)])
-      .then(([q, o, profile]) => {
+    Promise.all([ApiService.cartQuote(), ApiService.paymentOptions(), ApiService.profile().catch(() => null),
+      ApiService.addresses().catch(() => [])])
+      .then(([q, o, profile, book]) => {
         setQuote(q);
         setOptions(o);
-        if (profile?.phone && /^\d{10}$/.test(profile.phone)) setAddr(a => (a.phone ? a : { ...a, phone: profile.phone }));
+        setSaved(book);
+        if (book.length) {
+          // Returning customer: deliver to the address they used last, one tap to change.
+          setChosen(book[0].id);
+          setAddr(fromSaved(book[0]));
+        } else if (profile?.phone && /^\d{10}$/.test(profile.phone)) {
+          // Signed in by OTP: the verified mobile number is already known.
+          setAddr(a => (a.phone ? a : { ...a, phone: profile.phone }));
+        }
         track.beginCheckout(q);
       })
       .catch(() => toast.error('Failed to load checkout details'))
@@ -87,6 +122,38 @@ export function Checkout() {
       .catch(() => {});
     return () => ctl.abort();
   }, [addr.pincode]);
+
+  const fillFromLocation = () => {
+    setLocating(true);
+    locate()
+      .then(found => {
+        setAddr(a => ({ ...a, line2: found.line2 || a.line2, city: found.city || a.city, state: found.state || a.state, pincode: found.pincode || a.pincode }));
+        setErrors({});
+        toast.success('Address filled from your location. Add your house number and check the details.');
+        document.getElementById('ck-line1')?.focus();
+      })
+      .catch(err => toast.error(err.message || 'Could not find your location'))
+      .finally(() => setLocating(false));
+  };
+
+  const pickSaved = (s) => { setChosen(s.id); setAddr(fromSaved(s)); setErrors({}); };
+
+  const addNew = () => {
+    const name = [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ');
+    setChosen(null);
+    setAddr({ ...BLANK, fullName: saved[0]?.fullName || name, phone: saved[0]?.phone || '' });
+    setErrors({});
+  };
+
+  const forget = (s) => {
+    ApiService.deleteAddress(s.id)
+      .then(() => {
+        const rest = saved.filter(x => x.id !== s.id);
+        setSaved(rest);
+        if (chosen === s.id) { if (rest.length) pickSaved(rest[0]); else addNew(); }
+      })
+      .catch(() => toast.error('Could not remove this address'));
+  };
 
   const applyCoupon = (e) => {
     e.preventDefault();
@@ -120,6 +187,7 @@ export function Checkout() {
     if (composeAddress(addr).length > 500) e.line2 = 'Address is too long';
     setErrors(e);
     const first = Object.keys(e)[0];
+    if (first && chosen) setChosen(null); // show the form so the problem can be fixed
     if (first) document.getElementById(`ck-${first}`)?.focus();
     return !first;
   };
@@ -137,10 +205,9 @@ export function Checkout() {
     };
     ApiService.checkout(payload, idempotencyKey.current)
       .then((order) => {
-        try {
-          if (remember) localStorage.setItem(addressKey(currentUser), JSON.stringify(addr));
-          else localStorage.removeItem(addressKey(currentUser));
-        } catch { /* storage unavailable */ }
+        // Saved to the account, so it is offered again on any phone or computer.
+        if (remember) ApiService.saveAddress({ ...addr, line2: addr.line2.trim() || undefined }).catch(() => {});
+        try { localStorage.removeItem(addressKey(currentUser)); } catch { /* storage unavailable */ }
         track.purchase(order);
         navigate('/order/success', { state: { order } });
       })
@@ -191,6 +258,33 @@ export function Checkout() {
         <div className="ck-main">
           <section className="ck-card" aria-labelledby="ck-addr-title">
             <h2 id="ck-addr-title"><span className="ck-num">1</span> Delivery address</h2>
+            {saved.length > 0 && (
+              <div className="ck-saved" role="radiogroup" aria-label="Saved addresses">
+                {saved.map(s => (
+                  <div key={s.id} className={`ck-saved-opt ${chosen === s.id ? 'on' : ''}`}>
+                    <label>
+                      <input type="radio" name="saved-address" checked={chosen === s.id} onChange={() => pickSaved(s)} />
+                      <span>
+                        <b>{s.fullName}</b> · {s.phone}<br />
+                        {s.line1}{s.line2 ? `, ${s.line2}` : ''}<br />
+                        {s.city}, {s.state} - {s.pincode}
+                      </span>
+                    </label>
+                    <button type="button" className="ck-forget" onClick={() => forget(s)} aria-label={`Remove address of ${s.fullName}, ${s.pincode}`}>
+                      <i className="bi bi-trash" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                ))}
+                <label className={`ck-saved-opt ck-saved-new ${chosen === null ? 'on' : ''}`}>
+                  <input type="radio" name="saved-address" checked={chosen === null} onChange={addNew} />
+                  <span><i className="bi bi-plus-lg" aria-hidden="true"></i> Deliver to a new address</span>
+                </label>
+              </div>
+            )}
+            {chosen === null && (<>
+            <button type="button" className="btn btn-outline ck-locate" onClick={fillFromLocation} disabled={locating}>
+              <i className="bi bi-geo-alt" aria-hidden="true"></i> {locating ? 'Finding your location…' : 'Use my current location'}
+            </button>
             <div className="ck-fields">
               {field('fullName', 'Full name', { input: { autoComplete: 'name', maxLength: 80 } })}
               {field('phone', 'Mobile number', { input: { autoComplete: 'tel-national', inputMode: 'numeric', maxLength: 10, placeholder: '10-digit mobile' } })}
@@ -210,8 +304,9 @@ export function Checkout() {
             </div>
             <label className="ck-check">
               <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
-              Remember this address on this device
+              Save this address for next time
             </label>
+            </>)}
           </section>
 
           <section className="ck-card" aria-labelledby="ck-pay-title">

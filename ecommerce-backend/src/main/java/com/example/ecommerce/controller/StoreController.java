@@ -1,6 +1,7 @@
 package com.example.ecommerce.controller;
 
 import com.example.ecommerce.model.Coupon;
+import com.example.ecommerce.security.FirebasePhoneVerifier;
 import com.example.ecommerce.service.CouponService;
 import com.example.ecommerce.service.LeadService;
 import com.example.ecommerce.service.payment.PaymentGateway;
@@ -40,7 +41,8 @@ public class StoreController {
             String gaMeasurementId,
             String metaPixelId,
             Offer welcomeOffer,
-            BigDecimal defaultGstPercent) {
+            BigDecimal defaultGstPercent,
+            FirebasePhoneVerifier.WebConfig phoneLogin) {
     }
 
     /** What a new subscriber gets; shown only while the underlying coupon is usable. */
@@ -61,6 +63,9 @@ public class StoreController {
 
     @Autowired
     private CouponService couponService;
+
+    @Autowired
+    private FirebasePhoneVerifier phoneVerifier;
 
     @Value("${app.pricing.currency:INR}")
     private String currency;
@@ -100,7 +105,8 @@ public class StoreController {
                 .body(new StoreInfo(currency, freeShippingThreshold, shippingFee, false, true,
                         paymentGateway.enabled(), paymentGateway.testMode(),
                         digitsOnly(whatsapp), blankToNull(supportEmail), blankToNull(supportPhone),
-                        blankToNull(gaId), blankToNull(metaPixelId), welcomeOffer(), defaultGstPercent));
+                        blankToNull(gaId), blankToNull(metaPixelId), welcomeOffer(), defaultGstPercent,
+                        phoneVerifier.webConfig()));
     }
 
     /** Opt-in sign-up. The response is identical for new and existing subscribers. */

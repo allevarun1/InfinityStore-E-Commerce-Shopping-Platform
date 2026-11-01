@@ -220,7 +220,7 @@ public class AutopilotService {
             if (code != null && !orders.existsByUser(user)) {
                 offer = "As it's your first order, code " + code + " still works at checkout.\n\n";
             }
-            AutomationEvent e = new AutomationEvent(ABANDONED_CART, key, "Bag reminder for " + who(user.getFirstName(), user.getEmail(), null)
+            AutomationEvent e = new AutomationEvent(ABANDONED_CART, key, "Bag reminder for " + who(user.getFirstName(), user.getEmail(), LeadService.normalisePhone(user.getPhone()))
                     + " (" + live.size() + " item" + (live.size() == 1 ? "" : "s") + ", Rs. " + plain(value) + ")");
             e.setRecipient(user.getEmail());
             e.setRecipientName(user.getFirstName());

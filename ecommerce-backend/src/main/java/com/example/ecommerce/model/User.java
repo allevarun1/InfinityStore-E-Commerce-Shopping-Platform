@@ -22,7 +22,7 @@ public class User {
     @Size(max = 20)
     private String username;
 
-    @NotBlank
+    // Blank for customers who signed in with a mobile number and never added an email.
     @Size(max = 50)
     @Email
     private String email;
@@ -40,6 +40,11 @@ public class User {
 
     @Size(max = 20)
     private String phone;
+
+    /** Mobile number proven by an OTP sign-in, in international form (+919876543210). Never set for admins. */
+    @Column(name = "verified_phone", length = 16, unique = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String verifiedPhone;
 
     @Column(length = 1000)
     private String addresses;
@@ -117,6 +122,14 @@ public class User {
 
     public java.time.LocalDateTime getPasswordChangedAt() {
         return passwordChangedAt;
+    }
+
+    public String getVerifiedPhone() {
+        return verifiedPhone;
+    }
+
+    public void setVerifiedPhone(String verifiedPhone) {
+        this.verifiedPhone = verifiedPhone;
     }
 
     public String getFirstName() {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useStore } from '../contexts/StoreContext';
 
 export function Register() {
   const [form, setForm] = useState({
@@ -20,6 +21,7 @@ export function Register() {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const { info } = useStore();
 
   const getPasswordStrength = (pass) => {
     if (!pass) return { label: '', class: '' };
@@ -100,6 +102,11 @@ export function Register() {
   return (
     <form className="form-card" onSubmit={handleSubmit} style={{ gap: '16px' }}>
       <h1>Create account</h1>
+      {info?.phoneLogin && (
+        <p className="otp-help">
+          Quicker: <Link to="/login" state={location.state}>sign up with your mobile number and an OTP</Link>, no password needed.
+        </p>
+      )}
       
       <div className="field-group">
         <label htmlFor="firstName">First Name</label>

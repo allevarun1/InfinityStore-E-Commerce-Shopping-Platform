@@ -38,8 +38,9 @@ public class UserController extends BaseUserController {
                 && !request.getEmail().equals(user.getEmail());
         boolean passwordChanged = request.getPassword() != null && !request.getPassword().isBlank();
 
-        // Changing credentials requires proof of the current password.
-        if (emailChanged || passwordChanged) {
+        // Changing credentials requires proof of the current password. A customer who signed in by OTP
+        // and has no email yet may add one without it (they never had a password).
+        if (passwordChanged || (emailChanged && user.getEmail() != null && !user.getEmail().isBlank())) {
             if (request.getCurrentPassword() == null
                     || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
                 throw new BusinessException("Current password is incorrect");

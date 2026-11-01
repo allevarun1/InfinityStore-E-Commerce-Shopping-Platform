@@ -13,11 +13,12 @@ public record UserResponse(
         String lastName,
         String phone,
         String addresses,
-        List<String> roles) {
+        List<String> roles,
+        boolean mobileLogin) {
 
     public static UserResponse from(User u) {
         List<String> roles = u.getRoles().stream().map(r -> r.getName().name()).sorted().toList();
         return new UserResponse(u.getId(), u.getUsername(), u.getEmail(), u.getFirstName(), u.getLastName(),
-                u.getPhone(), u.getAddresses(), roles);
+                u.getPhone(), u.getAddresses(), roles, u.getVerifiedPhone() != null);
     }
 }

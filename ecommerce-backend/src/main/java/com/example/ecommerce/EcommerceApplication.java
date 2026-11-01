@@ -38,6 +38,12 @@ public class EcommerceApplication {
                     // Ignore if the table does not exist yet
                 }
                 try {
+                    // Customers who sign in by mobile OTP may have no email; older databases created it NOT NULL.
+                    jdbcTemplate.execute("ALTER TABLE users MODIFY COLUMN email VARCHAR(50) NULL;");
+                } catch (Exception e) {
+                    // Ignore if the table does not exist yet
+                }
+                try {
                     // Leads can now be phone-only (WhatsApp); older databases created the column NOT NULL.
                     jdbcTemplate.execute("ALTER TABLE leads MODIFY COLUMN email VARCHAR(120) NULL;");
                 } catch (Exception e) {

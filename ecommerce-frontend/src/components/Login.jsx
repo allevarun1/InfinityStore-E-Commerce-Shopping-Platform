@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { PhoneLogin } from './PhoneLogin';
 
 export function Login() {
   const [username, setUsername] = useState('');
@@ -138,9 +139,9 @@ export function Login() {
 
   return (
     <div className="form-card">
+      <h1 className="otp-title">Login</h1>
+      <PhoneLogin onSignedIn={() => { toast.success('Welcome to Rekha Shopping Mall'); navigate(returnTo, { replace: true }); }} />
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-        <h1>Login</h1>
-        
         <div className="field-group">
           <label htmlFor="username">Username</label>
           <input 

@@ -22,14 +22,23 @@ export function AuthProvider({ children }) {
   // Same origin as the rest of the API; set VITE_API_URL when deploying.
   const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth`;
 
-  const login = async (username, password) => {
-    const res = await axios.post(`${apiUrl}/signin`, { username, password });
-    const response = res.data;
+  const startSession = async (response) => {
     localStorage.setItem('infinity_token', response.token || response.accessToken);
     localStorage.setItem('infinity_user', JSON.stringify(response));
     setCurrentUser(response);
     await mergeGuestCart(response);
     return response;
+  };
+
+  const login = async (username, password) => {
+    const res = await axios.post(`${apiUrl}/signin`, { username, password });
+    return startSession(res.data);
+  };
+
+  /** Swaps the ID token Firebase gives after a correct OTP for our own session. */
+  const loginWithPhone = async (idToken) => {
+    const res = await axios.post(`${apiUrl}/phone`, { idToken });
+    return startSession(res.data);
   };
 
   const signup = async (payload) => {
@@ -70,6 +79,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       currentUser,
       login,
+      loginWithPhone,
       signup,
       forgotPassword,
       resetPassword,
