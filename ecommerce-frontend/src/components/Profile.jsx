@@ -104,6 +104,7 @@ export function Profile() {
         <input 
           id="firstName"
           name="firstName" 
+          maxLength={100}
           placeholder="First name" 
           value={form.firstName || ''}
           className={errors.firstName ? 'input-invalid' : form.firstName ? 'input-valid' : ''}
@@ -118,6 +119,7 @@ export function Profile() {
         <input 
           id="lastName"
           name="lastName" 
+          maxLength={100}
           placeholder="Last name" 
           value={form.lastName || ''}
           className={errors.lastName ? 'input-invalid' : form.lastName ? 'input-valid' : ''}
@@ -161,6 +163,7 @@ export function Profile() {
           id="addresses"
           name="addresses" 
           placeholder="Addresses" 
+          maxLength={1000}
           value={form.addresses || ''}
           onChange={handleChange}
         />

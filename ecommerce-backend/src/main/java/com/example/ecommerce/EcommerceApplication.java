@@ -32,6 +32,12 @@ public class EcommerceApplication {
                     // Ignore if column already exists
                 }
                 try {
+                    // Checkout allows addresses up to 500 characters; older databases created the column as VARCHAR(255).
+                    jdbcTemplate.execute("ALTER TABLE orders MODIFY COLUMN shipping_address VARCHAR(500) NOT NULL;");
+                } catch (Exception e) {
+                    // Ignore if the table does not exist yet
+                }
+                try {
                     // Leads can now be phone-only (WhatsApp); older databases created the column NOT NULL.
                     jdbcTemplate.execute("ALTER TABLE leads MODIFY COLUMN email VARCHAR(120) NULL;");
                 } catch (Exception e) {

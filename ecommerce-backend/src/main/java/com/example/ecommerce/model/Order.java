@@ -74,7 +74,7 @@ public class Order {
     @Column(name = "idempotency_key", length = 100, unique = true)
     private String idempotencyKey;
 
-    @Column(name = "shipping_address", nullable = false)
+    @Column(name = "shipping_address", nullable = false, length = 500)
     private String shippingAddress;
 
     @Column(name = "phone_number")

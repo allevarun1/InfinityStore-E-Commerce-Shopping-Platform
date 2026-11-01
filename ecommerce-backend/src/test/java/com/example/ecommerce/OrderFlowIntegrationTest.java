@@ -43,6 +43,20 @@ class OrderFlowIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void longDeliveryAddressWithinCheckoutLimitIsSaved() {
+        User user = customer();
+        Product p = product("500.00", 10);
+        addToCart(user, p, 1);
+        OrderRequest r = request("COD");
+        String address = "Flat 12, Sri Lakshmi Residency, " + "Near Temple Road, ".repeat(25);
+        r.setShippingAddress(address.substring(0, 480));
+
+        Order o = orderService.placeOrder(user, r, null);
+
+        assertEquals(480, orders.findById(o.getId()).orElseThrow().getShippingAddress().length());
+    }
+
+    @Test
     void orderItemsSnapshotPriceAndName() {
         User user = customer();
         Product p = product("300.00", 5);

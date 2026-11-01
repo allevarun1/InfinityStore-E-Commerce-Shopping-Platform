@@ -4,9 +4,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 public class ProfileUpdateRequest {
+    @Size(max = 100, message = "First name can be up to 100 characters")
     private String firstName;
+    @Size(max = 100, message = "Last name can be up to 100 characters")
     private String lastName;
+    @Size(max = 20, message = "Phone number can be up to 20 characters")
     private String phone;
+    @Size(max = 1000, message = "Address can be up to 1000 characters")
     private String addresses;
 
     @Email
