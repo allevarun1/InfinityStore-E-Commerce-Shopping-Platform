@@ -25,7 +25,8 @@ const MESSAGES = {
   'auth/network-request-failed': 'No internet connection. Please check and try again.',
   'auth/captcha-check-failed': 'Security check failed. Please reload the page and try again.',
   'auth/operation-not-allowed': 'OTP login is not available right now. Please sign in with your username and password.',
-  'auth/unauthorized-domain': 'OTP login is not available right now. Please sign in with your username and password.',
+  'auth/billing-not-enabled': 'OTP login is not available right now. Please sign in with your username and password.',
+  'auth/unauthorized-domain':'OTP login is not available right now. Please sign in with your username and password.',
 };
 
 export const otpError = (err) => {
