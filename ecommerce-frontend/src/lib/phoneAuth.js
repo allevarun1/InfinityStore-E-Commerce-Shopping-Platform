@@ -24,9 +24,15 @@ const MESSAGES = {
   'auth/code-expired': 'That OTP has expired. Please request a new one.',
   'auth/network-request-failed': 'No internet connection. Please check and try again.',
   'auth/captcha-check-failed': 'Security check failed. Please reload the page and try again.',
+  'auth/operation-not-allowed': 'OTP login is not available right now. Please sign in with your username and password.',
+  'auth/unauthorized-domain': 'OTP login is not available right now. Please sign in with your username and password.',
 };
 
-export const otpError = (err) => MESSAGES[err?.code] || err?.response?.data?.message || 'Something went wrong. Please try again.';
+export const otpError = (err) => {
+  // Keeps the Firebase code in the console so a failure can be traced without guessing.
+  if (err?.code) console.warn('OTP login failed:', err.code);
+  return MESSAGES[err?.code] || err?.response?.data?.message || 'Something went wrong. Please try again.';
+};
 
 /**
  * Sends an OTP to a 10-digit Indian mobile. `buttonId` is the element the invisible security check attaches to.
