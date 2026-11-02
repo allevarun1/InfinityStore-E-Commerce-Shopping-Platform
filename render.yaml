@@ -20,6 +20,9 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
+      # Aiven personal token (secret): lets the API switch the free database back on when Aiven powers it off.
+      - key: AIVEN_API_TOKEN
+        sync: false
       # Login with mobile number + OTP: from Firebase console > Project settings > Your apps (web). Public values.
       - key: FIREBASE_PROJECT_ID
         sync: false

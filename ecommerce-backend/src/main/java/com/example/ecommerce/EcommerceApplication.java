@@ -15,6 +15,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @EnableScheduling
 public class EcommerceApplication {
     public static void main(String[] args) {
+        // Aiven can power off the free database; switch it back on before connecting instead of crashing.
+        com.example.ecommerce.config.AivenPowerGuard.ensureRunningBeforeStart();
         SpringApplication.run(EcommerceApplication.class, args);
     }
 
