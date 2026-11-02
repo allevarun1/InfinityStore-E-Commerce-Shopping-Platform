@@ -41,8 +41,10 @@ services:
         generateValue: true
       - key: ADMIN_PASSWORD
         generateValue: true
+      # Loads the 19 built-in sarees, their reels and the welcome offer, only while the database has no categories,
+      # so it never duplicates or overwrites sarees added in admin.
       - key: SEED_DEMO_CATALOG
-        value: "false"
+        value: "true"
       - key: CORS_ORIGINS
         value: https://rekha-shopping-mall.pages.dev,https://rekha-shopping-mall.onrender.com
       - key: FRONTEND_URL
