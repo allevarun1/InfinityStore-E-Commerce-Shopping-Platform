@@ -3,7 +3,10 @@ package com.example.ecommerce.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/** A photo or video the owner uploaded. The bytes live in the database so the store works on hosts without a disk. */
+/**
+ * A photo or video the owner uploaded. With R2 configured the file lives in R2 (storageKey) and the database keeps
+ * only these details; otherwise the bytes are kept in the data column so the store works on hosts without a disk.
+ */
 @Entity
 @Table(name = "media_assets")
 public class MediaAsset {
@@ -31,8 +34,12 @@ public class MediaAsset {
     private String checksum;
 
     @Lob
-    @Column(nullable = false, columnDefinition = "LONGBLOB")
+    @Column(columnDefinition = "LONGBLOB NULL")
     private byte[] data;
+
+    /** Object key in R2, e.g. media/2026/ab12cd34ef-saree.jpg; null while the bytes are still in data. */
+    @Column(name = "storage_key", length = 200)
+    private String storageKey;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -50,5 +57,7 @@ public class MediaAsset {
     public void setChecksum(String checksum) { this.checksum = checksum; }
     public byte[] getData() { return data; }
     public void setData(byte[] data) { this.data = data; }
+    public String getStorageKey() { return storageKey; }
+    public void setStorageKey(String storageKey) { this.storageKey = storageKey; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

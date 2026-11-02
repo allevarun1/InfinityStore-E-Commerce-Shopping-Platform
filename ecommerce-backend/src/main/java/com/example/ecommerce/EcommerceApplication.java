@@ -44,6 +44,12 @@ public class EcommerceApplication {
                     // Ignore if the table does not exist yet
                 }
                 try {
+                    // Uploaded files now live in R2 when it is configured; older databases created data NOT NULL.
+                    jdbcTemplate.execute("ALTER TABLE media_assets MODIFY COLUMN data LONGBLOB NULL;");
+                } catch (Exception e) {
+                    // Ignore if the table does not exist yet
+                }
+                try {
                     // Leads can now be phone-only (WhatsApp); older databases created the column NOT NULL.
                     jdbcTemplate.execute("ALTER TABLE leads MODIFY COLUMN email VARCHAR(120) NULL;");
                 } catch (Exception e) {

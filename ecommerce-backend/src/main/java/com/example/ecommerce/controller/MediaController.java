@@ -33,11 +33,18 @@ public class MediaController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Public. The checksum is part of the path, so a cached copy is always the right one and may be kept for a year. */
+    /**
+     * Public. The checksum is part of the path, so a cached copy is always the right one and may be kept for a year.
+     * Files in R2 are a redirect to R2, so photos and videos never pass through this server.
+     */
     @GetMapping("/api/media/{id}/{checksum}")
     public ResponseEntity<Resource> serve(@PathVariable Long id, @PathVariable String checksum) {
         return media.find(id, checksum)
-                .map(a -> ResponseEntity.ok()
+                .map(a -> media.publicUrlOf(a) != null
+                        ? ResponseEntity.status(302).location(java.net.URI.create(media.publicUrlOf(a)))
+                                .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
+                                .<Resource>build()
+                        : ResponseEntity.ok()
                         .contentType(MediaType.parseMediaType(a.getContentType()))
                         .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
                         .header("X-Content-Type-Options", "nosniff")

@@ -21,4 +21,8 @@ public interface MediaAssetRepository extends JpaRepository<MediaAsset, Long> {
     }
 
     List<Meta> findAllByOrderByIdDesc();
+
+    /** Files still kept in the database, to move into R2. */
+    @org.springframework.data.jpa.repository.Query("select m.id from MediaAsset m where m.storageKey is null order by m.id")
+    List<Long> findIdsStoredInDatabase();
 }

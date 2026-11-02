@@ -28,6 +28,17 @@ services:
       # On hold: Firebase sends OTP SMS only on its paid Blaze plan. Set to "true" once billing is enabled there.
       - key: PHONE_LOGIN_ENABLED
         value: "false"
+      # Photos and videos uploaded in admin go to Cloudflare R2 (10 GB free) so the 1 GB database stays small.
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_PUBLIC_URL
+        sync: false
       # Online payments: set PAYMENT_PROVIDER=razorpay and the three Razorpay values in the dashboard.
       - key: PAYMENT_PROVIDER
         sync: false

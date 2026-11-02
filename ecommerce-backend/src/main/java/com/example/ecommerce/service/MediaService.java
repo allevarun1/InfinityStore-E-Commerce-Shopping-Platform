@@ -5,11 +5,20 @@ import com.example.ecommerce.model.Product;
 import com.example.ecommerce.repository.MediaAssetRepository;
 import com.example.ecommerce.repository.ProductRepository;
 import com.example.ecommerce.repository.StoreVideoRepository;
+import com.example.ecommerce.service.storage.R2Storage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +32,7 @@ import java.util.regex.Pattern;
 public class MediaService {
     public static final long MAX_IMAGE_BYTES = 8L * 1024 * 1024;
     public static final long MAX_VIDEO_BYTES = 20L * 1024 * 1024;
+    private static final Logger log = LoggerFactory.getLogger(MediaService.class);
     private static final Pattern URL = Pattern.compile("^/api/media/(\\d{1,12})/([a-f0-9]{10})$");
 
     public record Info(Long id, String name, String contentType, MediaAsset.Kind kind, long sizeBytes, String url, LocalDateTime createdAt) {}
@@ -31,6 +41,8 @@ public class MediaService {
     @Autowired private ProductRepository products;
     @Autowired private StoreVideoRepository videos;
     @Autowired private AuditService audit;
+    @Autowired private R2Storage r2;
+    @Autowired private org.springframework.transaction.support.TransactionTemplate tx;
 
     static String url(Long id, String checksum) { return "/api/media/" + id + "/" + checksum; }
 
@@ -66,7 +78,18 @@ public class MediaService {
         a.setKind(kind);
         a.setSizeBytes(bytes.length);
         a.setChecksum(checksum(bytes));
-        a.setData(bytes);
+        if (r2.enabled()) {
+            // File goes to R2 first; the database row is only written once the file is safely stored.
+            String key = keyFor(a.getChecksum(), a.getName());
+            try {
+                r2.put(key, bytes, type);
+            } catch (RuntimeException e) {
+                throw new BusinessException("The file could not be saved right now. Please try again.");
+            }
+            a.setStorageKey(key);
+        } else {
+            a.setData(bytes);
+        }
         MediaAsset saved = media.save(a);
         audit.record("MEDIA_UPLOADED", "MediaAsset", saved.getId(), saved.getName() + " (" + saved.getContentType() + ", " + saved.getSizeBytes() + " bytes)");
         return info(saved);
@@ -101,6 +124,70 @@ public class MediaService {
         }
         media.delete(a);
         audit.record("MEDIA_DELETED", "MediaAsset", id, a.getName());
+        String key = a.getStorageKey();
+        if (key != null && r2.enabled()) {
+            afterCommit(() -> {
+                try {
+                    r2.delete(key);
+                } catch (RuntimeException e) {
+                    log.warn("Could not remove {} from R2: {}", key, e.getMessage());
+                }
+            });
+        }
+    }
+
+    /** Public address of a stored file in R2, or null when its bytes are served from the database. */
+    public String publicUrlOf(MediaAsset a) {
+        return a.getStorageKey() != null && r2.enabled() ? r2.publicUrl(a.getStorageKey()) : null;
+    }
+
+    /**
+     * Moves files uploaded before R2 was set up out of the database, one at a time, so the 1 GB database is freed.
+     * Links on the website keep working: /api/media/... now points to the R2 copy.
+     */
+    @Async
+    @EventListener(ApplicationReadyEvent.class)
+    public void moveDatabaseFilesToR2OnStartup() {
+        moveDatabaseFilesToR2();
+    }
+
+    public void moveDatabaseFilesToR2() {
+        if (!r2.enabled()) return;
+        List<Long> ids = media.findIdsStoredInDatabase();
+        if (ids.isEmpty()) return;
+        log.info("Moving {} uploaded file(s) from the database to R2", ids.size());
+        for (Long id : ids) {
+            try {
+                tx.executeWithoutResult(s -> media.findById(id).ifPresent(a -> {
+                    if (a.getStorageKey() != null || a.getData() == null) return;
+                    String key = keyFor(a.getChecksum(), a.getName());
+                    r2.put(key, a.getData(), a.getContentType());
+                    a.setStorageKey(key);
+                    a.setData(null);
+                    media.save(a);
+                }));
+            } catch (RuntimeException e) {
+                log.warn("Could not move media {} to R2 yet: {}", id, e.getMessage());
+            }
+        }
+    }
+
+    static String keyFor(String checksum, String name) {
+        String safe = name.toLowerCase().replaceAll("[^a-z0-9._-]+", "-").replaceAll("-{2,}", "-");
+        return "media/" + LocalDate.now().getYear() + "/" + checksum + "-" + safe;
+    }
+
+    private static void afterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
+        }
     }
 
     private Info info(MediaAsset a) {
