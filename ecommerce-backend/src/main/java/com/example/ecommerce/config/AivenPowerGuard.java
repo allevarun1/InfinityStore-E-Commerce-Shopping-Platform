@@ -78,8 +78,12 @@ public class AivenPowerGuard {
 
     /** Before Spring starts: if the database is off, switch it on and wait (up to 12 minutes) until it runs. */
     public static void ensureRunningBeforeStart() {
-        if (token().isEmpty()) return;
+        if (token().isEmpty()) {
+            log.info("Aiven power guard is off (AIVEN_API_TOKEN not set)");
+            return;
+        }
         String state = state();
+        log.info("Aiven power guard is on; database state: {}", state == null ? "unknown (see warning above)" : state);
         if (state == null || "RUNNING".equals(state)) return;
         if ("POWEROFF".equals(state)) powerOn();
         Instant until = Instant.now().plus(START_WAIT);
