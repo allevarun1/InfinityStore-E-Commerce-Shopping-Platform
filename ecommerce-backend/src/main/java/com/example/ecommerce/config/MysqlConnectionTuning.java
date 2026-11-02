@@ -25,7 +25,9 @@ public class MysqlConnectionTuning implements BeanPostProcessor {
             ds.addDataSourceProperty("rewriteBatchedStatements", "true");
             ds.addDataSourceProperty("maintainTimeStats", "false");
             // Keep warm connections ready so no request pays for a new TLS connection to the database.
-            ds.setMinimumIdle(Math.min(4, ds.getMaximumPoolSize()));
+            // The pool size may still be unset (-1) here; Hikari then defaults it to 10.
+            int max = ds.getMaximumPoolSize();
+            ds.setMinimumIdle(max > 0 ? Math.min(4, max) : 4);
             ds.setKeepaliveTime(120_000);
         }
         return bean;
