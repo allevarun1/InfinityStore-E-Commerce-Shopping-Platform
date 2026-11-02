@@ -30,7 +30,7 @@ services:
         value: "false"
       # Quick sign-in. GOOGLE_CLIENT_ID and TRUECALLER_APP_KEY are public; WHATSAPP_TOKEN is a secret.
       - key: GOOGLE_CLIENT_ID
-        sync: false
+        value: 1095864064515-vqa19ftl6s24kuih70g2tan8n7a9u3bu.apps.googleusercontent.com
       - key: TRUECALLER_APP_KEY
         sync: false
       - key: WHATSAPP_TOKEN
