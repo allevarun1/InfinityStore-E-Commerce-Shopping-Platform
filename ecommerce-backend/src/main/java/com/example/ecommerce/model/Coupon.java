@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 /** A discount code. Exactly one of percentOff / flatOff is set. Applied after deal prices, before GST. */
 @Entity
+@EntityListeners(com.example.ecommerce.service.CatalogCache.Listener.class)
 @Table(name = "coupons", uniqueConstraints = @UniqueConstraint(columnNames = "code"))
 public class Coupon {
     @Id

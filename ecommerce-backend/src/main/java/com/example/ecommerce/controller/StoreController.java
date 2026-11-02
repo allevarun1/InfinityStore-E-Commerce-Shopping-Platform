@@ -115,16 +115,20 @@ public class StoreController {
     @Value("${app.growth.welcome-code:WELCOME10}")
     private String welcomeCode;
 
+    @Autowired
+    private com.example.ecommerce.service.CatalogCache cache;
+
+    /** Read on every page; kept in memory and cleared when a coupon (the welcome offer) changes. */
     @GetMapping("/info")
     public ResponseEntity<StoreInfo> info() {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePublic())
-                .body(new StoreInfo(currency, freeShippingThreshold, shippingFee, false, true,
+                .body(cache.get("store-info", () -> new StoreInfo(currency, freeShippingThreshold, shippingFee, false, true,
                         paymentGateway.enabled(), paymentGateway.testMode(),
                         digitsOnly(whatsapp), blankToNull(supportEmail), blankToNull(supportPhone),
                         blankToNull(gaId), blankToNull(metaPixelId), welcomeOffer(), defaultGstPercent,
                         phoneVerifier.webConfig(),
-                        new LoginOptions(googleVerifier.clientId(), truecaller.webConfig(), whatsappOtp.enabled())));
+                        new LoginOptions(googleVerifier.clientId(), truecaller.webConfig(), whatsappOtp.enabled()))));
     }
 
     /** Opt-in sign-up. The response is identical for new and existing subscribers. */
