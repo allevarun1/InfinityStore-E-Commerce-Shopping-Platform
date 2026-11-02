@@ -16,7 +16,7 @@ import { ProductGallery } from './Gallery';
 import { NotifyMe } from './NotifyMe';
 import { ColourSwatches } from './ColourSwatches';
 import { WatchButton } from './Videos';
-import { DeliveryCheck, OfferStrip, PriceBreakup, DemandLine, VideoCallLink } from './Shopper';
+import { DeliveryCheck, OfferStrip, PriceBreakup, DemandLine } from './Shopper';
 import { freeShippingFrom, codOffered } from '../lib/policy';
 
 // Search engines that run JavaScript read this to show price and availability in results.
@@ -212,13 +212,16 @@ export function ProductDetail() {
                     <button type="button" aria-label="Increase quantity" disabled={qty >= maxQty} onClick={() => setQty(q => q + 1)}>+</button>
                   </div>
                 )}
-                <button type="button" className="btn btn-primary" disabled={soldOut || busy} onClick={() => add(false)}>
-                  <i className="bi bi-bag" aria-hidden="true"></i> {soldOut ? 'Sold out' : busy ? 'Adding…' : 'Add to cart'}
+                {/* Buy now leads, in the main colour; Add to cart sits underneath. */}
+                <button type="button" className="btn btn-primary" disabled={soldOut || busy} onClick={() => add(true)}>
+                  <i className="bi bi-lightning-charge" aria-hidden="true"></i> {soldOut ? 'Sold out' : busy ? 'Please wait…' : 'Buy now'}
                 </button>
               </div>
               <div className="buy-row">
                 {!soldOut && (
-                  <button type="button" className="btn btn-outline" disabled={busy} onClick={() => add(true)}>Buy now</button>
+                  <button type="button" className="btn btn-outline" disabled={busy} onClick={() => add(false)}>
+                    <i className="bi bi-bag" aria-hidden="true"></i> Add to cart
+                  </button>
                 )}
                 <button type="button" className="btn btn-outline" aria-pressed={isWished(product.id)} onClick={() => toggleWish(product)}>
                   <i className={`bi ${isWished(product.id) ? 'bi-heart-fill' : 'bi-heart'}`} aria-hidden="true"></i> {isWished(product.id) ? 'Saved to wishlist' : 'Save to wishlist'}
@@ -227,7 +230,6 @@ export function ProductDetail() {
               {soldOut && <NotifyMe product={product} />}
               <div className="pdp-actions-row">
                 <WhatsAppAsk product={product} />
-                <VideoCallLink product={product} />
                 <button type="button" className="btn btn-outline share-btn" onClick={share}>
                   <i className="bi bi-share" aria-hidden="true"></i> Share
                 </button>
@@ -298,8 +300,11 @@ export function ProductDetail() {
             <div className="price-now">{inrCompact(activePrice(product))}</div>
             {onDeal && <div className="price-was" style={{ fontSize: '0.8rem' }}>{inrCompact(product.price)}</div>}
           </div>
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => add(false)}>
-            {busy ? 'Adding…' : 'Add to cart'}
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => add(true)}>
+            {busy ? 'Please wait…' : 'Buy now'}
+          </button>
+          <button type="button" className="btn btn-outline mobile-buy-cart" disabled={busy} onClick={() => add(false)} aria-label="Add to cart">
+            <i className="bi bi-bag-plus" aria-hidden="true"></i>
           </button>
         </div>
       )}

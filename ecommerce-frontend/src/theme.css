@@ -483,6 +483,8 @@ select, input, textarea { max-width: 100%; }
     border-top: 1px solid var(--line); box-shadow: 0 -8px 24px -12px rgb(30 25 21 / 0.25);
   }
   .mobile-buy .btn { flex: 1; }
+  /* Small square "add to cart" beside the main Buy now button. */
+  .mobile-buy .mobile-buy-cart { flex: 0 0 52px; padding: 0; font-size: 1.2rem; }
   .pdp { padding-bottom: 84px; }
   .footer-inner { grid-template-columns: 1fr; }
 }
