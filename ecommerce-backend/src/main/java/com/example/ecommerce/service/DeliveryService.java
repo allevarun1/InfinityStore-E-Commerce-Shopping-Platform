@@ -25,6 +25,17 @@ public class DeliveryService {
     private final int[] metroDays, remoteDays, defaultDays;
     private final int dispatchDays;
     private final ZoneId zone;
+    private StorePolicy policy;
+
+    /** Optional so the service can be built on its own in unit tests (cash on delivery then counts as offered). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setPolicy(StorePolicy policy) {
+        this.policy = policy;
+    }
+
+    private boolean codOffered() {
+        return policy == null || policy.codEnabled();
+    }
 
     public DeliveryService(
             @Value("${app.delivery.metro-prefixes:11,30,38,40,41,50,56,60,70}") String metro,
@@ -63,13 +74,13 @@ public class DeliveryService {
         LocalDate today = LocalDate.now(zone);
         LocalDate from = today.plusDays(dispatchDays + days[0]);
         LocalDate to = today.plusDays(dispatchDays + days[1]);
-        boolean cod = !noCod.contains(prefix);
+        boolean cod = codOffered() && !noCod.contains(prefix);
         return new Estimate(pin, true, cod, zoneName, days[0], days[1], from, to,
                 "Estimated delivery " + from.getDayOfWeek().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
                         + " " + from.getDayOfMonth() + " " + from.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
                         + " to " + to.getDayOfWeek().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
                         + " " + to.getDayOfMonth() + " " + to.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
-                        + (cod ? "" : ". Cash on delivery is not available here."));
+                        + (cod || !codOffered() ? "" : ". Cash on delivery is not available here."));
     }
 
     private static List<String> split(String v) {

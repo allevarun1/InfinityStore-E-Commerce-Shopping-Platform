@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useStore } from '../contexts/StoreContext';
 import { inrCompact } from '../lib/format';
 import { BrandSignature } from './BrandMark';
+import { freeShippingFrom, codOffered } from '../lib/policy';
 
 /** Split-screen frame for sign-in, registration and password reset: brand panel + the form. */
 export function AuthShell({ children }) {
@@ -14,8 +15,8 @@ export function AuthShell({ children }) {
           <BrandSignature tone="dark" />
           <p className="auth-quote">Handwoven drapes, chosen with care and delivered to your door.</p>
           <ul>
-            {info && <li><i className="bi bi-truck"></i> Free shipping above {inrCompact(info.freeShippingThreshold)}</li>}
-            <li><i className="bi bi-cash-coin"></i> Cash on delivery</li>
+            {freeShippingFrom(info) && <li><i className="bi bi-truck"></i> Free shipping above {inrCompact(freeShippingFrom(info))}</li>}
+            {codOffered(info) && <li><i className="bi bi-cash-coin"></i> Cash on delivery</li>}
             <li><i className="bi bi-heart"></i> Save favourites and track orders</li>
           </ul>
         </div>

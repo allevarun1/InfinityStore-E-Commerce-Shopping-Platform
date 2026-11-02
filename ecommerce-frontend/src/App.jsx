@@ -62,14 +62,15 @@ const OrderSuccess = lazy(() => import('./components/OrderViews').then(m => ({ d
 const TrackOrder = lazy(() => import('./components/TrackOrder').then(m => ({ default: m.TrackOrder })));
 const PersonalShopping = lazy(() => import('./components/PersonalShopping').then(m => ({ default: m.PersonalShopping })));
 import { Loader } from './components/Loader';
+import { freeShippingFrom, codOffered } from './lib/policy';
 
 function AnnouncementBar() {
   const { info, offers } = useStore();
   const [at, setAt] = useState(0);
   const top = offers?.length ? offers[offers.length - 1] : null;
   const lines = info ? [
-    <span key="s">Free shipping above {inrCompact(info.freeShippingThreshold)}</span>,
-    <span key="c">Cash on delivery available</span>,
+    freeShippingFrom(info) && <span key="s">Free shipping above {inrCompact(freeShippingFrom(info))}</span>,
+    codOffered(info) && <span key="c">Cash on delivery available</span>,
     top && <span key="o">Buy {top.minItems}+ sarees, save {Number(top.percentOff)}%</span>,
     info.welcomeOffer && <span key="w">New here? Use code <strong>{info.welcomeOffer.code}</strong> for {info.welcomeOffer.summary.split(' on orders')[0]}</span>,
   ].filter(Boolean) : [];
@@ -200,8 +201,9 @@ function Footer() {
         <div>
           <h3>Delivery &amp; payment</h3>
           <ul>
-            {info && <li>Free shipping above {inrCompact(info.freeShippingThreshold)}</li>}
-            <li>Cash on delivery</li>
+            {freeShippingFrom(info) && <li>Free shipping above {inrCompact(freeShippingFrom(info))}</li>}
+            {info && !freeShippingFrom(info) && <li>Flat {inrCompact(info.shippingFee)} delivery on every order</li>}
+            {codOffered(info) ? <li>Cash on delivery</li> : <li>Secure online payment</li>}
             <li>GST itemised on every order</li>
           </ul>
         </div>

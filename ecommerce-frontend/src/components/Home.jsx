@@ -11,7 +11,7 @@ import { ReelsStrip } from './Videos';
 import { Testimonials } from './Testimonials';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { QuickView } from './QuickView';
-import { inrCompact, isOnDeal, activePrice, discountPercent } from '../lib/format';
+import { isOnDeal, activePrice, discountPercent } from '../lib/format';
 
 const SORTS = {
   featured: { label: 'Featured', fn: (a, b) => (b.stockQuantity > 0) - (a.stockQuantity > 0) || isOnDeal(b) - isOnDeal(a) || a.id - b.id },
@@ -51,7 +51,7 @@ export function Home() {
   const price = PRICE_BANDS[params.get('price')] ? params.get('price') : '';
 
   const { isAdmin } = useAuth();
-  const { info, videos } = useStore();
+  const { videos } = useStore();
   const cartActions = useCartActions();
   const location = useLocation();
   // The banner's looping motion (photo push-in, light sweep, petals) pauses once it is scrolled away: measured on a
@@ -152,11 +152,10 @@ export function Home() {
 
   const tickerItems = useMemo(() => {
     const names = categories.map(c => c.name.replace(/ Sarees$/i, ''));
-    const lead = ['Handwoven by weavers', 'Cash on delivery'];
-    if (info) lead.push(`Free shipping above ${inrCompact(info.freeShippingThreshold)}`);
+    const lead = ['Handwoven by weavers'];
     const seen = new Set();
     return [...lead, ...fabrics.slice(0, 4), ...names].filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()));
-  }, [categories, fabrics, info]);
+  }, [categories, fabrics]);
 
   const pickAndScroll = (changes) => {
     update(changes);

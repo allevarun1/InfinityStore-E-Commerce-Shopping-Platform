@@ -62,7 +62,7 @@ export function productMessage(p, key = 'new', to = null) {
     '',
     `See it here: ${productLink(p, key)}`,
     '',
-    'Reply to this message to reserve it. Cash on delivery available.',
+    'Reply to this message to reserve it.',
   ].filter((line, i, all) => line !== '' || all[i - 1] !== '').join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
@@ -201,7 +201,7 @@ export async function statusImage(p, key = 'new') {
   } else ctx.fillText(price, W / 2, y);
 
   ctx.font = '600 32px "DM Sans Variable", "DM Sans", sans-serif'; ctx.fillStyle = '#7b1e2b';
-  ctx.fillText('Reply to order  ·  Cash on delivery', W / 2, H - 150);
+  ctx.fillText('Reply to order', W / 2, H - 150);
   ctx.font = '500 30px "DM Sans Variable", "DM Sans", sans-serif'; ctx.fillStyle = 'rgba(59,13,23,0.6)';
   ctx.fillText(window.location.host, W / 2, H - 100);
   return new Promise((resolve) => c.toBlob(resolve, 'image/png'));

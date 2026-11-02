@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStore } from '../contexts/StoreContext';
 import { guestCart } from '../lib/guestCart';
 import { inr, inrCompact, activePrice, imageSrc } from '../lib/format';
+import { freeShippingFrom } from '../lib/policy';
 
 /**
  * Slide-in confirmation after every Add to cart: what was added, progress to free shipping, one-tap
@@ -58,7 +59,7 @@ export function MiniCart() {
 
   if (!open) return null;
   const { product, quantity } = added;
-  const threshold = info ? Number(info.freeShippingThreshold) : null;
+  const threshold = freeShippingFrom(info);
   const remaining = threshold != null && subtotal != null ? Math.floor(threshold - subtotal) + 1 : null;
   const unlocked = remaining != null && remaining <= 0;
 

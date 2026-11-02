@@ -78,7 +78,7 @@ public class RazorpayPaymentGateway implements PaymentGateway {
             return new PaymentResult(PaymentResult.Status.PENDING, created.path("id").asText());
         } catch (RestClientException e) {
             log.error("Razorpay order creation failed for {}: {}", order.getTrackingNumber(), e.getMessage());
-            throw new BusinessException("Online payment is not reachable right now. Please try again or choose Cash on delivery.");
+            throw new BusinessException("Online payment is not reachable right now. Please try again in a moment.");
         }
     }
 

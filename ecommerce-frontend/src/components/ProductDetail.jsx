@@ -17,6 +17,7 @@ import { NotifyMe } from './NotifyMe';
 import { ColourSwatches } from './ColourSwatches';
 import { WatchButton } from './Videos';
 import { DeliveryCheck, OfferStrip, PriceBreakup, DemandLine, VideoCallLink } from './Shopper';
+import { freeShippingFrom, codOffered } from '../lib/policy';
 
 // Search engines that run JavaScript read this to show price and availability in results.
 function setProductMeta(p) {
@@ -241,10 +242,12 @@ export function ProductDetail() {
           {info && (
             <ul className="facts">
               <li><i className="bi bi-truck" aria-hidden="true"></i>
-                <span>{activePrice(product) > info.freeShippingThreshold
-                  ? 'Ships free with this item.'
-                  : `Free shipping on orders above ${inrCompact(info.freeShippingThreshold)}; otherwise ${inrCompact(info.shippingFee)}.`}</span></li>
-              <li><i className="bi bi-cash-coin" aria-hidden="true"></i><span>Cash on delivery available.</span></li>
+                <span>{!freeShippingFrom(info)
+                  ? `Delivery ${inrCompact(info.shippingFee)} per order.`
+                  : activePrice(product) > freeShippingFrom(info)
+                    ? 'Ships free with this item.'
+                    : `Free shipping on orders above ${inrCompact(freeShippingFrom(info))}; otherwise ${inrCompact(info.shippingFee)}.`}</span></li>
+              {codOffered(info) && <li><i className="bi bi-cash-coin" aria-hidden="true"></i><span>Cash on delivery available.</span></li>}
               <li><i className="bi bi-receipt" aria-hidden="true"></i><span>GST is itemised on your order.</span></li>
             </ul>
           )}
@@ -267,8 +270,10 @@ export function ProductDetail() {
               <summary>Shipping &amp; returns</summary>
               <div className="acc-body">
                 <ul>
-                  {info && <li>Free shipping above {inrCompact(info.freeShippingThreshold)}; otherwise {inrCompact(info.shippingFee)}.</li>}
-                  <li>Cash on delivery available.</li>
+                  {info && (freeShippingFrom(info)
+                    ? <li>Free shipping above {inrCompact(freeShippingFrom(info))}; otherwise {inrCompact(info.shippingFee)}.</li>
+                    : <li>Delivery {inrCompact(info.shippingFee)} per order.</li>)}
+                  {codOffered(info) && <li>Cash on delivery available.</li>}
                   <li>Returns are accepted for damaged or incorrect products. <Link to="/shipping">Read the full policy</Link>.</li>
                 </ul>
               </div>

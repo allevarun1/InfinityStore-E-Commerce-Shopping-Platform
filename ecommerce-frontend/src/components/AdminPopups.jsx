@@ -9,7 +9,7 @@ const THEMES = [['MAROON', 'Maroon and gold'], ['GOLD', 'Bright gold'], ['EMERAL
 const PRESETS = [
   { label: 'Welcome offer', headline: 'Welcome to Rekha Shopping Mall', message: 'Take 10% off your first order. Handwoven silks, cottons and bridal sarees, delivered to your door.', ctaLabel: 'Shop the collection', ctaUrl: '/#products', theme: 'MAROON', trigger: 'LOAD', delaySeconds: 6, frequency: 'SESSION' },
   { label: 'Festival sale', headline: 'Festive sale is on', message: 'Special prices on silks and bridal sarees for a short time only.', ctaLabel: 'See the deals', ctaUrl: '/?view=deals#products', theme: 'GOLD', trigger: 'LOAD', delaySeconds: 5, frequency: 'DAY', countdown: true },
-  { label: 'Free shipping', headline: 'Free shipping on orders above Rs. 999', message: 'Cash on delivery available across India.', ctaLabel: 'Start shopping', ctaUrl: '/#products', theme: 'EMERALD', trigger: 'LOAD', delaySeconds: 8, frequency: 'SESSION' },
+  { label: 'Free shipping', headline: 'Free shipping on orders above Rs. 999', message: 'Handwoven sarees delivered across India.', ctaLabel: 'Start shopping', ctaUrl: '/#products', theme: 'EMERALD', trigger: 'LOAD', delaySeconds: 8, frequency: 'SESSION' },
   { label: 'Before you go', headline: 'Wait! Take 10% off before you go', message: 'Your first order is on us. The code works on any saree above Rs. 1,499.', ctaLabel: 'Claim my offer', ctaUrl: '/#products', theme: 'NIGHT', trigger: 'EXIT', delaySeconds: 0, frequency: 'DAY' },
 ];
 

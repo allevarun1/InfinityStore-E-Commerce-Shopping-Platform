@@ -88,8 +88,7 @@ public class ShopAssistantService {
     @Autowired private PaymentGateway payments;
     @Autowired private AnthropicAssistantWriter ai;
 
-    @Value("${app.pricing.free-shipping-threshold:999}") private BigDecimal freeShippingThreshold;
-    @Value("${app.pricing.shipping-fee:49}") private BigDecimal shippingFee;
+    @Autowired private com.example.ecommerce.service.StorePolicy policy;
     @Value("${app.growth.welcome-code:WELCOME10}") private String welcomeCode;
     @Value("${app.store.whatsapp:}") private String whatsapp;
 
@@ -167,7 +166,7 @@ public class ShopAssistantService {
     }
 
     private Reply faq(String t, Filters f) {
-        String fee = money(shippingFee), free = money(freeShippingThreshold);
+        String fee = money(policy.shippingFee());
         if (has(t, "track", "where is my order", "order status", "my order", "delivered yet", "not received")) {
             return info("You can follow any order with just the order number and the mobile number you gave at checkout, no sign-in needed. If something looks wrong, message us and we'll check right away.", f, "track", "/track", "Track my order", true);
         }
@@ -181,11 +180,20 @@ public class ShopAssistantService {
             return info("Silk and zari sarees are best dry-cleaned. Cotton can usually be hand-washed in cold water. Each product page lists its own care instructions.", f, "care", null, null, false);
         }
         if (has(t, "cod", "cash on delivery", "payment", "pay online", "upi", "card")) {
-            String online = payments.enabled() ? " You can also pay online at checkout." : " Pay in cash when your saree arrives.";
-            return info("Yes, cash on delivery is available on every order." + online, f, "payment", null, null, false);
+            if (policy.codEnabled()) {
+                String online = payments.enabled() ? " You can also pay online at checkout." : " Pay in cash when your saree arrives.";
+                return info("Yes, cash on delivery is available on every order." + online, f, "payment", null, null, false);
+            }
+            return info(payments.enabled()
+                    ? "You pay securely online at checkout: UPI, cards or netbanking. We don't offer cash on delivery."
+                    : "We don't offer cash on delivery. Online payment is being set up; message us and we'll help you order.",
+                    f, "payment", null, null, !payments.enabled());
         }
         if (has(t, "shipping", "delivery", "deliver", "courier", "dispatch", "how long", "how many days")) {
-            return info("Delivery is free on orders over " + free + "; below that it's " + fee + ". Delivery times by area are on the Shipping page.", f, "shipping", "/shipping", "Shipping details", false);
+            String cost = policy.hasFreeShipping()
+                    ? "Delivery is free on orders over " + money(policy.freeShippingThreshold()) + "; below that it's " + fee + "."
+                    : "Delivery is a flat " + fee + " per order.";
+            return info(cost + " Delivery times by area are on the Shipping page.", f, "shipping", "/shipping", "Shipping details", false);
         }
         if (has(t, "talk to", "call me", "human", "person", "agent", "speak", "contact", "help me choose", "whatsapp")) {
             String how = whatsapp != null && !whatsapp.isBlank() ? " or tap the WhatsApp button" : "";

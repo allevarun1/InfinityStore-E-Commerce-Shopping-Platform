@@ -80,6 +80,7 @@ public class AutopilotService {
     public record RunSummary(int sent, int drafted, int noMail, Map<String, Integer> byRule) {}
 
     @Autowired private AutomationSettingRepository settings;
+    @Autowired private StorePolicy policy;
     @Autowired private AutomationEventRepository events;
     @Autowired private StockRequestRepository stockRequests;
     @Autowired private ProductRepository products;
@@ -228,7 +229,7 @@ public class AutopilotService {
             e.setEmailSubject("Still thinking it over? Your sarees are waiting");
             e.setBody(greeting(user.getFirstName()) + "You left these in your bag at " + storeName + ":\n\n" + lines + "\n"
                     + "We've kept them for you, but stock is limited. Pick up where you left off:\n" + link("/cart") + "\n\n"
-                    + offer + "Cash on delivery is available. Questions? Just reply to this email.\n\n- " + storeName);
+                    + offer + (policy.codEnabled() ? "Cash on delivery is available. " : "") + "Questions? Just reply to this email.\n\n- " + storeName);
             deliver(e, mode);
             made.add(e);
         }

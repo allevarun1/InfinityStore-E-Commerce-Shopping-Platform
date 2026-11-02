@@ -7,6 +7,7 @@ import { inr, inrCompact, isOnDeal, activePrice, imageSrc } from '../lib/format'
 import { useStore } from '../contexts/StoreContext';
 import { Loader } from './Loader';
 import { EmptyState } from './EmptyState';
+import { freeShippingFrom, codOffered } from '../lib/policy';
 
 /** The cart for visitors who have not signed in. Prices are indicative; checkout shows the exact total. */
 export function GuestCart() {
@@ -57,7 +58,7 @@ export function GuestCart() {
 
   const subtotal = lines.reduce((sum, l) => sum + activePrice(l.product) * l.quantity, 0);
   const units = lines.reduce((n, l) => n + l.quantity, 0);
-  const threshold = info ? Number(info.freeShippingThreshold) : null;
+  const threshold = freeShippingFrom(info);
   const remaining = threshold != null ? Math.max(1, Math.floor(threshold - subtotal) + 1) : null;
 
   return (
@@ -121,7 +122,7 @@ export function GuestCart() {
           <p className="secure-note" style={{ textAlign: 'center' }}>
             New here? <Link to="/register" state={{ from: { pathname: '/checkout' } }}>Create an account</Link> — your cart is kept.
           </p>
-          <p className="secure-note"><i className="bi bi-cash-coin" aria-hidden="true"></i> Cash on delivery available</p>
+          {codOffered(info) && <p className="secure-note"><i className="bi bi-cash-coin" aria-hidden="true"></i> Cash on delivery available</p>}
           <p style={{ textAlign: 'center', marginTop: 8 }}><Link to="/#products">Continue shopping</Link></p>
         </aside>
       </div>

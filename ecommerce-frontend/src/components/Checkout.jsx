@@ -86,6 +86,7 @@ export function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [quote, setQuote] = useState(null);
   const [options, setOptions] = useState({ cashOnDelivery: true, online: false, testMode: false });
+  const canPay = options.cashOnDelivery || options.online;
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -114,6 +115,8 @@ export function Checkout() {
       .then(([q, o, profile, book]) => {
         setQuote(q);
         setOptions(o);
+        // Without cash on delivery, online payment is the only (and so the chosen) method.
+        if (!o.cashOnDelivery) setPaymentMethod('ONLINE');
         setSaved(book);
         if (book.length) {
           // Returning customer: deliver to the address they used last, one tap to change.
@@ -360,11 +363,13 @@ export function Checkout() {
           <section className="ck-card" aria-labelledby="ck-pay-title">
             <h2 id="ck-pay-title"><span className="ck-num">2</span> Payment</h2>
             <div className="ck-pay" role="radiogroup" aria-label="Payment method">
-              <label className={`ck-pay-opt ${paymentMethod === 'COD' ? 'on' : ''}`}>
-                <input type="radio" name="pay" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} />
-                <i className="bi bi-cash-coin" aria-hidden="true"></i>
-                <span><strong>Cash on delivery</strong><small>Pay the courier when your saree arrives</small></span>
-              </label>
+              {options.cashOnDelivery && (
+                <label className={`ck-pay-opt ${paymentMethod === 'COD' ? 'on' : ''}`}>
+                  <input type="radio" name="pay" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} />
+                  <i className="bi bi-cash-coin" aria-hidden="true"></i>
+                  <span><strong>Cash on delivery</strong><small>Pay the courier when your saree arrives</small></span>
+                </label>
+              )}
               {options.online && (
                 <label className={`ck-pay-opt ${paymentMethod === 'ONLINE' ? 'on' : ''}`}>
                   <input type="radio" name="pay" value="ONLINE" checked={paymentMethod === 'ONLINE'} onChange={() => setPaymentMethod('ONLINE')} />
@@ -374,7 +379,10 @@ export function Checkout() {
                 </label>
               )}
             </div>
-            {!options.online && <p className="ck-note">Online payment is coming soon.</p>}
+            {!options.online && options.cashOnDelivery && <p className="ck-note">Online payment is coming soon.</p>}
+            {!options.online && !options.cashOnDelivery && (
+              <p className="ck-note" role="alert">Online payment is being set up, so orders can’t be placed on the website just yet. Please message us and we’ll help you order.</p>
+            )}
           </section>
         </div>
 
@@ -419,7 +427,7 @@ export function Checkout() {
             <div className="grand"><dt>Total payable</dt><dd>{inr(quote.total)}</dd></div>
           </dl>
 
-          <button type="submit" className="btn btn-primary ck-place" disabled={isSubmitting}>
+          <button type="submit" className="btn btn-primary ck-place" disabled={isSubmitting || !canPay}>
             {isSubmitting ? (paymentMethod === 'ONLINE' ? 'Opening payment…' : 'Placing order…') : `${paymentMethod === 'ONLINE' ? 'Pay' : 'Place order'} · ${inr(quote.total)}`}
           </button>
           <ul className="ck-trust">
@@ -430,7 +438,7 @@ export function Checkout() {
 
         <div className="ck-mobilebar">
           <div><small>Total</small><strong>{inr(quote.total)}</strong></div>
-          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Placing…' : 'Place order'}</button>
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting || !canPay}>{isSubmitting ? 'Placing…' : 'Place order'}</button>
         </div>
       </form>
     </div>

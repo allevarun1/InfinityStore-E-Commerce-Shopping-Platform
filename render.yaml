@@ -66,6 +66,14 @@ services:
         generateValue: true
       # Loads the 19 built-in sarees, their reels and the welcome offer, only while the database has no categories,
       # so it never duplicates or overwrites sarees added in admin.
+      # Delivery: no free shipping, a flat Rs 99 on every order.
+      - key: FREE_SHIPPING_THRESHOLD
+        value: "0"
+      - key: SHIPPING_FEE
+        value: "99"
+      # Cash on delivery stays on until Razorpay online payment is live; then set to "false".
+      - key: COD_ENABLED
+        value: "true"
       - key: SEED_DEMO_CATALOG
         value: "true"
       - key: CORS_ORIGINS

@@ -124,7 +124,7 @@ export function PersonalShopping() {
         <ul className="ps-points">
           <li><i className="bi bi-camera-video" aria-hidden="true"></i> Live colour and drape check</li>
           <li><i className="bi bi-person-heart" aria-hidden="true"></i> Advice for the occasion and budget</li>
-          <li><i className="bi bi-cash-coin" aria-hidden="true"></i> No obligation, cash on delivery</li>
+          <li><i className="bi bi-hand-thumbs-up" aria-hidden="true"></i> No obligation to buy</li>
         </ul>
       </section>
 

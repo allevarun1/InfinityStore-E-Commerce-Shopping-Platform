@@ -21,6 +21,6 @@ public class DisabledPaymentGateway implements PaymentGateway {
 
     @Override
     public PaymentResult initiate(Order order) {
-        throw new BusinessException("Online payment is not available yet. Please choose Cash on delivery.");
+        throw new BusinessException("Online payment is not available yet.");
     }
 }

@@ -330,7 +330,7 @@ public class DataSeeder implements CommandLineRunner {
             video("Sambalpuri Bandha Cotton Saree", "A temple border in gentle greys", StoreVideo.Kind.REEL, "/videos/cine-bandha-cotton.mp4", "/videos/cine-bandha-cotton.jpg", x_sambalpuri_bandha_cotton.getId(), 20);
 
             sampleQuote("Priya", "Chennai", "The silk drapes beautifully and the zari border looks even better in person. Packing was neat and it arrived on time.", 5, kanchipuram.getId(), 1);
-            sampleQuote("Ananya", "Bengaluru", "Ordered the kasavu for Onam. The cotton is soft and the golden border is lovely. Cash on delivery made it easy.", 5, kasavu.getId(), 2);
+            sampleQuote("Ananya", "Bengaluru", "Ordered the kasavu for Onam. The cotton is soft and the golden border is lovely. Delivery was quick too.", 5, kasavu.getId(), 2);
             sampleQuote("Meera", "Hyderabad", "The stylist chat helped me pick a saree for my sister's wedding in minutes. Exactly what I was looking for.", 5, null, 3);
             sampleQuote("Kavya", "Mumbai", "The colours match the photos, which is rare online. The delivery date estimate was accurate too.", 4, null, 4);
             sampleQuote("Lakshmi", "Kochi", "Good quality and fair pricing, with the GST shown clearly before paying. Will order again for the festive season.", 5, banarasi.getId(), 5);

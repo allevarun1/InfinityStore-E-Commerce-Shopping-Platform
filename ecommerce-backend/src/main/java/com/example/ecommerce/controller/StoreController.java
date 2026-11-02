@@ -88,14 +88,13 @@ public class StoreController {
     @Value("${app.pricing.currency:INR}")
     private String currency;
 
-    @Value("${app.pricing.free-shipping-threshold:999}")
-    private BigDecimal freeShippingThreshold;
+    @Autowired
+    private com.example.ecommerce.service.StorePolicy policy;
 
     @Value("${app.pricing.default-gst-percent:18}")
     private BigDecimal defaultGstPercent;
 
-    @Value("${app.pricing.shipping-fee:49}")
-    private BigDecimal shippingFee;
+
 
     /** International format without "+", e.g. 919876543210. Blank hides the WhatsApp buttons. */
     @Value("${app.store.whatsapp:}")
@@ -127,7 +126,7 @@ public class StoreController {
     public ResponseEntity<StoreInfo> info() {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePublic())
-                .body(cache.get("store-info", () -> new StoreInfo(currency, freeShippingThreshold, shippingFee, false, true,
+                .body(cache.get("store-info", () -> new StoreInfo(currency, policy.freeShippingThreshold(), policy.shippingFee(), false, policy.codEnabled(),
                         paymentGateway.enabled(), paymentGateway.testMode(),
                         digitsOnly(whatsapp), blankToNull(supportEmail), blankToNull(supportPhone),
                         blankToNull(gaId), blankToNull(metaPixelId), welcomeOffer(), defaultGstPercent,

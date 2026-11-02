@@ -76,6 +76,9 @@ public class OrderService {
     private PaymentGateway paymentGateway;
 
     @Autowired
+    private StorePolicy policy;
+
+    @Autowired
     private AuditService auditService;
 
     @Autowired
@@ -88,7 +91,7 @@ public class OrderService {
     private ReferralService referralService;
 
     public PaymentOptions paymentOptions() {
-        return new PaymentOptions(true, paymentGateway.enabled(), paymentGateway.testMode());
+        return new PaymentOptions(policy.codEnabled(), paymentGateway.enabled(), paymentGateway.testMode());
     }
 
     public PriceQuote quoteCart(User user) {
@@ -133,7 +136,12 @@ public class OrderService {
 
         boolean online = isOnline(request.getPaymentMethod());
         if (online && !paymentGateway.enabled()) {
-            throw new BusinessException("Online payment is not available yet. Please choose Cash on delivery.");
+            throw new BusinessException(policy.codEnabled()
+                    ? "Online payment is not available yet. Please choose Cash on delivery."
+                    : "Online payment is not available right now. Please try again later.");
+        }
+        if (!online && !policy.codEnabled()) {
+            throw new BusinessException("Cash on delivery is not available. Please pay online.");
         }
 
         // Lock product rows in a stable order (prevents deadlocks) and re-read their latest state.

@@ -113,7 +113,10 @@ public class PricingService {
         }
 
         BigDecimal taxable = subtotal.subtract(discount).subtract(coupon);
-        BigDecimal shipping = (items.isEmpty() || taxable.compareTo(freeShippingThreshold) > 0)
+        // A threshold of 0 (or less) means the shop has no free shipping: every order pays the flat fee.
+        boolean freeOver = freeShippingThreshold != null && freeShippingThreshold.signum() > 0
+                && taxable.compareTo(freeShippingThreshold) > 0;
+        BigDecimal shipping = (items.isEmpty() || freeOver)
                 ? BigDecimal.ZERO.setScale(2) : money(shippingFee);
         BigDecimal total = taxable.add(tax).add(shipping);
         return new PriceQuote(lines, subtotal, discount, taxable, tax, shipping, total, currency,

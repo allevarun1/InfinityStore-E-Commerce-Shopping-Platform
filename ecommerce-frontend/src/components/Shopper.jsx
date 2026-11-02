@@ -4,6 +4,7 @@ import { ApiService } from '../services/api';
 import { useStore } from '../contexts/StoreContext';
 import { inr, inrCompact, activePrice, imageSrc } from '../lib/format';
 import { useCartActions } from '../lib/useCartActions';
+import { freeShippingFrom } from '../lib/policy';
 
 const PIN_KEY = 'infinity_pin';
 const readPin = () => { try { return localStorage.getItem(PIN_KEY) || ''; } catch { return ''; } };
@@ -112,7 +113,8 @@ export function PriceBreakup({ product }) {
         <div><dt>Saree price</dt><dd>{inr(base)}</dd></div>
         <div><dt>GST ({pct}%)</dt><dd>{inr(gst)}</dd></div>
         <div className="sum"><dt>Total with GST</dt><dd>{inr(base + gst)}</dd></div>
-        <div><dt>Shipping</dt><dd>{base > Number(info.freeShippingThreshold) ? 'Free' : `${inrCompact(info.shippingFee)}, free above ${inrCompact(info.freeShippingThreshold)}`}</dd></div>
+        <div><dt>Shipping</dt><dd>{!freeShippingFrom(info) ? inrCompact(info.shippingFee)
+          : base > freeShippingFrom(info) ? 'Free' : `${inrCompact(info.shippingFee)}, free above ${inrCompact(freeShippingFrom(info))}`}</dd></div>
       </dl>
       <p>No hidden charges. Your exact total is shown again before you place the order.</p>
     </details>

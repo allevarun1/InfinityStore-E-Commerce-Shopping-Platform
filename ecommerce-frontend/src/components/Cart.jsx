@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { EmptyState } from './EmptyState';
 import { inr, inrCompact, isOnDeal, imageSrc } from '../lib/format';
 import { DeliveryCheck, OfferProgress, CartCrossSell } from './Shopper';
+import { freeShippingFrom, codOffered } from '../lib/policy';
 
 export function Cart() {
   const { isLoggedIn } = useAuth();
@@ -73,7 +74,7 @@ function ServerCart() {
   }
 
   const lineFor = (item) => quote?.lines.find(l => l.cartItemId === item.id);
-  const threshold = info ? Number(info.freeShippingThreshold) : null;
+  const threshold = freeShippingFrom(info);
   const taxable = quote ? Number(quote.taxableAmount) : 0;
   // Free shipping applies strictly above the threshold; the server's shipping figure is the authority.
   const freeShipping = quote && Number(quote.shipping) === 0;
@@ -145,7 +146,7 @@ function ServerCart() {
             <div className="summary-row total"><span>Total</span><span>{inr(quote.total)}</span></div>
             <DeliveryCheck compact />
             <Link className="btn btn-primary" to="/checkout">Proceed to checkout</Link>
-            <p className="secure-note"><i className="bi bi-cash-coin" aria-hidden="true"></i> Cash on delivery available</p>
+            {codOffered(info) && <p className="secure-note"><i className="bi bi-cash-coin" aria-hidden="true"></i> Cash on delivery available</p>}
             <p style={{ textAlign: 'center', marginTop: 8 }}><Link to="/#products">Continue shopping</Link></p>
           </aside>
         )}
