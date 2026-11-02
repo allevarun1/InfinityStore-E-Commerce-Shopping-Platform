@@ -71,9 +71,9 @@ services:
         value: "0"
       - key: SHIPPING_FEE
         value: "99"
-      # Cash on delivery stays on until Razorpay online payment is live; then set to "false".
+      # No cash on delivery: every order is prepaid online through Razorpay.
       - key: COD_ENABLED
-        value: "true"
+        value: "false"
       - key: SEED_DEMO_CATALOG
         value: "true"
       - key: CORS_ORIGINS
