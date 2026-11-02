@@ -1,0 +1,29 @@
+# Keeps the shop awake. Render's free server sleeps after 15 idle minutes and Aiven's free MySQL can be powered off
+# when idle; loading the saree list every 10 minutes keeps both running, so the site never opens empty or slow.
+# Free for public repositories. GitHub may delay scheduled runs by a few minutes; that is fine here.
+name: Keep shop awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Load sarees from the live API (wakes the server and touches the database)
+        run: |
+          for attempt in 1 2 3; do
+            count=$(curl -s --max-time 90 https://rekha-shopping-mall-api.onrender.com/api/products | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" || echo "")
+            if [ -n "$count" ]; then
+              echo "Shop is up: $count sarees"
+              if [ "$count" = "0" ]; then echo "::warning::The shop returned 0 sarees"; fi
+              exit 0
+            fi
+            echo "No answer yet (attempt $attempt), retrying"
+            sleep 20
+          done
+          echo "::error::The shop API did not answer"
+          exit 1
