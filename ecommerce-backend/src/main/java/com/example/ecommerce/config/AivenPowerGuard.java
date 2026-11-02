@@ -33,7 +33,7 @@ public class AivenPowerGuard {
     }
 
     private static String token() {
-        return env("AIVEN_API_TOKEN", "");
+        return env("AIVEN_API_TOKEN", env("AIVEN_API_KEY", ""));
     }
 
     private static String serviceUrl() {
@@ -79,7 +79,7 @@ public class AivenPowerGuard {
     /** Before Spring starts: if the database is off, switch it on and wait (up to 12 minutes) until it runs. */
     public static void ensureRunningBeforeStart() {
         if (token().isEmpty()) {
-            log.info("Aiven power guard is off (AIVEN_API_TOKEN not set)");
+            log.info("Aiven power guard is off (AIVEN_API_TOKEN / AIVEN_API_KEY not set)");
             return;
         }
         String state = state();
