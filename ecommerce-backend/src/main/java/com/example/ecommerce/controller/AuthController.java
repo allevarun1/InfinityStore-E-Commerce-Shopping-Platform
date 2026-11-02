@@ -7,11 +7,15 @@ import com.example.ecommerce.model.User;
 import com.example.ecommerce.repository.RoleRepository;
 import com.example.ecommerce.repository.UserRepository;
 import com.example.ecommerce.security.FirebasePhoneVerifier;
+import com.example.ecommerce.security.GoogleIdTokenVerifier;
 import com.example.ecommerce.security.jwt.JwtUtils;
 import com.example.ecommerce.security.services.UserDetailsImpl;
 import com.example.ecommerce.service.LoginAttemptService;
 import com.example.ecommerce.service.PasswordResetService;
 import com.example.ecommerce.service.PhoneLoginService;
+import com.example.ecommerce.service.TruecallerLoginService;
+import com.example.ecommerce.service.WhatsAppOtpService;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -89,10 +93,86 @@ public class AuthController {
      */
     @PostMapping("/phone")
     public ResponseEntity<JwtResponse> phoneLogin(@Valid @RequestBody PhoneLoginRequest request) {
-        UserDetailsImpl details = phoneLogins.signIn(phoneVerifier.verify(request.idToken())).user();
+        return ResponseEntity.ok(customerSession(phoneLogins.signIn(phoneVerifier.verify(request.idToken())).user()));
+    }
+
+    /** Customers who sign in without a password stay signed in on their phone for 30 days. */
+    static final long CUSTOMER_SESSION_MS = 30L * 24 * 60 * 60 * 1000;
+
+    @Autowired
+    GoogleIdTokenVerifier googleVerifier;
+
+    @Autowired
+    TruecallerLoginService truecaller;
+
+    @Autowired
+    WhatsAppOtpService whatsappOtp;
+
+    public record GoogleLoginRequest(@NotBlank @Size(max = 4096) String credential) {
+    }
+
+    public record OtpSendRequest(@NotBlank @Size(max = 16) String phone) {
+    }
+
+    public record OtpVerifyRequest(@NotBlank @Size(max = 16) String phone, @NotBlank @Size(max = 6) String code) {
+    }
+
+    public record TruecallerStart(String nonce) {
+    }
+
+    /** status is PENDING, REJECTED or VERIFIED; session is set only when VERIFIED. */
+    public record TruecallerStatus(String status, JwtResponse session) {
+    }
+
+    private JwtResponse customerSession(UserDetailsImpl details) {
         String jwt = jwtUtils.generateJwtToken(
-                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities()));
-        return ResponseEntity.ok(jwtResponse(jwt, details));
+                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities()), CUSTOMER_SESSION_MS);
+        return jwtResponse(jwt, details);
+    }
+
+    /** Continue with Google: the storefront posts the ID token Google Identity Services returned. */
+    @PostMapping("/google")
+    public ResponseEntity<JwtResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(customerSession(phoneLogins.signIn(googleVerifier.verify(request.credential())).user()));
+    }
+
+    @PostMapping("/otp/send")
+    public ResponseEntity<Void> sendOtp(@Valid @RequestBody OtpSendRequest request) {
+        whatsappOtp.send(request.phone());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/otp/verify")
+    public ResponseEntity<JwtResponse> verifyOtp(@Valid @RequestBody OtpVerifyRequest request) {
+        if (!whatsappOtp.verify(request.phone(), request.code())) {
+            throw new com.example.ecommerce.service.BusinessException("That OTP is not right. Please check WhatsApp and try again.");
+        }
+        String e164 = "+91" + WhatsAppOtpService.normalise(request.phone());
+        return ResponseEntity.ok(customerSession(phoneLogins.signIn(e164).user()));
+    }
+
+    @PostMapping("/truecaller/start")
+    public ResponseEntity<TruecallerStart> truecallerStart() {
+        return ResponseEntity.ok(new TruecallerStart(truecaller.start()));
+    }
+
+    /** Called by Truecaller's servers, not by browsers. Always 200 so Truecaller does not retry forged calls. */
+    @PostMapping("/truecaller/callback")
+    public ResponseEntity<Void> truecallerCallback(@RequestBody(required = false) JsonNode body) {
+        if (body != null) truecaller.callback(body);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/truecaller/status/{nonce}")
+    public ResponseEntity<TruecallerStatus> truecallerStatus(@PathVariable String nonce) {
+        var result = truecaller.poll(nonce);
+        if (result.getKey() != TruecallerLoginService.State.VERIFIED) {
+            return ResponseEntity.ok(new TruecallerStatus(result.getKey().name(), null));
+        }
+        var v = result.getValue();
+        UserDetailsImpl details = phoneLogins.signIn(v.phone(),
+                new PhoneLoginService.Profile(v.firstName(), v.lastName(), v.email())).user();
+        return ResponseEntity.ok(new TruecallerStatus("VERIFIED", customerSession(details)));
     }
 
     private static JwtResponse jwtResponse(String jwt, UserDetailsImpl userDetails) {

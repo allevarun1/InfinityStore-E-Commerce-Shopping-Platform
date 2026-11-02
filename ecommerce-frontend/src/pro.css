@@ -355,3 +355,15 @@ img { max-width: 100%; }
 .ck-forget { flex: none; background: none; border: 0; color: var(--muted); padding: 6px; min-height: 0; cursor: pointer; border-radius: 8px; }
 .ck-forget:hover { color: var(--maroon); background: var(--sand); }
 .ck-locate { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 16px; }
+
+/* Quick sign-in: Google, Truecaller (Android), WhatsApp OTP */
+.quick-login { display: flex; flex-direction: column; gap: 12px; }
+.ql-google { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 44px; }
+.ql-google-btn { width: 100%; display: flex; justify-content: center; }
+.ql-truecaller { display: flex; flex-direction: column; gap: 6px; }
+.ql-tc-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px;
+  border: none; border-radius: 999px; background: #0087ff; color: #fff; font-weight: 600; font-size: 0.95rem; cursor: pointer;
+}
+.ql-tc-btn:disabled { opacity: 0.7; cursor: progress; }
+.ql-note { margin: -4px 0 0; font-size: 0.75rem; color: var(--muted); text-align: center; }

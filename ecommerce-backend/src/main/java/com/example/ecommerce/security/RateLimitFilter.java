@@ -23,6 +23,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         this.rules = List.of(
                 new Rule("/api/auth/signin", 30 * multiplier, 5 * minute),
                 new Rule("/api/auth/phone", 30 * multiplier, 5 * minute),
+                new Rule("/api/auth/google", 30 * multiplier, 5 * minute),
+                new Rule("/api/auth/otp/send", 10 * multiplier, 15 * minute),
+                new Rule("/api/auth/otp/verify", 30 * multiplier, 15 * minute),
+                new Rule("/api/auth/truecaller/start", 30 * multiplier, 5 * minute),
                 new Rule("/api/auth/signup", 10 * multiplier, 60 * minute),
                 new Rule("/api/auth/forgot-password", 5 * multiplier, 15 * minute),
                 new Rule("/api/auth/reset-password", 10 * multiplier, 15 * minute),

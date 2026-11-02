@@ -26,25 +26,53 @@ const addressKey = (user) => `infinity_address_${user?.id ?? 'me'}`;
 
 const fromSaved = (s) => ({ fullName: s.fullName, phone: s.phone, line1: s.line1, line2: s.line2 || '', city: s.city, state: s.state, pincode: s.pincode });
 
-/** "Use my current location": OpenStreetMap's free reverse geocoder turns the GPS position into area, city, state and PIN. */
+/** Matches map names ("NCT of Delhi", "Orissa", "Pondicherry", "Jammu & Kashmir") to the state list. */
+function matchState(name) {
+  const n = String(name || '').toLowerCase().replace(/&/g, 'and').replace(/^(the )?(nct of |national capital territory of |union territory of )/, '')
+    .replace('orissa', 'odisha').replace('pondicherry', 'puducherry').replace('uttaranchal', 'uttarakhand').trim();
+  return INDIAN_STATES.find(st => st.toLowerCase() === n) || '';
+}
+
+const validPin = (p) => { const pin = String(p || '').replace(/\s/g, ''); return /^[1-9]\d{5}$/.test(pin) ? pin : ''; };
+
+function getJson(url, ms = 6000) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms);
+  return fetch(url, { signal: ctl.signal })
+    .then(r => { if (!r.ok) throw new Error('lookup failed'); return r.json(); })
+    .finally(() => clearTimeout(t));
+}
+
+/**
+ * "Use my current location": the phone's GPS position, turned into street, area, city, state and PIN by
+ * OpenStreetMap, with BigDataCloud as a backup for anything OpenStreetMap leaves out. Both are free and need no key.
+ */
 function locate() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) { reject(new Error('Location is not available on this device')); return; }
-    navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error('Allow location access to fill your address')),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
-  }).then(({ coords }) =>
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=en&lat=${coords.latitude}&lon=${coords.longitude}`)
-      .then(r => { if (!r.ok) throw new Error('Could not look up your location'); return r.json(); }))
-    .then(({ address: a = {} }) => {
-      const area = [a.road, a.neighbourhood || a.suburb || a.quarter || a.village].filter(Boolean);
-      const pin = String(a.postcode || '').replace(/\s/g, '');
-      return {
-        line2: [...new Set(area)].join(', ').slice(0, 160),
-        city: (a.city || a.town || a.state_district || a.county || a.village || '').slice(0, 60),
-        state: INDIAN_STATES.find(st => st.toLowerCase() === String(a.state || '').toLowerCase()) || '',
-        pincode: /^[1-9]\d{5}$/.test(pin) ? pin : '',
-      };
-    });
+    navigator.geolocation.getCurrentPosition(resolve, (err) => reject(new Error(err.code === 1
+      ? 'Location permission is off. Allow location for this site in your browser settings, or type the address.'
+      : 'Could not get your location. Turn on GPS and try again, or type the address.')),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+  }).then(async ({ coords }) => {
+    const { latitude: lat, longitude: lon } = coords;
+    const [osm, bdc] = await Promise.allSettled([
+      getJson(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=en&lat=${lat}&lon=${lon}`),
+      getJson(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`),
+    ]);
+    const a = osm.status === 'fulfilled' ? osm.value.address || {} : {};
+    const b = bdc.status === 'fulfilled' ? bdc.value || {} : {};
+    if (!a.state && !b.principalSubdivision) throw new Error('Could not look up your location. Please type the address.');
+    const house = [a.house_number, a.building || a.house_name].filter(Boolean).join(', ');
+    const area = [a.road, a.neighbourhood || a.suburb || a.quarter || a.village || b.locality].filter(Boolean);
+    return {
+      line1: house.slice(0, 160),
+      line2: [...new Set(area)].join(', ').slice(0, 160),
+      city: (a.city || a.town || b.city || a.state_district || a.county || a.village || '').slice(0, 60),
+      state: matchState(a.state) || matchState(b.principalSubdivision),
+      pincode: validPin(a.postcode) || validPin(b.postcode),
+    };
+  });
 }
 
 /** One readable block for the courier label; the server stores it as the order's shipping address. */
@@ -128,10 +156,13 @@ export function Checkout() {
     setLocating(true);
     locate()
       .then(found => {
-        setAddr(a => ({ ...a, line2: found.line2 || a.line2, city: found.city || a.city, state: found.state || a.state, pincode: found.pincode || a.pincode }));
+        setAddr(a => ({ ...a, line1: a.line1 || found.line1, line2: found.line2 || a.line2, city: found.city || a.city,
+          state: found.state || a.state, pincode: found.pincode || a.pincode }));
         setErrors({});
-        toast.success('Address filled from your location. Add your house number and check the details.');
-        document.getElementById('ck-line1')?.focus();
+        const missing = !found.pincode ? 'PIN code' : !found.line1 ? 'house / flat number' : '';
+        toast.success(missing ? `Address filled from your location. Please add your ${missing} and check the details.`
+          : 'Address filled from your location. Please check the details.');
+        document.getElementById(!found.pincode ? 'ck-pincode' : 'ck-line1')?.focus();
       })
       .catch(err => toast.error(err.message || 'Could not find your location'))
       .finally(() => setLocating(false));

@@ -28,6 +28,15 @@ services:
       # On hold: Firebase sends OTP SMS only on its paid Blaze plan. Set to "true" once billing is enabled there.
       - key: PHONE_LOGIN_ENABLED
         value: "false"
+      # Quick sign-in. GOOGLE_CLIENT_ID and TRUECALLER_APP_KEY are public; WHATSAPP_TOKEN is a secret.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: TRUECALLER_APP_KEY
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
       # Photos and videos uploaded in admin go to Cloudflare R2 (10 GB free) so the 1 GB database stays small.
       - key: R2_ACCOUNT_ID
         sync: false
@@ -91,7 +100,7 @@ services:
         value: strict-origin-when-cross-origin
       - path: /*
         name: Content-Security-Policy
-        value: "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://connect.facebook.net https://www.google.com https://www.gstatic.com https://apis.google.com https://checkout.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://www.youtube-nocookie.com https://www.google.com https://*.firebaseapp.com https://api.razorpay.com https://checkout.razorpay.com; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        value: "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://connect.facebook.net https://www.google.com https://www.gstatic.com https://apis.google.com https://checkout.razorpay.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; frame-src https://www.youtube-nocookie.com https://www.google.com https://*.firebaseapp.com https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
       - path: /assets/*
         name: Cache-Control
         value: public, max-age=31536000, immutable

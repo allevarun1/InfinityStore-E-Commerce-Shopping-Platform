@@ -2,6 +2,9 @@ package com.example.ecommerce.controller;
 
 import com.example.ecommerce.model.Coupon;
 import com.example.ecommerce.security.FirebasePhoneVerifier;
+import com.example.ecommerce.security.GoogleIdTokenVerifier;
+import com.example.ecommerce.service.TruecallerLoginService;
+import com.example.ecommerce.service.WhatsAppOtpService;
 import com.example.ecommerce.service.CouponService;
 import com.example.ecommerce.service.LeadService;
 import com.example.ecommerce.service.payment.PaymentGateway;
@@ -42,7 +45,12 @@ public class StoreController {
             String metaPixelId,
             Offer welcomeOffer,
             BigDecimal defaultGstPercent,
-            FirebasePhoneVerifier.WebConfig phoneLogin) {
+            FirebasePhoneVerifier.WebConfig phoneLogin,
+            LoginOptions login) {
+    }
+
+    /** Which quick sign-in buttons the storefront shows; all values are public. */
+    public record LoginOptions(String googleClientId, TruecallerLoginService.WebConfig truecaller, boolean whatsappOtp) {
     }
 
     /** What a new subscriber gets; shown only while the underlying coupon is usable. */
@@ -66,6 +74,15 @@ public class StoreController {
 
     @Autowired
     private FirebasePhoneVerifier phoneVerifier;
+
+    @Autowired
+    private GoogleIdTokenVerifier googleVerifier;
+
+    @Autowired
+    private TruecallerLoginService truecaller;
+
+    @Autowired
+    private WhatsAppOtpService whatsappOtp;
 
     @Value("${app.pricing.currency:INR}")
     private String currency;
@@ -106,7 +123,8 @@ public class StoreController {
                         paymentGateway.enabled(), paymentGateway.testMode(),
                         digitsOnly(whatsapp), blankToNull(supportEmail), blankToNull(supportPhone),
                         blankToNull(gaId), blankToNull(metaPixelId), welcomeOffer(), defaultGstPercent,
-                        phoneVerifier.webConfig()));
+                        phoneVerifier.webConfig(),
+                        new LoginOptions(googleVerifier.clientId(), truecaller.webConfig(), whatsappOtp.enabled())));
     }
 
     /** Opt-in sign-up. The response is identical for new and existing subscribers. */

@@ -102,9 +102,9 @@ export function Register() {
   return (
     <form className="form-card" onSubmit={handleSubmit} style={{ gap: '16px' }}>
       <h1>Create account</h1>
-      {info?.phoneLogin && (
+      {(info?.phoneLogin || info?.login?.googleClientId || info?.login?.truecaller || info?.login?.whatsappOtp) && (
         <p className="otp-help">
-          Quicker: <Link to="/login" state={location.state}>sign up with your mobile number and an OTP</Link>, no password needed.
+          Quicker: <Link to="/login" state={location.state}>continue with Google or your mobile number</Link>, no password needed.
         </p>
       )}
       

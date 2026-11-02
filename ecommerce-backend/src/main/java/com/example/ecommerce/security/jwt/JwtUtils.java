@@ -28,12 +28,16 @@ public class JwtUtils {
     }
 
     public String generateJwtToken(Authentication authentication) {
+        return generateJwtToken(authentication, jwtExpirationMs);
+    }
+
+    public String generateJwtToken(Authentication authentication, long validForMs) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
         return Jwts.builder()
                 .setSubject((userPrincipal.getUsername()))
                 .setIssuedAt(new Date())
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .setExpiration(new Date((new Date()).getTime() + validForMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

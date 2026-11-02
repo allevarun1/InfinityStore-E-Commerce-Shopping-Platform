@@ -41,6 +41,28 @@ export function AuthProvider({ children }) {
     return startSession(res.data);
   };
 
+  /** Continue with Google: swaps Google's ID token for our own session. */
+  const loginWithGoogle = async (credential) => {
+    const res = await axios.post(`${apiUrl}/google`, { credential });
+    return startSession(res.data);
+  };
+
+  const sendWhatsAppOtp = (phone) => axios.post(`${apiUrl}/otp/send`, { phone });
+
+  const loginWithWhatsAppOtp = async (phone, code) => {
+    const res = await axios.post(`${apiUrl}/otp/verify`, { phone, code });
+    return startSession(res.data);
+  };
+
+  /** Truecaller one-tap: start a request, then ask until Truecaller has vouched for the number. */
+  const startTruecaller = async () => (await axios.post(`${apiUrl}/truecaller/start`)).data.nonce;
+
+  const pollTruecaller = async (nonce) => {
+    const res = await axios.get(`${apiUrl}/truecaller/status/${encodeURIComponent(nonce)}`);
+    if (res.data.status === 'VERIFIED') await startSession(res.data.session);
+    return res.data.status;
+  };
+
   const signup = async (payload) => {
     const res = await axios.post(`${apiUrl}/signup`, payload);
     return res.data;
@@ -80,6 +102,11 @@ export function AuthProvider({ children }) {
       currentUser,
       login,
       loginWithPhone,
+      loginWithGoogle,
+      sendWhatsAppOtp,
+      loginWithWhatsAppOtp,
+      startTruecaller,
+      pollTruecaller,
       signup,
       forgotPassword,
       resetPassword,

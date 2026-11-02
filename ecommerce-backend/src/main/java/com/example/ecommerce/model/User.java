@@ -46,6 +46,11 @@ public class User {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private String verifiedPhone;
 
+    /** Google account ID ("sub") for customers who use Continue with Google. Never set for admins. */
+    @Column(name = "google_subject", length = 64, unique = true)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String googleSubject;
+
     @Column(length = 1000)
     private String addresses;
 
@@ -186,4 +191,12 @@ public class User {
     public void setResetTokenExpiresAt(java.time.LocalDateTime resetTokenExpiresAt) { this.resetTokenExpiresAt = resetTokenExpiresAt; }
     public int getResetAttempts() { return resetAttempts == null ? 0 : resetAttempts; }
     public void setResetAttempts(Integer resetAttempts) { this.resetAttempts = resetAttempts; }
+
+    public String getGoogleSubject() {
+        return googleSubject;
+    }
+
+    public void setGoogleSubject(String googleSubject) {
+        this.googleSubject = googleSubject;
+    }
 }
