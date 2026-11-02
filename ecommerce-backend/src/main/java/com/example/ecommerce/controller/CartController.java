@@ -51,10 +51,15 @@ public class CartController {
         return ResponseEntity.ok(orderService.quoteCart(getAuthenticatedUser(), coupon));
     }
 
+    /** Answers with just the line id and quantity; the storefront already shows the product. */
+    public record AddedLine(Long id, Long productId, Integer quantity) {
+    }
+
     @PostMapping
-    public ResponseEntity<CartItem> addItemToCart(@Valid @RequestBody CartItemRequest request) {
-        User user = getAuthenticatedUser();
-        return ResponseEntity.ok(cartService.addItemToCart(user, request));
+    public ResponseEntity<AddedLine> addItemToCart(@Valid @RequestBody CartItemRequest request) {
+        UserDetailsImpl me = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        CartItem line = cartService.addItemToCart(me.getId(), request);
+        return ResponseEntity.ok(new AddedLine(line.getId(), request.getProductId(), line.getQuantity()));
     }
 
     @PutMapping("/{cartItemId}")

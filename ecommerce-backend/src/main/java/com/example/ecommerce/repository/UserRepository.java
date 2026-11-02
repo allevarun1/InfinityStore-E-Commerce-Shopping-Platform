@@ -13,6 +13,8 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    /** Used on every signed-in request: the user and their roles in one query. */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "roles")
     Optional<User> findByUsername(String username);
 
     Optional<User> findByEmail(String email);

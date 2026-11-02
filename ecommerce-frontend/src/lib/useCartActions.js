@@ -13,7 +13,7 @@ import { flyToCart } from './motion';
  */
 export function useCartActions() {
   const { isLoggedIn } = useAuth();
-  const { refreshCart, showAdded } = useStore();
+  const { refreshCart, bumpCart, showAdded, closeAdded } = useStore();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -25,14 +25,18 @@ export function useCartActions() {
       if (!quiet) flyToCart(product.id).then(() => showAdded(product, quantity));
       return true;
     }
+    // Show it in the cart at once; the server confirms in the background and we undo it if it refuses.
+    bumpCart(quantity);
+    if (!quiet) flyToCart(product.id).then(() => showAdded(product, quantity));
     try {
       await ApiService.addToCart(product.id, quantity);
       track.addToCart(product, quantity);
-      refreshCart();
-      if (!quiet) flyToCart(product.id).then(() => showAdded(product, quantity));
       return true;
     } catch (err) {
+      bumpCart(-quantity);
+      if (!quiet) closeAdded();
       toast.error(err.response?.data?.message || 'Could not add this item');
+      refreshCart();
       return false;
     }
   };

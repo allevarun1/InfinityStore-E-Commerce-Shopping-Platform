@@ -20,6 +20,8 @@ public class MailService {
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
+    // @Async here too: these call send() on this same object, which would otherwise run on the shopper's request.
+    @Async
     public void sendOrderPlaced(String to, Order order) {
         send(to, "Rekha Shopping Mall - Order Confirmed",
                 "Hi there!\n\nYour order has been placed successfully.\n\n" +
@@ -29,6 +31,7 @@ public class MailService {
                 "We'll notify you when it ships.\n\nThank you for shopping with Rekha Shopping Mall!");
     }
 
+    @Async
     public void sendPaymentSuccess(String to, Order order) {
         send(to, "Rekha Shopping Mall - Payment Successful",
                 "Hi there!\n\nPayment for your order has been confirmed.\n\n" +
@@ -37,6 +40,7 @@ public class MailService {
                 "Thank you for shopping with Rekha Shopping Mall!");
     }
 
+    @Async
     public void sendPasswordReset(String to, String resetLink, long validMinutes) {
         send(to, "Rekha Shopping Mall - Password Reset",
                 "Hi there!\n\nYou requested a password reset.\n\n" +

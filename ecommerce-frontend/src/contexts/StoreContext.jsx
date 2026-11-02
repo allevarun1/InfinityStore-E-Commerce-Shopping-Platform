@@ -61,10 +61,12 @@ export function StoreProvider({ children }) {
     setCartPulse(n => n + 1);
   }, []);
   const closeAdded = useCallback(() => setAdded(null), []);
+  /** Shows a cart change right away, before the server has confirmed it. */
+  const bumpCart = useCallback((n) => setCartCount(c => Math.max(0, c + n)), []);
 
   const value = useMemo(() => ({
-    info, categories, offers, videos, cartCount, cartPulse, refreshCart, wishIds, setWishIds, added, showAdded, closeAdded,
-  }), [info, categories, offers, videos, cartCount, cartPulse, refreshCart, wishIds, added, showAdded, closeAdded]);
+    info, categories, offers, videos, cartCount, cartPulse, refreshCart, bumpCart, wishIds, setWishIds, added, showAdded, closeAdded,
+  }), [info, categories, offers, videos, cartCount, cartPulse, refreshCart, bumpCart, wishIds, added, showAdded, closeAdded]);
 
   return (
     <StoreContext.Provider value={value}>

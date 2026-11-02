@@ -30,8 +30,14 @@ public class CartService {
     }
 
     public CartItem addItemToCart(User user, CartItemRequest request) {
+        return addItemToCart(user.getId(), request);
+    }
+
+    /** Adds by user id, so the request needs no separate user lookup before the locking read. */
+    public CartItem addItemToCart(Long userId, CartItemRequest request) {
         // Serialise a customer's cart writes so a double tap cannot create two lines for one product.
-        userRepository.lockById(user.getId());
+        User user = userRepository.lockById(userId)
+                .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("User not found"));
         Product product = productRepository.findPublicById(request.getProductId())
                 .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("Product not found with id: " + request.getProductId()));
 

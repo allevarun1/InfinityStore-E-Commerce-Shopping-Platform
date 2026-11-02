@@ -17,6 +17,8 @@ import com.example.ecommerce.model.User;
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
+    /** The cart with each line's product and category in one query (the database is a long round trip away). */
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"product", "product.category"})
     List<CartItem> findByUser(User user);
 
     Optional<CartItem> findByUserAndProduct(User user, Product product);
