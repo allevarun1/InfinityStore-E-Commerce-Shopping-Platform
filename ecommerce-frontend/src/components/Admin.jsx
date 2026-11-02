@@ -39,10 +39,18 @@ const TITLES = Object.fromEntries(NAV.flatMap(g => g.items.map(([k, , l]) => [k,
 
 const ORDER_FILTERS = [['ALL', 'All'], ['PENDING', 'New'], ['CONFIRMED', 'To ship'], ['SHIPPED', 'On the way'], ['DELIVERED', 'Delivered'], ['CANCELLED', 'Cancelled']];
 
+const ADMIN_TABS = ['autopilot', 'catalogue', 'coupons', 'insights', 'leads', 'management', 'media', 'orders', 'popups',
+  'products', 'studio', 'users', 'videos'];
+
 export function Admin() {
   const [searchParams] = useSearchParams();
   // The owner lands on Today; links such as /admin?tab=leads open a tab directly.
-  const [currentTab, setCurrentTab] = useState(() => searchParams.get('tab') || (searchParams.get('editId') ? 'management' : 'autopilot'));
+  const [currentTab, setCurrentTab] = useState(() => {
+    const asked = searchParams.get('tab');
+    // An unknown or old link opens Today instead of a blank page.
+    if (asked && ADMIN_TABS.includes(asked)) return asked;
+    return searchParams.get('editId') ? 'management' : 'autopilot';
+  });
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);

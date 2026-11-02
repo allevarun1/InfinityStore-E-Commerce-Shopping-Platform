@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { inr, imageSrc } from '../lib/format';
 import { useStore } from '../contexts/StoreContext';
+import { useAuth } from '../contexts/AuthContext';
 import { confetti } from '../lib/motion';
 
 const STEPS = [
@@ -61,6 +62,9 @@ export function OrderItems({ order }) {
 export function OrderSuccess() {
   const order = useLocation().state?.order;
   const { info, refreshCart } = useStore();
+  const { currentUser } = useAuth();
+  // Only promise an email when the shop can send one and the customer has an address.
+  const emailed = !!info?.emailConfirmations && !!currentUser?.email;
   useEffect(() => {
     document.title = 'Order placed | Rekha Shopping Mall';
     refreshCart();
@@ -82,7 +86,9 @@ export function OrderSuccess() {
         <span className="success-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path pathLength="1" d="M5.5 12.8l4.2 4.2L18.8 7.6" /></svg></span>
         <h1 id="ok-title">Thank you! Your order is placed.</h1>
         <p>Order number <strong className="success-no">{order.trackingNumber}</strong></p>
-        <p className="muted">We’ve emailed your confirmation. Keep the order number handy if you contact us.</p>
+        <p className="muted">
+          {emailed ? 'We’ve emailed your confirmation. ' : ''}Keep the order number handy; you can follow it any time under Your orders.
+        </p>
       </section>
 
       <div className="success-grid">

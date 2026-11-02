@@ -46,7 +46,8 @@ public class StoreController {
             Offer welcomeOffer,
             BigDecimal defaultGstPercent,
             FirebasePhoneVerifier.WebConfig phoneLogin,
-            LoginOptions login) {
+            LoginOptions login,
+            boolean emailConfirmations) {
     }
 
     /** Which quick sign-in buttons the storefront shows; all values are public. */
@@ -118,6 +119,9 @@ public class StoreController {
     @Autowired
     private com.example.ecommerce.service.CatalogCache cache;
 
+    @Autowired
+    private com.example.ecommerce.service.MailService mailService;
+
     /** Read on every page; kept in memory and cleared when a coupon (the welcome offer) changes. */
     @GetMapping("/info")
     public ResponseEntity<StoreInfo> info() {
@@ -128,7 +132,8 @@ public class StoreController {
                         digitsOnly(whatsapp), blankToNull(supportEmail), blankToNull(supportPhone),
                         blankToNull(gaId), blankToNull(metaPixelId), welcomeOffer(), defaultGstPercent,
                         phoneVerifier.webConfig(),
-                        new LoginOptions(googleVerifier.clientId(), truecaller.webConfig(), whatsappOtp.enabled()))));
+                        new LoginOptions(googleVerifier.clientId(), truecaller.webConfig(), whatsappOtp.enabled()),
+                        mailService.configured())));
     }
 
     /** Opt-in sign-up. The response is identical for new and existing subscribers. */
