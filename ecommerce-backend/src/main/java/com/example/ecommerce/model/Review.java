@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 /** A verified-purchase review: only customers with a delivered order of the product can write one. */
 @Entity
+@EntityListeners(com.example.ecommerce.service.CatalogCache.Listener.class)
 @Table(name = "reviews", uniqueConstraints = @UniqueConstraint(name = "uk_review_user_product", columnNames = {"user_id", "product_id"}))
 public class Review {
     @Id

@@ -17,9 +17,12 @@ public class CategoryController {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private com.example.ecommerce.service.CatalogCache cache;
+
     @GetMapping
     public ResponseEntity<List<Category>> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategories());
+        return ResponseEntity.ok(cache.get("categories", categoryService::getAllCategories));
     }
 
     @GetMapping("/{id}")

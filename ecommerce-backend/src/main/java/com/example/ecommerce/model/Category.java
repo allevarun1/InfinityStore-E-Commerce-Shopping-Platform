@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 @Entity
+@EntityListeners(com.example.ecommerce.service.CatalogCache.Listener.class)
 @Table(name = "categories")
 public class Category {
     @Id

@@ -43,17 +43,20 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private com.example.ecommerce.service.CatalogCache cache;
+
     // ------------------------------------------------------------ public
 
     @GetMapping("/products")
     public ResponseEntity<List<ProductView>> getAllProducts() {
-        return ResponseEntity.ok(productService.views(productService.getAllProducts()));
+        return ResponseEntity.ok(cache.get("products", () -> productService.views(productService.getAllProducts())));
     }
 
     @GetMapping("/products/{id}")
     public ResponseEntity<ProductView> getProductById(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(productService.view(productService.getProductById(id)));
+            return ResponseEntity.ok(cache.get("product:" + id, () -> productService.view(productService.getProductById(id))));
         } catch (BusinessException e) {
             return ResponseEntity.notFound().build();
         }
@@ -61,7 +64,8 @@ public class ProductController {
 
     @GetMapping("/products/category/{categoryId}")
     public ResponseEntity<List<ProductView>> getProductsByCategory(@PathVariable Long categoryId) {
-        return ResponseEntity.ok(productService.views(productService.getProductsByCategory(categoryId)));
+        return ResponseEntity.ok(cache.get("category-products:" + categoryId,
+                () -> productService.views(productService.getProductsByCategory(categoryId))));
     }
 
     @GetMapping("/products/search")
@@ -71,7 +75,7 @@ public class ProductController {
 
     @GetMapping("/products/deals")
     public ResponseEntity<List<ProductView>> getDeals() {
-        return ResponseEntity.ok(productService.views(productService.getDeals()));
+        return ResponseEntity.ok(cache.get("deals", () -> productService.views(productService.getDeals())));
     }
 
     /** Serves an uploaded (inline) image as a cacheable file. The v parameter changes whenever the image does. */
