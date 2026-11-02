@@ -241,3 +241,8 @@
   .lead { grid-template-columns: auto minmax(0, 1fr); }
   .lead-actions { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); min-width: 0; }
 }
+
+/* Steps aside while the shopper scrolls down; returns on scroll up. */
+.ai-launch { transition: transform 0.25s ease, opacity 0.25s ease; }
+.ai-launch.away { transform: translateY(24px) scale(0.85); opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .ai-launch { transition: none; } }

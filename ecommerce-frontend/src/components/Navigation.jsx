@@ -106,7 +106,9 @@ export function BottomNav() {
     <nav className="bottomnav" aria-label="Quick navigation">
       <NavLink to="/" end><i className="bi bi-house" aria-hidden="true"></i><span>Home</span></NavLink>
       <Link to="/#products"><i className="bi bi-grid" aria-hidden="true"></i><span>Shop</span></Link>
-      <NavLink to={isLoggedIn() ? '/wishlist' : '/login'} state={isLoggedIn() ? undefined : { from: { pathname: '/wishlist' } }}>
+      {/* Lit only on the Saved page itself; signed-out shoppers are sent to /login, which "Sign in" owns. */}
+      <NavLink to={isLoggedIn() ? '/wishlist' : '/login'} state={isLoggedIn() ? undefined : { from: { pathname: '/wishlist' } }}
+        className={() => (pathname === '/wishlist' ? 'active' : '')}>
         <i className="bi bi-heart" aria-hidden="true"></i><span>Saved</span>
         {wishIds.length > 0 && <b className="bn-badge">{wishIds.length}</b>}
       </NavLink>

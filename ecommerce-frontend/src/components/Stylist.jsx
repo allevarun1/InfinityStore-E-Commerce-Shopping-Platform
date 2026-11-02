@@ -37,7 +37,22 @@ export function Stylist() {
   const [nudge, setNudge] = useState(false);
   const listRef = useRef(null);
   const inputRef = useRef(null);
-  const hidden = HIDDEN_ON.some(p => pathname.startsWith(p));
+  // On phones a saree page already has a sticky "Add to cart" bar at the bottom; keep that edge clear.
+  const phone = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 720px)').matches;
+  const hidden = HIDDEN_ON.some(p => pathname.startsWith(p)) || (phone && pathname.startsWith('/products/'));
+  // While the shopper scrolls down the button steps aside so it never covers a button they want to tap.
+  const [away, setAway] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 8) return;
+      setAway(y > last && y > 200);
+      last = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     try { sessionStorage.setItem(KEY, JSON.stringify({ ...state, messages: state.messages.slice(-30) })); } catch { /* ignore */ }
@@ -106,7 +121,7 @@ export function Stylist() {
   return (
     <>
       {!open && (
-        <div className={`ai-launch${withWa ? ' with-wa' : ''}`}>
+        <div className={`ai-launch${withWa ? ' with-wa' : ''}${away && !nudge ? ' away' : ''}`}>
           {nudge && (
             <div className="ai-nudge" role="status">
               <button type="button" className="ai-nudge-x" aria-label="Dismiss" onClick={() => setNudge(false)}>×</button>
