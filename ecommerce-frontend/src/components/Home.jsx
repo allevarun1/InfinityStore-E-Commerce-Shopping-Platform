@@ -5,11 +5,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStore } from '../contexts/StoreContext';
 import { EmptyState } from './EmptyState';
 import { useCartActions } from '../lib/useCartActions';
-import { Reveal, Spotlight, CategoryTiles, OccasionStrip, PromoTrio, StyleBand } from './HomeSections';
-import { Rise, CountUp, Marquee, BannerScene, Lotus, ThreadDivider } from './Motion';
-import { CraftStory, ReelsStrip } from './Videos';
+import { StyleBand } from './HomeSections';
+import { Marquee, BannerScene, Lotus } from './Motion';
+import { ReelsStrip } from './Videos';
 import { Testimonials } from './Testimonials';
-import { useTilt } from '../lib/motion';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { QuickView } from './QuickView';
 import { inrCompact, isOnDeal, activePrice, discountPercent } from '../lib/format';
@@ -55,7 +54,6 @@ export function Home() {
   const { info, videos } = useStore();
   const cartActions = useCartActions();
   const location = useLocation();
-  const tiltRef = useTilt(6);
   // The banner's looping motion (photo push-in, light sweep, petals) pauses once it is scrolled away: measured on a
   // throttled phone, leaving it running cost about 15 ms of every scroll frame further down the page.
   const heroRef = useRef(null);
@@ -151,11 +149,6 @@ export function Home() {
     setBusyId(null);
   };
 
-  const heroProducts = useMemo(() => {
-    const inStock = products.filter(p => p.stockQuantity > 0);
-    const deals = inStock.filter(isOnDeal);
-    return [...deals, ...inStock.filter(p => !isOnDeal(p))].slice(0, 4);
-  }, [products]);
 
   const tickerItems = useMemo(() => {
     const names = categories.map(c => c.name.replace(/ Sarees$/i, ''));
@@ -218,61 +211,23 @@ export function Home() {
                 View deals
               </button>
             </div>
-            {!loading && products.length > 0 && (
-              <div className="hero-stats">
-                <div><strong><CountUp eager to={products.length} /></strong><small>Sarees</small></div>
-                {fabrics.length > 1 && <div><strong><CountUp eager to={fabrics.length} /></strong><small>Fabrics</small></div>}
-                <div><strong><CountUp eager to={categories.length} /></strong><small>Collections</small></div>
-              </div>
-            )}
-          </div>
-          <div className="hero-media" ref={tiltRef}>
-            <span className="hb-pick">Today's pick</span>
-            <Spotlight products={heroProducts} />
           </div>
         </div>
       </section>
-
-      {info && (
-        <section className="trust full-bleed" aria-label="Shopping with Rekha Shopping Mall">
-          <Rise className="trust-item">
-            <i className="bi bi-truck" aria-hidden="true"></i>
-            <div><strong>Free shipping above {inrCompact(info.freeShippingThreshold)}</strong><span>Otherwise a flat {inrCompact(info.shippingFee)}</span></div>
-          </Rise>
-          <Rise className="trust-item" delay={110}>
-            <i className="bi bi-cash-coin" aria-hidden="true"></i>
-            <div><strong>Cash on delivery</strong><span>Pay when your order arrives</span></div>
-          </Rise>
-          <Rise className="trust-item" delay={220}>
-            <i className="bi bi-receipt" aria-hidden="true"></i>
-            <div><strong>Clear, upfront pricing</strong><span>Full GST and shipping breakdown before you order</span></div>
-          </Rise>
-        </section>
-      )}
 
       <Marquee items={tickerItems} />
 
       {!loading && !failed && (
         <>
-          <Reveal>
-            <CategoryTiles categories={categories} products={products}
-              onPick={(id) => pickAndScroll({ category: id, view: '', q: '' })} />
-          </Reveal>
-          <PromoTrio products={products} onPick={(changes) => pickAndScroll({ q: '', ...changes })} />
-          <ThreadDivider />
-          <CraftStory videos={videos} />
           <ReelsStrip videos={videos} />
-          <Reveal>
-            <OccasionStrip products={products} active={occasion}
-              onPick={(o) => pickAndScroll({ occasion: o })} />
-          </Reveal>
         </>
       )}
 
       <section id="products" className="catalog full-bleed" aria-labelledby="catalog-title">
-        <div className="catalog-head">
+        {/* The plain collection opens straight on the sarees; a heading and count appear only for a search, category or deals. */}
+        {!filtersActive && <h2 id="catalog-title" className="sr-only">{heading}</h2>}
+        {filtersActive && <div className="catalog-head">
           <div>
-            <span className="eyebrow">Shop</span>
             <h2 id="catalog-title">{heading}</h2>
             {!loading && !failed && (
               <p aria-live="polite">{visible.length} {visible.length === 1 ? 'saree' : 'sarees'}</p>
@@ -286,7 +241,7 @@ export function Home() {
               </button>
             </span>
           )}
-        </div>
+        </div>}
 
         <div className="mobile-tools">
           <button type="button" className="btn btn-outline" onClick={() => setSheet(true)} aria-haspopup="dialog">
