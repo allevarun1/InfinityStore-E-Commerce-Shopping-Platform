@@ -3,8 +3,10 @@ import { ApiService } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { imageSrc } from '../lib/format';
 import { kb, shrinkForUpload } from '../lib/imageTools';
+import { shrinkVideo } from '../lib/videoShrink';
 
 const MAX_VIDEO = 20 * 1024 * 1024;
+const MAX_RAW_VIDEO = 300 * 1024 * 1024; // phone videos are compressed in the browser first
 
 /** The owner's library of photos and videos: upload several at once, preview, copy a link, delete what is unused. */
 export function AdminMedia({ onStudio }) {
@@ -25,11 +27,19 @@ export function AdminMedia({ onStudio }) {
       const key = `${file.name}-${file.size}`;
       const isVideo = file.type.startsWith('video/');
       if (!isVideo && !file.type.startsWith('image/')) { toast.error(`${file.name}: use a photo or an MP4/WebM video`); continue; }
-      if (isVideo && file.size > MAX_VIDEO) { toast.error(`${file.name}: videos can be up to 20 MB. Shorten or compress it first.`); continue; }
+      if (isVideo && file.size > MAX_RAW_VIDEO) { toast.error(`${file.name}: that video is too long. Trim it to under 3 minutes first.`); continue; }
       setBusy(b => ({ ...b, [key]: { name: file.name, p: 0 } }));
       try {
-        const body = isVideo ? file : await shrinkForUpload(file);
-        await ApiService.uploadMedia(body, (p) => setBusy(b => ({ ...b, [key]: { name: file.name, p } })));
+        let body;
+        if (isVideo) {
+          setBusy(b => ({ ...b, [key]: { name: file.name, p: 0, step: 'Making smaller (keep this tab open)' } }));
+          body = await shrinkVideo(file, (p) => setBusy(b => ({ ...b, [key]: { name: file.name, p, step: 'Making smaller (keep this tab open)' } })));
+          if (body.size > MAX_VIDEO) { toast.error(`${file.name}: still ${kb(body.size)} after compressing. Videos can be up to 20 MB, so trim it shorter.`); continue; }
+          if (body !== file) toast.success(`${file.name}: ${kb(file.size)} → ${kb(body.size)}`);
+        } else {
+          body = await shrinkForUpload(file);
+        }
+        await ApiService.uploadMedia(body, (p) => setBusy(b => ({ ...b, [key]: { name: file.name, p, step: 'Uploading' } })));
         await load();
       } catch (e) {
         toast.error(e.response?.data?.message || `Could not upload ${file.name}`);
@@ -51,14 +61,32 @@ export function AdminMedia({ onStudio }) {
     }
   };
 
+  const [cleaning, setCleaning] = useState(false);
+  const unused = (items || []).filter(a => !a.usedBy);
+  const unusedBytes = unused.reduce((t, a) => t + a.sizeBytes, 0);
+  const totalBytes = (items || []).reduce((t, a) => t + a.sizeBytes, 0);
+  const removeUnused = async () => {
+    setCleaning(true);
+    try {
+      const r = await ApiService.deleteUnusedMedia();
+      toast.success(r.removed ? `Removed ${r.removed} unused file(s), freed ${kb(r.bytesFreed)}` : 'Nothing to remove. Files uploaded in the last hour are kept.');
+      setSure(null);
+      load();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Could not remove unused files');
+    } finally {
+      setCleaning(false);
+    }
+  };
+
   const copy = (a) => navigator.clipboard?.writeText(imageSrc(a.url)).then(() => toast.success('Link copied'), () => toast.error('Copy did not work'));
-  const shown = useMemo(() => (items || []).filter(a => (filter === 'ALL' || a.kind === filter) && a.name.toLowerCase().includes(q.toLowerCase())), [items, filter, q]);
+  const shown = useMemo(() => (items || []).filter(a => (filter === 'ALL' || a.kind === filter || (filter === 'UNUSED' && !a.usedBy)) && a.name.toLowerCase().includes(q.toLowerCase())), [items, filter, q]);
   const photos = (items || []).filter(a => a.kind === 'IMAGE').length;
 
   return (
     <div className="tab-content media-lib">
       <h2>Media library</h2>
-      <p className="admin-hint">Every photo and video you upload lives here, ready to use on any saree, reel or pop-up. Photos up to 8 MB, videos (MP4 or WebM) up to 20 MB.</p>
+      <p className="admin-hint">Every photo and video you upload lives here, ready to use on any saree, reel or pop-up. Photos are resized automatically; videos are made smaller (720p) before uploading.</p>
 
       <div className={`dropzone ${over ? 'over' : ''}`} onDragOver={(e) => { e.preventDefault(); setOver(true); }} onDragLeave={() => setOver(false)}
         onDrop={(e) => { e.preventDefault(); setOver(false); upload(e.dataTransfer.files); }}>
@@ -73,7 +101,7 @@ export function AdminMedia({ onStudio }) {
 
       {Object.entries(busy).length > 0 && (
         <ul className="photo-busy" aria-live="polite">
-          {Object.entries(busy).map(([k, b]) => <li key={k}><span className="spin" aria-hidden="true"></span>{b.name}: {Math.round(b.p * 100)}%</li>)}
+          {Object.entries(busy).map(([k, b]) => <li key={k}><span className="spin" aria-hidden="true"></span>{b.name}: {b.step ? `${b.step} ` : ''}{Math.round(b.p * 100)}%</li>)}
         </ul>
       )}
 
@@ -82,10 +110,21 @@ export function AdminMedia({ onStudio }) {
           {[['ALL', `All (${(items || []).length})`], ['IMAGE', `Photos (${photos})`], ['VIDEO', `Videos (${(items || []).length - photos})`]].map(([k, l]) => (
             <button key={k} type="button" className={filter === k ? 'on' : ''} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>
           ))}
+          <button type="button" className={filter === 'UNUSED' ? 'on' : ''} aria-pressed={filter === 'UNUSED'} onClick={() => setFilter('UNUSED')}>Unused ({unused.length})</button>
         </div>
         <input type="search" placeholder="Search by name" value={q} onChange={e => setQ(e.target.value)} aria-label="Search the library" />
       </div>
 
+      {items && items.length > 0 && (
+        <div className="media-space" role="status">
+          <span><i className="bi bi-hdd" aria-hidden="true"></i> Library uses <strong>{kb(totalBytes)}</strong></span>
+          {unused.length > 0 && (sure === 'UNUSED'
+            ? <span className="media-space-confirm">Delete {unused.length} unused file(s), {kb(unusedBytes)}?
+                <button type="button" className="danger-btn" disabled={cleaning} onClick={removeUnused}>{cleaning ? 'Removing…' : 'Yes, remove'}</button>
+                <button type="button" onClick={() => setSure(null)}>Keep</button></span>
+            : <button type="button" className="btn btn-outline" onClick={() => setSure('UNUSED')}><i className="bi bi-trash" aria-hidden="true"></i> Remove unused ({kb(unusedBytes)})</button>)}
+        </div>
+      )}
       {items === null && <p className="admin-hint">Loading…</p>}
       {items && shown.length === 0 && <p className="ap-empty">{items.length === 0 ? 'Nothing uploaded yet. Drop your first photo above.' : 'No files match.'}</p>}
       <ul className="media-grid">
@@ -96,6 +135,7 @@ export function AdminMedia({ onStudio }) {
               <span className="kind">{a.kind === 'VIDEO' ? 'Video' : 'Photo'}</span>
             </div>
             <div className="media-meta"><strong title={a.name}>{a.name}</strong><small>{kb(a.sizeBytes)}</small></div>
+            <p className={a.usedBy ? 'media-use' : 'media-use unused'} title={a.usedBy || 'Not shown anywhere on the shop'}>{a.usedBy || 'Unused'}</p>
             <div className="media-actions">
               <button type="button" onClick={() => copy(a)}><i className="bi bi-link-45deg" aria-hidden="true"></i> Copy link</button>
               {a.kind === 'IMAGE' && onStudio && <button type="button" onClick={() => onStudio(a)}><i className="bi bi-stars" aria-hidden="true"></i> Studio</button>}

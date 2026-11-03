@@ -178,6 +178,10 @@
 .media-meta { padding: 10px 12px 4px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .media-meta strong { font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .media-meta small { color: var(--muted); flex: none; }
+.media-use { margin: 0; padding: 0 12px 2px; font-size: 0.74rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.media-use.unused { color: var(--danger); font-weight: 700; }
+.media-space { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--paper); font-size: 0.88rem; }
+.media-space-confirm { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .media-actions { padding: 6px 12px 12px; display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ---------- Pickers (modal) ---------- */

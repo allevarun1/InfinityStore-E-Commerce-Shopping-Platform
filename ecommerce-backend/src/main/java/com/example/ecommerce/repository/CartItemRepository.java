@@ -32,4 +32,10 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     /** Bag lines touched since the given time, oldest first. */
     List<CartItem> findByUpdatedAtAfterOrderByUpdatedAtAsc(java.time.LocalDateTime after);
+
+    /** Nightly clean-up: bag lines nobody has touched since the given time. */
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM CartItem c WHERE c.updatedAt < :before")
+    int deleteUntouchedSince(@Param("before") java.time.LocalDateTime before);
 }

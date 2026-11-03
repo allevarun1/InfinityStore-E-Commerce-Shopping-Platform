@@ -27,6 +27,10 @@ public class MediaController {
     @GetMapping("/api/admin/media")
     public List<MediaService.Info> list() { return media.list(); }
 
+    /** Removes every photo and video nothing on the shop uses (files from the last hour are kept). */
+    @DeleteMapping("/api/admin/media/unused")
+    public MediaService.Cleanup deleteUnused() { return media.deleteUnused(); }
+
     @DeleteMapping("/api/admin/media/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         media.delete(id);

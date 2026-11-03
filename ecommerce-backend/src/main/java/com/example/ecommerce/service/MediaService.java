@@ -35,11 +35,16 @@ public class MediaService {
     private static final Logger log = LoggerFactory.getLogger(MediaService.class);
     private static final Pattern URL = Pattern.compile("^/api/media/(\\d{1,12})/([a-f0-9]{10})$");
 
-    public record Info(Long id, String name, String contentType, MediaAsset.Kind kind, long sizeBytes, String url, LocalDateTime createdAt) {}
+    /** usedBy names the saree, video or pop-up that shows the file; null when nothing uses it. */
+    public record Info(Long id, String name, String contentType, MediaAsset.Kind kind, long sizeBytes, String url, LocalDateTime createdAt, String usedBy) {}
+
+    /** What "remove unused" did. */
+    public record Cleanup(int removed, long bytesFreed) {}
 
     @Autowired private MediaAssetRepository media;
     @Autowired private ProductRepository products;
     @Autowired private StoreVideoRepository videos;
+    @Autowired private com.example.ecommerce.repository.PromoPopupRepository popups;
     @Autowired private AuditService audit;
     @Autowired private R2Storage r2;
     @Autowired private org.springframework.transaction.support.TransactionTemplate tx;
@@ -97,9 +102,55 @@ public class MediaService {
 
     @Transactional(readOnly = true)
     public List<Info> list() {
+        java.util.Map<String, String> uses = uses();
         return media.findAllByOrderByIdDesc().stream()
-                .map(m -> new Info(m.getId(), m.getName(), m.getContentType(), m.getKind(), m.getSizeBytes(), url(m.getId(), m.getChecksum()), m.getCreatedAt()))
+                .map(m -> {
+                    String link = url(m.getId(), m.getChecksum());
+                    return new Info(m.getId(), m.getName(), m.getContentType(), m.getKind(), m.getSizeBytes(), link, m.getCreatedAt(), uses.get(link));
+                })
                 .toList();
+    }
+
+    /** Every library link shown somewhere on the shop, mapped to a readable name of where it is used. */
+    private java.util.Map<String, String> uses() {
+        java.util.Map<String, String> uses = new java.util.HashMap<>();
+        for (Product p : products.findAll()) {
+            if (p.getImageUrl() != null) uses.putIfAbsent(p.getImageUrl(), "Saree: " + p.getName());
+            for (String g : p.getGalleryRaw()) uses.putIfAbsent(g, "Saree: " + p.getName());
+        }
+        for (var v : videos.findAll()) {
+            if (v.getVideoUrl() != null) uses.putIfAbsent(v.getVideoUrl(), "Video: " + v.getTitle());
+            if (v.getPosterUrl() != null) uses.putIfAbsent(v.getPosterUrl(), "Video: " + v.getTitle());
+        }
+        for (var pp : popups.findAll()) {
+            if (pp.getImageUrl() != null) uses.putIfAbsent(pp.getImageUrl(), "Pop-up: " + pp.getName());
+        }
+        return uses;
+    }
+
+    /**
+     * Removes every file no saree, video or pop-up uses. Files uploaded in the last hour are kept, so a photo
+     * uploaded while a saree is still being edited (not saved yet) is never lost.
+     */
+    public Cleanup deleteUnused() {
+        java.util.Map<String, String> uses = tx.execute(s -> uses());
+        LocalDateTime recent = LocalDateTime.now().minusHours(1);
+        int removed = 0;
+        long freed = 0;
+        for (MediaAssetRepository.Meta a : media.findAllByOrderByIdDesc()) {
+            if (uses.containsKey(url(a.getId(), a.getChecksum()))) continue;
+            if (a.getCreatedAt() == null || a.getCreatedAt().isAfter(recent)) continue;
+            try {
+                Long id = a.getId();
+                tx.executeWithoutResult(t -> delete(id));
+                removed++;
+                freed += a.getSizeBytes();
+            } catch (RuntimeException e) {
+                log.warn("Could not remove unused media {}: {}", a.getId(), e.getMessage());
+            }
+        }
+        audit.record("MEDIA_CLEANUP", "MediaAsset", null, removed + " unused file(s), " + freed + " bytes freed");
+        return new Cleanup(removed, freed);
     }
 
     /** The file for a public link, only when the checksum part matches what is stored. */
@@ -120,6 +171,11 @@ public class MediaService {
         for (var v : videos.findAll()) {
             if (link.equals(v.getVideoUrl()) || link.equals(v.getPosterUrl())) {
                 throw new BusinessException("This file is used by the video \"" + v.getTitle() + "\". Remove that video first.");
+            }
+        }
+        for (var pp : popups.findAll()) {
+            if (link.equals(pp.getImageUrl())) {
+                throw new BusinessException("This file is used by the pop-up \"" + pp.getName() + "\". Change that pop-up first.");
             }
         }
         media.delete(a);
@@ -191,7 +247,7 @@ public class MediaService {
     }
 
     private Info info(MediaAsset a) {
-        return new Info(a.getId(), a.getName(), a.getContentType(), a.getKind(), a.getSizeBytes(), url(a.getId(), a.getChecksum()), a.getCreatedAt());
+        return new Info(a.getId(), a.getName(), a.getContentType(), a.getKind(), a.getSizeBytes(), url(a.getId(), a.getChecksum()), a.getCreatedAt(), null);
     }
 
     /** JPEG, PNG, GIF, WebP, MP4 or WebM by magic number; null for anything else. */

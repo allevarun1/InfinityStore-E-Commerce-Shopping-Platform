@@ -33,4 +33,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where u.id = :id")
     Optional<User> lockById(@Param("id") Long id);
+
+    /** Nightly clean-up: forget password-reset codes that have already expired. */
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("UPDATE User u SET u.resetToken = null, u.resetTokenHash = null, u.resetTokenExpiresAt = null WHERE u.resetTokenExpiresAt < :now")
+    int clearExpiredResetCodes(@Param("now") java.time.LocalDateTime now);
 }

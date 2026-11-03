@@ -111,6 +111,7 @@ export const ApiService = {
     return api.post('/admin/media', body, { onUploadProgress: (e) => onProgress?.(e.total ? e.loaded / e.total : 0) }).then(res => res.data);
   },
   deleteMedia: (id) => api.delete(`/admin/media/${id}`).then(res => res.data),
+  deleteUnusedMedia: () => api.delete('/admin/media/unused').then(res => res.data),
   adminVideos: () => api.get('/admin/videos').then(res => res.data),
   createVideo: (payload) => api.post('/admin/videos', payload).then(res => res.data),
   setVideoActive: (id, value) => api.put(`/admin/videos/${id}/active`, null, { params: { value } }).then(res => res.data),
