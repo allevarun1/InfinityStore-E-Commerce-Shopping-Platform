@@ -122,3 +122,13 @@
 .offers-list span { font-size: 0.78rem; font-weight: 700; padding: 2px 10px; border-radius: var(--r-pill); background: var(--success-50); color: var(--success); }
 .offers-list li.off span { background: var(--sand); color: var(--muted); }
 @media (max-width: 520px) { .offers-list li { grid-template-columns: minmax(0, 1fr) auto; } .offers-list li button { grid-column: auto; } }
+
+/* Prepaid checkout: a single secure online payment block */
+.ck-prepaid { border: 1.5px solid var(--maroon, #7b1e2b); border-radius: 14px; padding: 16px; background: color-mix(in srgb, var(--maroon, #7b1e2b) 5%, transparent); display: flex; flex-direction: column; gap: 12px; }
+.ck-prepaid-head { display: flex; gap: 12px; align-items: flex-start; }
+.ck-prepaid-head > i { font-size: 1.5rem; color: var(--maroon, #7b1e2b); line-height: 1; margin-top: 2px; }
+.ck-prepaid-head strong { display: block; font-size: 1.02rem; }
+.ck-prepaid-head small { display: block; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+.ck-prepaid-ways { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.ck-prepaid-ways li { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--paper, #fff); border: 1px solid var(--line); font-size: 0.85rem; font-weight: 600; }
+.ck-prepaid-note { margin: 0; font-size: 0.8rem; color: var(--muted); display: flex; gap: 6px; align-items: flex-start; }

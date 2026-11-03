@@ -146,7 +146,9 @@ function ServerCart() {
             <div className="summary-row total"><span>Total</span><span>{inr(quote.total)}</span></div>
             <DeliveryCheck compact />
             <Link className="btn btn-primary" to="/checkout">Proceed to checkout</Link>
-            {codOffered(info) && <p className="secure-note"><i className="bi bi-cash-coin" aria-hidden="true"></i> Cash on delivery available</p>}
+            {codOffered(info)
+              ? <p className="secure-note"><i className="bi bi-cash-coin" aria-hidden="true"></i> Cash on delivery available</p>
+              : <p className="secure-note"><i className="bi bi-shield-lock" aria-hidden="true"></i> Secure online payment: UPI, cards, netbanking</p>}
             <p style={{ textAlign: 'center', marginTop: 8 }}><Link to="/#products">Continue shopping</Link></p>
           </aside>
         )}

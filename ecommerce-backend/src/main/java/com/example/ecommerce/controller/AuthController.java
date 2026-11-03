@@ -82,7 +82,10 @@ public class AuthController {
         }
         loginAttempts.recordSuccess(loginRequest.getUsername());
 
-        String jwt = jwtUtils.generateJwtToken(authentication);
+        // Shoppers stay signed in for 30 days, like the big stores. The admin console keeps the shorter default.
+        boolean admin = authentication.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        String jwt = admin ? jwtUtils.generateJwtToken(authentication)
+                : jwtUtils.generateJwtToken(authentication, CUSTOMER_SESSION_MS);
 
         return ResponseEntity.ok(jwtResponse(jwt, (UserDetailsImpl) authentication.getPrincipal()));
     }

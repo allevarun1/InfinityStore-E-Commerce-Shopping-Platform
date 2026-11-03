@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import axios from 'axios';
-import { ApiService } from '../services/api';
+import { ApiService, withWakeRetry } from '../services/api';
 import { guestCart } from '../lib/guestCart';
 
 const AuthContext = createContext(null);
@@ -31,19 +31,19 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (username, password) => {
-    const res = await axios.post(`${apiUrl}/signin`, { username, password });
+    const res = await withWakeRetry(() => axios.post(`${apiUrl}/signin`, { username, password }));
     return startSession(res.data);
   };
 
   /** Swaps the ID token Firebase gives after a correct OTP for our own session. */
   const loginWithPhone = async (idToken) => {
-    const res = await axios.post(`${apiUrl}/phone`, { idToken });
+    const res = await withWakeRetry(() => axios.post(`${apiUrl}/phone`, { idToken }));
     return startSession(res.data);
   };
 
   /** Continue with Google: swaps Google's ID token for our own session. */
   const loginWithGoogle = async (credential) => {
-    const res = await axios.post(`${apiUrl}/google`, { credential });
+    const res = await withWakeRetry(() => axios.post(`${apiUrl}/google`, { credential }));
     return startSession(res.data);
   };
 

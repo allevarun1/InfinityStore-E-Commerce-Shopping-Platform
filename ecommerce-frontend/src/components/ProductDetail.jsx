@@ -249,7 +249,9 @@ export function ProductDetail() {
                   : activePrice(product) > freeShippingFrom(info)
                     ? 'Ships free with this item.'
                     : `Free shipping on orders above ${inrCompact(freeShippingFrom(info))}; otherwise ${inrCompact(info.shippingFee)}.`}</span></li>
-              {codOffered(info) && <li><i className="bi bi-cash-coin" aria-hidden="true"></i><span>Cash on delivery available.</span></li>}
+              {codOffered(info)
+                ? <li><i className="bi bi-cash-coin" aria-hidden="true"></i><span>Cash on delivery available.</span></li>
+                : <li><i className="bi bi-shield-lock" aria-hidden="true"></i><span>Secure online payment: UPI, cards, netbanking.</span></li>}
               <li><i className="bi bi-receipt" aria-hidden="true"></i><span>GST is itemised on your order.</span></li>
             </ul>
           )}

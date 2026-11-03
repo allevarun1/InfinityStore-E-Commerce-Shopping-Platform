@@ -15,6 +15,7 @@
 .bi-bag-check::before { content: "\f171"; }
 .bi-bag-heart::before { content: "\f705"; }
 .bi-bag-plus::before { content: "\f176"; }
+.bi-bank::before { content: "\f62e"; }
 .bi-bell::before { content: "\f18a"; }
 .bi-bell-fill::before { content: "\f189"; }
 .bi-box-arrow-down::before { content: "\f1b9"; }
@@ -54,6 +55,7 @@
 .bi-gift::before { content: "\f3ec"; }
 .bi-graph-up-arrow::before { content: "\f673"; }
 .bi-grid::before { content: "\f3fc"; }
+.bi-hand-thumbs-up::before { content: "\f407"; }
 .bi-heart::before { content: "\f417"; }
 .bi-heart-fill::before { content: "\f415"; }
 .bi-house::before { content: "\f425"; }
@@ -65,6 +67,7 @@
 .bi-lightbulb::before { content: "\f46b"; }
 .bi-lightning-charge::before { content: "\f46d"; }
 .bi-link-45deg::before { content: "\f470"; }
+.bi-lock::before { content: "\f47b"; }
 .bi-megaphone::before { content: "\f484"; }
 .bi-patch-check::before { content: "\f4b6"; }
 .bi-pause-circle::before { content: "\f4c2"; }
@@ -95,12 +98,14 @@
 .bi-sunrise::before { content: "\f5a5"; }
 .bi-tag::before { content: "\f5b0"; }
 .bi-telephone::before { content: "\f5c1"; }
+.bi-telephone-fill::before { content: "\f5b4"; }
 .bi-trash::before { content: "\f5de"; }
 .bi-truck::before { content: "\f5ea"; }
 .bi-upload::before { content: "\f603"; }
 .bi-volume-mute-fill::before { content: "\f60c"; }
 .bi-volume-up-fill::before { content: "\f610"; }
 .bi-vr::before { content: "\f612"; }
+.bi-wallet2::before { content: "\f615"; }
 .bi-whatsapp::before { content: "\f618"; }
 .bi-x::before { content: "\f62a"; }
 .bi-x-circle::before { content: "\f623"; }

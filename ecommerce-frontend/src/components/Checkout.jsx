@@ -362,6 +362,25 @@ export function Checkout() {
 
           <section className="ck-card" aria-labelledby="ck-pay-title">
             <h2 id="ck-pay-title"><span className="ck-num">2</span> Payment</h2>
+            {options.online && !options.cashOnDelivery ? (
+              /* Prepaid shop: one secure online payment, no choice to make. */
+              <div className="ck-prepaid">
+                <div className="ck-prepaid-head">
+                  <i className="bi bi-shield-lock" aria-hidden="true"></i>
+                  <div>
+                    <strong>{options.testMode ? 'Online payment (test mode)' : 'Pay securely online'}</strong>
+                    <small>{options.testMode ? 'No payment details are collected and no money moves' : 'Pay now to place your order. Your saree is reserved for you while you pay.'}</small>
+                  </div>
+                </div>
+                <ul className="ck-prepaid-ways" aria-label="Ways to pay">
+                  <li><i className="bi bi-phone" aria-hidden="true"></i> UPI</li>
+                  <li><i className="bi bi-credit-card" aria-hidden="true"></i> Cards</li>
+                  <li><i className="bi bi-bank" aria-hidden="true"></i> Netbanking</li>
+                  <li><i className="bi bi-wallet2" aria-hidden="true"></i> Wallets</li>
+                </ul>
+                <p className="ck-prepaid-note"><i className="bi bi-lock" aria-hidden="true"></i> Payments are processed by Razorpay. We never see or store your card or UPI details.</p>
+              </div>
+            ) : (
             <div className="ck-pay" role="radiogroup" aria-label="Payment method">
               {options.cashOnDelivery && (
                 <label className={`ck-pay-opt ${paymentMethod === 'COD' ? 'on' : ''}`}>
@@ -379,6 +398,7 @@ export function Checkout() {
                 </label>
               )}
             </div>
+            )}
             {!options.online && options.cashOnDelivery && <p className="ck-note">Online payment is coming soon.</p>}
             {!options.online && !options.cashOnDelivery && (
               <p className="ck-note" role="alert">Online payment is being set up, so orders can’t be placed on the website just yet. Please message us and we’ll help you order.</p>
@@ -438,7 +458,9 @@ export function Checkout() {
 
         <div className="ck-mobilebar">
           <div><small>Total</small><strong>{inr(quote.total)}</strong></div>
-          <button type="submit" className="btn btn-primary" disabled={isSubmitting || !canPay}>{isSubmitting ? 'Placing…' : 'Place order'}</button>
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting || !canPay}>
+            {isSubmitting ? (paymentMethod === 'ONLINE' ? 'Opening payment…' : 'Placing…') : (paymentMethod === 'ONLINE' ? 'Pay now' : 'Place order')}
+          </button>
         </div>
       </form>
     </div>

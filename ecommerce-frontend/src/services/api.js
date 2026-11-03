@@ -20,9 +20,33 @@ api.interceptors.request.use(
 
 // An expired or revoked token makes every protected call fail with 401 while the UI still
 // looks signed in. Drop the stale session and send the customer back to sign in.
+/** True when the server is asleep, waking up, or its database is briefly unreachable: worth trying again. */
+export const isWakeError = (error) => !error.response || [502, 503, 504].includes(error.response.status);
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Runs `fn`, retrying up to 4 times (about 20 s) while the server wakes up. */
+export async function withWakeRetry(fn, tries = 4) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= tries || !isWakeError(error)) throw error;
+      await wait(attempt * 2500);
+    }
+  }
+}
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // Reads are safe to repeat: quietly retry them while the server wakes up instead of failing the page.
+    const cfg = error.config;
+    if (cfg && (cfg.method || 'get').toLowerCase() === 'get' && isWakeError(error) && (cfg.__wakeTry || 0) < 3) {
+      cfg.__wakeTry = (cfg.__wakeTry || 0) + 1;
+      await wait(cfg.__wakeTry * 2500);
+      return api(cfg);
+    }
     const hadToken = !!localStorage.getItem('infinity_token');
     if (error.response?.status === 401 && hadToken) {
       localStorage.removeItem('infinity_token');

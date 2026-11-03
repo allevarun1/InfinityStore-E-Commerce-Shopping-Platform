@@ -34,7 +34,19 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                UserDetails userDetails;
+                try {
+                    userDetails = userDetailsService.loadUserByUsername(username);
+                } catch (org.springframework.dao.DataAccessException | org.springframework.transaction.TransactionException e) {
+                    // The token is fine but the database is waking up or briefly unreachable. Answer 503 so the
+                    // storefront retries instead of treating it as a 401 and signing the shopper out.
+                    logger.warn("Database unavailable while checking a session: {}", e.getMessage());
+                    response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                    response.setHeader("Retry-After", "3");
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"status\":503,\"message\":\"The shop is waking up. Please try again in a moment.\"}");
+                    return;
+                }
                 if (issuedBeforePasswordChange(jwt, userDetails)) {
                     filterChain.doFilter(request, response);
                     return;
