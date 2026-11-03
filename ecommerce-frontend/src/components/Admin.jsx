@@ -328,6 +328,9 @@ export function Admin() {
                     <p><i className="bi bi-person" aria-hidden="true"></i> {order.user ? `${order.user.firstName} ${order.user.lastName} (@${order.user.username})` : 'Unknown customer'}</p>
                     <p><i className="bi bi-telephone" aria-hidden="true"></i> {order.phoneNumber || 'N/A'}</p>
                     <p><i className="bi bi-geo-alt" aria-hidden="true"></i> {order.shippingAddress}</p>
+                    {order.paymentMethod === 'ONLINE' && order.paymentStatus === 'PENDING' && order.status !== 'CANCELLED' && (
+                      <p className="ord-unpaid" role="note"><i className="bi bi-hourglass-split" aria-hidden="true"></i> <strong>Awaiting payment: do not pack or ship.</strong> It is cancelled automatically if not paid within 45 minutes.</p>
+                    )}
                     <p><i className="bi bi-credit-card" aria-hidden="true"></i> {order.paymentMethod} ({order.paymentStatus}){order.couponCode && <> · coupon {order.couponCode} (−{inr(order.couponDiscountAmount || 0, { decimals: 0 })})</>}</p>
                   </div>
                   <ul className="ord-items">

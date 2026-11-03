@@ -71,7 +71,8 @@ export function OrderSuccess() {
     window.scrollTo(0, 0);
     confetti();
   }, [refreshCart]);
-  if (!order) return <Navigate to="/orders" replace />;
+  // Strict: an online order is shown as placed only after the server has verified the payment with Razorpay.
+  if (!order || (order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'PAID')) return <Navigate to="/orders" replace />;
   const cod = order.paymentMethod === 'COD' && order.paymentStatus !== 'PAID';
 
   return (
@@ -99,7 +100,7 @@ export function OrderSuccess() {
             <li><i className="bi bi-patch-check" aria-hidden="true"></i><span><strong>We confirm your order</strong> and carefully pack your saree.</span></li>
             <li><i className="bi bi-truck" aria-hidden="true"></i><span><strong>It ships to you.</strong> Track progress any time under Your orders.</span></li>
             <li><i className={`bi ${cod ? 'bi-cash-coin' : 'bi-check2-circle'}`} aria-hidden="true"></i>
-              <span>{cod ? <><strong>Pay {inr(order.totalPrice)} on delivery</strong> in cash or UPI to the courier.</> : <><strong>Payment received.</strong> Nothing more to pay.</>}</span></li>
+              <span>{cod ? <><strong>Pay {inr(order.totalPrice)} on delivery</strong> in cash or UPI to the courier.</> : <><strong>Payment received.</strong> Nothing more to pay.{order.testPayment ? ' (Test mode: no real money was charged.)' : ''}</>}</span></li>
           </ul>
           <div className="success-ship">
             <h3>Delivering to</h3>

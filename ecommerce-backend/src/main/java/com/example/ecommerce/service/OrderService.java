@@ -222,6 +222,8 @@ public class OrderService {
                 "total=" + saved.getTotalPrice() + " method=" + saved.getPaymentMethod() + " testPayment=" + saved.isTestPayment());
 
         afterCommit(() -> {
+            // An online order is only a real order once it is paid: its confirmation goes out from markPaid.
+            if (awaitingPayment(saved)) return;
             mailService.sendOrderPlaced(owner.getEmail(), saved);
             if ("PAID".equals(saved.getPaymentStatus()) && !saved.isTestPayment()) {
                 mailService.sendPaymentSuccess(owner.getEmail(), saved);
@@ -361,10 +363,18 @@ public class OrderService {
         }
         Order saved = orderRepository.save(order);
         auditService.record("PAYMENT_CAPTURED", "ORDER", saved.getId(), note);
-        if ("PAID".equals(saved.getPaymentStatus()) && !saved.isTestPayment()) {
-            afterCommit(() -> mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved));
+        if ("PAID".equals(saved.getPaymentStatus())) {
+            afterCommit(() -> {
+                mailService.sendOrderPlaced(saved.getUser().getEmail(), saved);
+                if (!saved.isTestPayment()) mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved);
+            });
         }
         return saved;
+    }
+
+    /** An online order whose payment Razorpay has not confirmed yet. It must never be packed or shipped. */
+    public static boolean awaitingPayment(Order order) {
+        return "ONLINE".equals(order.getPaymentMethod()) && !"PAID".equals(order.getPaymentStatus());
     }
 
     /**
@@ -402,13 +412,19 @@ public class OrderService {
     }
 
     public List<String> nextStatuses(Order order) {
-        return ORDER_TRANSITIONS.getOrDefault(order.getStatus(), Set.of()).stream().sorted().toList();
+        return ORDER_TRANSITIONS.getOrDefault(order.getStatus(), Set.of()).stream()
+                .filter(s -> !awaitingPayment(order) || "CANCELLED".equals(s))
+                .sorted().toList();
     }
 
     private Order applyOrderStatus(Order order, String next) {
         String current = order.getStatus();
         if (!ORDER_TRANSITIONS.getOrDefault(current, Set.of()).contains(next)) {
             throw new BusinessException("Order cannot move from " + current + " to " + next);
+        }
+        if (awaitingPayment(order) && !"CANCELLED".equals(next)) {
+            // Strict rule: nothing is confirmed, packed or shipped until Razorpay has confirmed the money.
+            throw new BusinessException("This order has not been paid yet. It can only be confirmed or shipped after the payment is received.");
         }
         if ("CANCELLED".equals(next)) {
             restoreStock(order);

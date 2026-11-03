@@ -49,9 +49,10 @@ public class InsightsService {
     @Autowired private ProductRepository products;
     @Autowired private WishlistItemRepository wishlists;
 
-    /** Orders that count as sales: not cancelled, not refunded, not placed through the test payment provider. */
+    /** Orders that count as sales: paid (online) or cash on delivery, not cancelled, not refunded, not test payments. */
     public static boolean counts(Order o) {
-        return !"CANCELLED".equals(o.getStatus()) && !"REFUNDED".equals(o.getPaymentStatus()) && !o.isTestPayment();
+        return !"CANCELLED".equals(o.getStatus()) && !"REFUNDED".equals(o.getPaymentStatus()) && !o.isTestPayment()
+                && !OrderService.awaitingPayment(o);
     }
 
     @Transactional(readOnly = true)
@@ -155,7 +156,7 @@ public class InsightsService {
         if (orderCount == 0) notes.add("No counted orders in this period yet.");
 
         return new Dashboard(window, orderCount, units, net, gst, ship, total, aov, profit, coverage,
-                orders.countByStatus("PENDING"), cancelled, testExcluded, top, low, out, series, mix, notes);
+                orders.findByStatus("PENDING").stream().filter(o -> !OrderService.awaitingPayment(o)).count(), cancelled, testExcluded, top, low, out, series, mix, notes);
     }
 
     private static BigDecimal nz(BigDecimal v) { return v == null ? BigDecimal.ZERO : v; }

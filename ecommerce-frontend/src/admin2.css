@@ -308,3 +308,5 @@
 
 .adm .admin-row-actions { justify-content: flex-start; }
 .adm .admin-row-actions button { flex: 0 0 auto; }
+
+.ord-unpaid { margin: 4px 0; padding: 6px 10px; border-radius: var(--r-sm); background: #fdecea; color: #8a1c12; font-size: 0.84rem; }

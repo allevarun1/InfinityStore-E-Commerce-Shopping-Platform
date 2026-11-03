@@ -381,7 +381,8 @@ public class AutopilotService {
         LocalDateTime now = LocalDateTime.now();
         List<Task> out = new ArrayList<>();
 
-        List<Order> pending = orders.findByStatus("PENDING");
+        // Unpaid online orders are not orders yet: they never show up as work to confirm.
+        List<Order> pending = orders.findByStatus("PENDING").stream().filter(o -> !OrderService.awaitingPayment(o)).toList();
         if (!pending.isEmpty()) {
             LocalDateTime oldest = pending.stream().map(Order::getOrderDate).min(Comparator.naturalOrder()).orElse(now);
             long hours = Duration.between(oldest, now).toHours();

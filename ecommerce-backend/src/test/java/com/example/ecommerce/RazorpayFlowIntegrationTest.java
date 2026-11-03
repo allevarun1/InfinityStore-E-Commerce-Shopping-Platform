@@ -171,4 +171,21 @@ class RazorpayFlowIntegrationTest extends IntegrationTestSupport {
         assertEquals("REFUNDED", o.getPaymentStatus());
         verify(gateway).refund("pay_after", PaymentGateway.paise(order.getTotalPrice()));
     }
+
+    @Test
+    void unpaidOnlineOrderCannotBeConfirmedOrShippedAndIsNotASale() {
+        User user = customer();
+        Order order = placeOnline(user, product("900.00", 5));
+        assertEquals(java.util.List.of("CANCELLED"), orderService.nextStatuses(order), "only cancelling is offered before payment");
+        assertThrows(BusinessException.class, () -> orderService.updateOrderStatus(order.getId(), "CONFIRMED"));
+        assertThrows(BusinessException.class, () -> orderService.updateOrderStatus(order.getId(), "SHIPPED"));
+        assertThrows(BusinessException.class, () -> orderService.updatePaymentStatus(order.getId(), "PAID"),
+                "an online payment can never be marked paid by hand");
+        assertFalse(com.example.ecommerce.service.InsightsService.counts(orders.findById(order.getId()).orElseThrow()));
+
+        Order paid = orderService.confirmPayment(user, order.getId(), order.getPaymentReference(), "pay_ship", "good-signature");
+        assertTrue(com.example.ecommerce.service.InsightsService.counts(paid));
+        assertTrue(orderService.nextStatuses(paid).contains("SHIPPED"));
+        assertEquals("CONFIRMED", orderService.updateOrderStatus(order.getId(), "CONFIRMED").getStatus());
+    }
 }
