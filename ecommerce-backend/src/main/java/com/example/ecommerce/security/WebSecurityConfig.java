@@ -85,6 +85,8 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/store/**").permitAll()
+                    // Uptime monitors (UptimeRobot) ping with HEAD; without this they get 401 and report the shop down.
+                    .requestMatchers(HttpMethod.HEAD, "/api/store/**", "/api/products/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/media/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/store/subscribe").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/store/leads").permitAll()
