@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PhotoManager } from './PhotoManager';
-import { StudioAssist } from './StudioAssist';
 import { activePrice, discountPercent, imageSrc, inr, isOnDeal } from '../lib/format';
 
 const STATUS_LABEL = { DRAFT: 'Draft', READY_FOR_REVIEW: 'Ready for review', APPROVED: 'Approved', PUBLISHED: 'Published' };
@@ -17,15 +16,12 @@ function checklist(p) {
   return {
     required: [
       ['A name', (p.name || '').trim().length >= 3],
-      ['A description of at least 30 characters', (p.description || '').trim().length >= 30],
       ['A price', Number(p.price) > 0],
       ['A category', !!p.categoryId],
       ['A cover photo', photos >= 1],
     ],
     better: [
       ['Three or more photos', photos >= 3],
-      ['Fabric and colour', !!(p.fabric && p.colour)],
-      ['The occasion', !!p.occasion],
       ['A deal price lower than the price (if on deal)', !p.deal || (Number(p.dealPrice) > 0 && Number(p.dealPrice) < Number(p.price))],
     ],
   };
@@ -48,7 +44,51 @@ function PreviewCard({ product }) {
   );
 }
 
-export function AdminProductEditor({ product, setProduct, categories, onSave, onNew, category, setCategory, onSaveCategory, onStudio }) {
+const NEW_CATEGORY = '__new__';
+
+/** Pick an existing category or type a new one, in the same place. */
+function CategoryPicker({ value, categories, onPick, onCreate }) {
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+  const clash = categories.find(c => c.name.trim().toLowerCase() === name.trim().toLowerCase());
+
+  const create = () => {
+    if (name.trim().length < 2) return;
+    if (clash) { onPick(clash.id); setAdding(false); setName(''); return; }
+    setBusy(true);
+    onCreate(name).then((cat) => { onPick(cat.id); setAdding(false); setName(''); }).catch(() => {}).finally(() => setBusy(false));
+  };
+
+  if (adding || categories.length === 0) {
+    return (
+      <div className="field-group cat-pick">
+        <label htmlFor="cat-new">Category <span className="admin-hint">(new)</span></label>
+        <div className="cat-new-row">
+          <input id="cat-new" autoFocus maxLength={60} placeholder="e.g., Linen Sarees" value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); create(); } if (e.key === 'Escape' && categories.length) setAdding(false); }} />
+          <button type="button" className="btn btn-primary small" disabled={busy || name.trim().length < 2} onClick={create}>{busy ? 'Saving…' : clash ? 'Use it' : 'Create'}</button>
+          {categories.length > 0 && <button type="button" className="btn btn-outline small" onClick={() => { setAdding(false); setName(''); }}>Cancel</button>}
+        </div>
+        {clash && <small className="admin-hint">&ldquo;{clash.name}&rdquo; already exists: it will be selected.</small>}
+      </div>
+    );
+  }
+  return (
+    <div className="field-group cat-pick">
+      <label htmlFor="cat">Category</label>
+      <select id="cat" name="cat" required value={value || ''}
+        onChange={(e) => (e.target.value === NEW_CATEGORY ? setAdding(true) : onPick(e.target.value))}>
+        <option value="" disabled>Select or create a category</option>
+        {categories.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
+        <option value={NEW_CATEGORY}>+ Create a new category…</option>
+      </select>
+    </div>
+  );
+}
+
+export function AdminProductEditor({ product, setProduct, categories, onSave, onNew, onCreateCategory, onStudio }) {
   const set = (k) => (e) => setProduct({ ...product, [k]: e.target.value });
   const c = checklist(product);
   const ready = c.required.every(([, ok]) => ok);
@@ -67,27 +107,22 @@ export function AdminProductEditor({ product, setProduct, categories, onSave, on
         <section className="card ed-card">
           <h3>The basics</h3>
           <div className="field-group">
-            <label htmlFor="pname">Product name</label>
+            <label htmlFor="pname">Saree name</label>
             <input id="pname" name="pname" placeholder="e.g., Kanchipuram Pure Silk Saree" required value={product.name || ''} onChange={set('name')} />
           </div>
           <div className="field-group">
-            <label htmlFor="pdesc">Description <span className="admin-hint">(at least 30 characters, {(product.description || '').length} so far)</span></label>
-            <textarea id="pdesc" name="pdesc" rows="4" placeholder="Fabric, weave, border, pallu, what is included…" required value={product.description || ''} onChange={set('description')} />
+            <label htmlFor="pdesc">Description <span className="admin-hint">(optional)</span></label>
+            <textarea id="pdesc" name="pdesc" rows="4" placeholder="Border, pallu, what is included…" value={product.description || ''} onChange={set('description')} />
           </div>
+          <CategoryPicker value={product.categoryId} categories={categories}
+            onPick={(id) => setProduct(prev => ({ ...prev, categoryId: id }))} onCreate={onCreateCategory} />
           <div className="admin-two">
             <div className="field-group">
-              <label htmlFor="cat">Category</label>
-              <select id="cat" name="cat" required value={product.categoryId} onChange={set('categoryId')}>
-                <option value="" disabled>Select category</option>
-                {categories.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-              </select>
-            </div>
-            <div className="field-group">
               <label htmlFor="stock">Stock quantity</label>
-              <input id="stock" name="stock" type="number" min="0" placeholder="0" required value={product.stockQuantity ?? ''} onChange={set('stockQuantity')} />
+              <input id="stock" name="stock" type="number" min="0" placeholder="0" required onFocus={(e) => e.target.select()} value={product.stockQuantity ?? ''} onChange={set('stockQuantity')} />
             </div>
             <div className="field-group">
-              <label htmlFor="price">Price (₹, before GST)</label>
+              <label htmlFor="price">Price (₹)</label>
               <input id="price" name="price" type="number" step="0.01" min="0.01" placeholder="0.00" required value={product.price ?? ''} onChange={set('price')} />
             </div>
             <div className="field-group deal-box">
@@ -112,37 +147,15 @@ export function AdminProductEditor({ product, setProduct, categories, onSave, on
         </section>
 
         <fieldset className="card ed-card admin-fieldset">
-          <legend>Saree details (shown to customers)</legend>
-          <div className="admin-two">
-            <div className="field-group"><label htmlFor="fabric">Fabric</label>
-              <input id="fabric" list="fabrics" value={product.fabric || ''} onChange={set('fabric')} />
-              <datalist id="fabrics"><option>Silk</option><option>Cotton</option><option>Silk cotton</option><option>Georgette</option><option>Organza</option><option>Linen</option></datalist></div>
-            <div className="field-group"><label htmlFor="weave">Weave</label>
-              <input id="weave" placeholder="Kanchipuram, Banarasi…" value={product.weave || ''} onChange={set('weave')} /></div>
-            <div className="field-group"><label htmlFor="occasion">Occasion</label>
-              <input id="occasion" list="occasions" value={product.occasion || ''} onChange={set('occasion')} />
-              <datalist id="occasions"><option>Wedding</option><option>Festive</option><option>Party</option><option>Everyday</option><option>Office</option></datalist></div>
-            <div className="field-group"><label htmlFor="colour">Colour</label>
-              <input id="colour" value={product.colour || ''} onChange={set('colour')} /></div>
-            <div className="field-group"><label htmlFor="sku">SKU (your own code)</label>
-              <input id="sku" maxLength={40} placeholder="KAN-RED-01" value={product.sku || ''} onChange={(e) => setProduct({ ...product, sku: e.target.value.replace(/[^A-Za-z0-9._-]/g, '') })} /></div>
-            <div className="field-group"><label htmlFor="region">Region of origin</label>
-              <input id="region" placeholder="Tamil Nadu" value={product.region || ''} onChange={set('region')} /></div>
-            <div className="field-group"><label htmlFor="len">Length (metres)</label>
-              <input id="len" type="number" step="0.01" min="0" max="20" value={product.lengthMeters ?? ''} onChange={set('lengthMeters')} /></div>
-          </div>
-          <label className="admin-check"><input type="checkbox" checked={!!product.blouseIncluded} onChange={(e) => setProduct({ ...product, blouseIncluded: e.target.checked })} /> Blouse piece included</label>
+          <legend>Saree details (optional, shown to customers)</legend>
+          <div className="field-group"><label htmlFor="sku">SKU (your own code)</label>
+            <input id="sku" maxLength={40} placeholder="KAN-RED-01" value={product.sku || ''} onChange={(e) => setProduct({ ...product, sku: e.target.value.replace(/[^A-Za-z0-9._-]/g, '') })} /></div>
           <div className="field-group"><label htmlFor="care">Care instructions</label>
             <input id="care" maxLength="500" placeholder="Dry clean only" value={product.careInstructions || ''} onChange={set('careInstructions')} /></div>
         </fieldset>
 
-        <StudioAssist product={product} onApply={(changes) => {
-          const { aiAssisted, ...fields } = changes;
-          setProduct(prev => ({ ...prev, ...fields, ...(aiAssisted ? { source: 'AI_ASSISTED' } : {}) }));
-        }} />
-
         <fieldset className="card ed-card admin-fieldset">
-          <legend>Business details (private, never shown to customers)</legend>
+          <legend>Business details (optional, private, never shown to customers)</legend>
           <div className="admin-two">
             <div className="field-group"><label htmlFor="cost">Your cost per piece (₹)</label>
               <input id="cost" type="number" step="0.01" min="0" value={product.costPrice ?? ''} onChange={set('costPrice')} /></div>
@@ -151,7 +164,7 @@ export function AdminProductEditor({ product, setProduct, categories, onSave, on
           </div>
           {margin(product) !== null && (
             <p className={`admin-hint ${margin(product) < 0 ? 'admin-warn' : ''}`}>
-              Gross margin before GST and shipping: <strong>{margin(product).toFixed(1)}%</strong>{margin(product) < 0 && ' — you would sell below cost'}
+              Gross margin before shipping: <strong>{margin(product).toFixed(1)}%</strong>{margin(product) < 0 && ' — you would sell below cost'}
             </p>
           )}
         </fieldset>
@@ -180,14 +193,6 @@ export function AdminProductEditor({ product, setProduct, categories, onSave, on
             {c.better.map(([l, ok]) => <li key={l} className={ok ? 'ok' : ''}><i className={`bi ${ok ? 'bi-check-circle-fill' : 'bi-dash-circle'}`} aria-hidden="true"></i>{l}</li>)}
           </ul>
         </div>
-        <form onSubmit={onSaveCategory} className="card side-card">
-          <h3>Add a category</h3>
-          <div className="field-group"><label htmlFor="cname">Name</label>
-            <input id="cname" name="cname" placeholder="e.g., Linen Sarees" required value={category.name || ''} onChange={(e) => setCategory({ ...category, name: e.target.value })} /></div>
-          <div className="field-group"><label htmlFor="cdesc">Description</label>
-            <input id="cdesc" name="cdesc" placeholder="Short description" value={category.description || ''} onChange={(e) => setCategory({ ...category, description: e.target.value })} /></div>
-          <button className="btn btn-outline" type="submit">Save category</button>
-        </form>
       </aside>
     </div>
   );

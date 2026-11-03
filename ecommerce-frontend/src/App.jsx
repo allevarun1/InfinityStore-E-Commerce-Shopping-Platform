@@ -204,7 +204,6 @@ function Footer() {
             {freeShippingFrom(info) && <li>Free shipping above {inrCompact(freeShippingFrom(info))}</li>}
             {info && !freeShippingFrom(info) && <li>Flat {inrCompact(info.shippingFee)} delivery on every order</li>}
             {codOffered(info) ? <li>Cash on delivery</li> : <li>Secure online payment</li>}
-            <li>GST itemised on every order</li>
           </ul>
         </div>
       </div>

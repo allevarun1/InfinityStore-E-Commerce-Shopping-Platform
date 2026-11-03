@@ -218,7 +218,6 @@ public class ProductService {
     public static List<String> readinessIssues(Product p) {
         List<String> issues = new ArrayList<>();
         if (p.getName() == null || p.getName().trim().length() < 3) issues.add("add a product name");
-        if (p.getDescription() == null || p.getDescription().trim().length() < 30) issues.add("write a description of at least 30 characters");
         if (p.getImageUrl() == null || p.getImageUrl().isBlank()) issues.add("add a product image");
         if (p.getPrice() == null || p.getPrice().signum() <= 0) issues.add("set a price");
         if (p.getStockQuantity() == null || p.getStockQuantity() < 0) issues.add("set the stock quantity");
@@ -230,18 +229,19 @@ public class ProductService {
 
     private void apply(Product product, ProductRequest r, Category category) {
         product.setName(r.getName().trim());
-        product.setDescription(r.getDescription().trim());
+        product.setDescription(r.getDescription() == null ? "" : r.getDescription().trim());
         product.setPrice(r.getPrice());
         product.setDealPrice(r.getDealPrice());
         product.setImageUrl(blankToNull(r.getImageUrl()));
         product.setStockQuantity(r.getStockQuantity());
         product.setCategory(category);
         product.setDeal(Boolean.TRUE.equals(r.getDeal()));
-        product.setGstPercent(r.getGstPercent());
+        product.setGstPercent(null); // no GST: the price entered is the final price
         product.setFabric(blankToNull(r.getFabric()));
         product.setWeave(blankToNull(r.getWeave()));
         product.setOccasion(blankToNull(r.getOccasion()));
-        product.setColour(blankToNull(r.getColour()));
+        // Colour is no longer edited in the saree form; it is only set by "Add another colour", so keep it when not sent.
+        if (r.getColour() != null) product.setColour(blankToNull(r.getColour()));
         product.setSku(blankToNull(r.getSku()));
         product.setStyleGroup(blankToNull(r.getStyleGroup()));
         product.setRegion(blankToNull(r.getRegion()));

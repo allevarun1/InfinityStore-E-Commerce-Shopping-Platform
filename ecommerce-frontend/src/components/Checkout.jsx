@@ -442,7 +442,6 @@ export function Checkout() {
             {Number(quote.discount) > 0 && <div className="save"><dt>Sale savings</dt><dd>−{inr(quote.discount)}</dd></div>}
             {Number(quote.offerDiscount) > 0 && <div className="save"><dt>{quote.offerLabel}</dt><dd>−{inr(quote.offerDiscount)}</dd></div>}
             {Number(quote.couponDiscount) > 0 && <div className="save"><dt>Coupon {quote.couponCode}</dt><dd>−{inr(quote.couponDiscount)}</dd></div>}
-            <div><dt>GST</dt><dd>{inr(quote.tax)}</dd></div>
             <div><dt>Shipping</dt><dd>{Number(quote.shipping) === 0 ? 'Free' : inr(quote.shipping)}</dd></div>
             <div className="grand"><dt>Total payable</dt><dd>{inr(quote.total)}</dd></div>
           </dl>

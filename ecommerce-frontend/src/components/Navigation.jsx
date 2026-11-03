@@ -64,7 +64,7 @@ export function SearchBox() {
             <li key={p.id} id={`${listId}-${i}`} role="option" aria-selected={i === active}
               className={i === active ? 'on' : ''} onPointerDown={(e) => { e.preventDefault(); go(p); }}>
               <img src={imageSrc(p.imageUrl)} alt="" width="40" height="52" loading="lazy" />
-              <span><strong>{p.name}</strong><small>{[p.fabric, p.occasion].filter(Boolean).join(' · ') || p.category?.name}</small></span>
+              <span><strong>{p.name}</strong><small>{p.category?.name}</small></span>
               <b>{inrCompact(activePrice(p))}</b>
             </li>
           ))}

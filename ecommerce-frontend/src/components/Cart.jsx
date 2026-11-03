@@ -141,7 +141,6 @@ function ServerCart() {
             {Number(quote.offerDiscount) > 0 && (
               <div className="summary-row" style={{ color: 'var(--success)' }}><span>{quote.offerLabel}</span><span>−{inr(quote.offerDiscount)}</span></div>
             )}
-            <div className="summary-row"><span>GST</span><span>{inr(quote.tax)}</span></div>
             <div className="summary-row"><span>Shipping</span><span>{Number(quote.shipping) === 0 ? 'Free' : inr(quote.shipping)}</span></div>
             <div className="summary-row total"><span>Total</span><span>{inr(quote.total)}</span></div>
             <DeliveryCheck compact />

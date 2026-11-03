@@ -25,7 +25,7 @@ function priceLine(p) {
 }
 
 function details(p) {
-  return [p.fabric, p.weave, p.colour].filter(Boolean).join(' · ');
+  return p.category?.name || '';
 }
 
 export const TEMPLATES = [

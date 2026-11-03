@@ -58,7 +58,7 @@ export function StudioAssist({ product, onApply }) {
           <p><strong>{draft.name}</strong></p>
           <p>{draft.description}</p>
           {draft.suggestedPrice != null && (
-            <p className="admin-hint">Suggested starting price {inr(draft.suggestedPrice)} before GST. {draft.priceReasoning}</p>
+            <p className="admin-hint">Suggested starting price {inr(draft.suggestedPrice)}. {draft.priceReasoning}</p>
           )}
           {draft.marketContext && <p className="admin-hint">{draft.marketContext}</p>}
           <div className="admin-actions">

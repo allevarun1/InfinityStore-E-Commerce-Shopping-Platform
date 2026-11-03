@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Authoritative price calculation. Catalogue prices are tax-exclusive; GST is added on
- * top using the product's own rate or the configured default. Shipping is free above a
+ * Authoritative price calculation. The price the owner enters is the final price the customer pays: no GST is
+ * added (app.pricing.default-gst-percent defaults to 0; set DEFAULT_GST_PERCENT only after registering for GST). Shipping is free above a
  * configurable threshold of the discounted subtotal.
  */
 @Service
@@ -35,7 +35,7 @@ public class PricingService {
 
     @Autowired
     public PricingService(
-            @Value("${app.pricing.default-gst-percent:18}") BigDecimal defaultGstPercent,
+            @Value("${app.pricing.default-gst-percent:0}") BigDecimal defaultGstPercent,
             @Value("${app.pricing.free-shipping-threshold:999}") BigDecimal freeShippingThreshold,
             @Value("${app.pricing.shipping-fee:49}") BigDecimal shippingFee,
             @Value("${app.pricing.currency:INR}") String currency) {
@@ -52,7 +52,8 @@ public class PricingService {
     }
 
     public BigDecimal taxPercentFor(Product product) {
-        return product.getGstPercent() != null ? product.getGstPercent() : defaultGstPercent;
+        // One store-wide rate (0 by default). Per-saree GST rates are no longer used.
+        return defaultGstPercent;
     }
 
     public PriceQuote quote(List<CartItem> items) {

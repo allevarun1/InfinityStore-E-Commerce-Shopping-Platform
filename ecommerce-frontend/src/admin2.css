@@ -118,7 +118,7 @@
 .ed-card-head h3 { margin: 0 !important; }
 .adm .admin-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .deal-box { align-self: end; }
-.savebar { position: sticky; bottom: 12px; z-index: 6; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: rgb(255 255 255 / 0.96); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: 0 -8px 30px -12px rgb(30 25 21 / 0.25); }
+.savebar { margin-top: 4px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: rgb(255 255 255 / 0.96); border: 1px solid var(--line); border-radius: var(--r-lg); }
 .savebar > span { flex: 1; font-size: 0.9rem; color: var(--muted); font-weight: 600; }
 .savebar > span.ok { color: var(--success); }
 .editor-side { position: sticky; top: 124px; display: grid; gap: 14px; }
@@ -290,7 +290,6 @@
   .kpis, .quick, .adm .admin-two { grid-template-columns: minmax(0, 1fr); }
   .kpi > button, .kpi.accent { padding: 14px; }
   .pgrid-admin { grid-template-columns: minmax(0, 1fr); }
-  .savebar { bottom: 70px; }
   .adm-top .btn { flex: 1; }
   .photo-link, .with-btn { flex-direction: column; }
   .reel-view { grid-template-columns: minmax(0, 1fr); }
@@ -310,3 +309,5 @@
 .adm .admin-row-actions button { flex: 0 0 auto; }
 
 .ord-unpaid { margin: 4px 0; padding: 6px 10px; border-radius: var(--r-sm); background: #fdecea; color: #8a1c12; font-size: 0.84rem; }
+.cat-new-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cat-new-row input { flex: 1 1 200px; min-width: 0; }

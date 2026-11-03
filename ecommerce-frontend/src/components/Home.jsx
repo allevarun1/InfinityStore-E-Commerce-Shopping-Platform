@@ -133,9 +133,6 @@ export function Home() {
     return () => { document.body.classList.remove('no-scroll'); document.removeEventListener('keydown', onKey); };
   }, [sheet]);
 
-  const options = (key) => [...new Set(products.map(p => p[key]).filter(Boolean))].sort();
-  const fabrics = useMemo(() => options('fabric'), [products]); // eslint-disable-line react-hooks/exhaustive-deps
-  const occasions = useMemo(() => options('occasion'), [products]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = (changes) => {
     const next = new URLSearchParams(params);
@@ -154,8 +151,8 @@ export function Home() {
     const names = categories.map(c => c.name.replace(/ Sarees$/i, ''));
     const lead = ['Handwoven by weavers'];
     const seen = new Set();
-    return [...lead, ...fabrics.slice(0, 4), ...names].filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()));
-  }, [categories, fabrics]);
+    return [...lead, ...names].filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()));
+  }, [categories]);
 
   const pickAndScroll = (changes) => {
     update(changes);
@@ -279,24 +276,6 @@ export function Home() {
             ))}
           </div>
           <div className="filter-selects">
-            {fabrics.length > 0 && (
-              <label className="sort-control">
-                Fabric
-                <select value={fabric} onChange={e => update({ fabric: e.target.value })}>
-                  <option value="">All fabrics</option>
-                  {fabrics.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
-              </label>
-            )}
-            {occasions.length > 0 && (
-              <label className="sort-control">
-                Occasion
-                <select value={occasion} onChange={e => update({ occasion: e.target.value })}>
-                  <option value="">Any occasion</option>
-                  {occasions.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </label>
-            )}
           <label className="sort-control">
             Sort
             <select value={sort} onChange={e => update({ sort: e.target.value === 'featured' ? '' : e.target.value })}>

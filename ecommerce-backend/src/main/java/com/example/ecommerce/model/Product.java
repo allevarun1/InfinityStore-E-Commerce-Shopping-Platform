@@ -32,7 +32,6 @@ public class Product {
     @Column(columnDefinition = "LONGTEXT")
     private String name;
 
-    @NotBlank
     @Size(max = 100000)
     @Column(columnDefinition = "LONGTEXT")
     private String description;

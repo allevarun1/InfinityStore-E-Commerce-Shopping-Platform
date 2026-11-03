@@ -68,10 +68,7 @@ export function QuickView({ product, onClose }) {
             <span className="dot" aria-hidden="true"></span>
             {soldOut ? 'Sold out' : product.stockQuantity < LOW_STOCK ? `Only ${product.stockQuantity} left` : 'In stock, ready to ship'}
           </p>
-          <p className="qv-desc">{product.description}</p>
-          {[product.fabric, product.weave, product.occasion].some(Boolean) && (
-            <ul className="qv-tags">{[product.fabric, product.weave, product.occasion].filter(Boolean).map(t => <li key={t}>{t}</li>)}</ul>
-          )}
+          {product.description && <p className="qv-desc">{product.description}</p>}
           {!soldOut && (
             <div className="buy-row">
               <div className="stepper" role="group" aria-label="Quantity">

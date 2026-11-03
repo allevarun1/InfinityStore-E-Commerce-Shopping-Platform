@@ -99,24 +99,23 @@ export function OfferProgress({ units, saving }) {
   );
 }
 
-/** Price breakup on the product page: what the saree costs, the GST on it, and when shipping is free. */
+/** Price breakup on the product page: the saree price (final, no tax added), delivery, and the total. */
 export function PriceBreakup({ product }) {
   const { info } = useStore();
   if (!info) return null;
   const base = activePrice(product);
-  const pct = Number(product.gstPercent ?? info.defaultGstPercent ?? 0);
-  const gst = Math.round(base * pct) / 100;
+  const free = freeShippingFrom(info) && base > freeShippingFrom(info);
+  const ship = free ? 0 : Number(info.shippingFee || 0);
   return (
     <details className="breakup">
       <summary>Price breakup</summary>
       <dl>
         <div><dt>Saree price</dt><dd>{inr(base)}</dd></div>
-        <div><dt>GST ({pct}%)</dt><dd>{inr(gst)}</dd></div>
-        <div className="sum"><dt>Total with GST</dt><dd>{inr(base + gst)}</dd></div>
-        <div><dt>Shipping</dt><dd>{!freeShippingFrom(info) ? inrCompact(info.shippingFee)
-          : base > freeShippingFrom(info) ? 'Free' : `${inrCompact(info.shippingFee)}, free above ${inrCompact(freeShippingFrom(info))}`}</dd></div>
+        <div><dt>Delivery</dt><dd>{!freeShippingFrom(info) ? inrCompact(info.shippingFee)
+          : free ? 'Free' : `${inrCompact(info.shippingFee)}, free above ${inrCompact(freeShippingFrom(info))}`}</dd></div>
+        <div className="sum"><dt>You pay</dt><dd>{inr(base + ship)}</dd></div>
       </dl>
-      <p>No hidden charges. Your exact total is shown again before you place the order.</p>
+      <p>No hidden charges, no tax added. Your exact total is shown again before you pay.</p>
     </details>
   );
 }

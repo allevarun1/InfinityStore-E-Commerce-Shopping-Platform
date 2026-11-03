@@ -138,13 +138,6 @@ export function ProductDetail() {
   const copyCode = () => navigator.clipboard?.writeText(info.welcomeOffer.code).then(() => toast.info('Code copied')).catch(() => {});
 
   const specs = [
-    ['Fabric', product.fabric],
-    ['Weave', product.weave],
-    ['Occasion', product.occasion],
-    ['Colour', product.colour],
-    ['Made in', product.region],
-    ['Length', product.lengthMeters ? `${Number(product.lengthMeters)} m` : null],
-    ['Blouse piece', product.blouseIncluded == null ? null : product.blouseIncluded ? 'Included' : 'Not included'],
     ['Care', product.careInstructions],
   ].filter(([, v]) => v);
 
@@ -187,7 +180,7 @@ export function ProductDetail() {
                 </>
               )}
             </div>
-            <small>Price excludes GST. Tax and shipping are shown in full before you place your order.</small>
+            <small>Final price, no tax added. Delivery is shown before you pay.</small>
           </div>
 
           {info?.welcomeOffer && (
@@ -252,7 +245,6 @@ export function ProductDetail() {
               {codOffered(info)
                 ? <li><i className="bi bi-cash-coin" aria-hidden="true"></i><span>Cash on delivery available.</span></li>
                 : <li><i className="bi bi-shield-lock" aria-hidden="true"></i><span>Secure online payment: UPI, cards, netbanking.</span></li>}
-              <li><i className="bi bi-receipt" aria-hidden="true"></i><span>GST is itemised on your order.</span></li>
             </ul>
           )}
 
@@ -260,7 +252,7 @@ export function ProductDetail() {
             <details open>
               <summary>Details</summary>
               <div className="acc-body">
-                <p>{product.description}</p>
+                {product.description && <p>{product.description}</p>}
                 {specs.length > 0 && (
                   <dl className="specs">
                     {specs.map(([label, value]) => (

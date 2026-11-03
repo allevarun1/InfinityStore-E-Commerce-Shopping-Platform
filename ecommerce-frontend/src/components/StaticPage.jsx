@@ -20,7 +20,7 @@ function Shipping({ info }) {
         {codOffered(info)
           ? <li>Cash on delivery is available. Pay the courier when your saree arrives.</li>
           : <li>Orders are paid securely online at checkout. We don’t offer cash on delivery.</li>}
-        <li>Delivery times vary by location and courier. The exact total, GST and shipping are shown before you place your order.</li>
+        <li>Delivery times vary by location and courier. The exact total and delivery charge are shown before you pay.</li>
         <li>Track the progress of every order under <Link to="/orders">Your orders</Link>; we also email you when it is placed.</li>
       </ul>
       <h2>Returns &amp; refunds</h2>

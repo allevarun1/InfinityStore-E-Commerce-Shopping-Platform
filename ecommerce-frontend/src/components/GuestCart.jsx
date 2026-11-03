@@ -113,7 +113,7 @@ export function GuestCart() {
           )}
           <OfferProgress units={lines.reduce((n, l) => n + l.quantity, 0)} />
           <div className="summary-row total"><span>Subtotal</span><span>{inr(subtotal)}</span></div>
-          <p className="secure-note">GST and shipping are added at checkout, where you can also apply a coupon.</p>
+          <p className="secure-note">Delivery is added at checkout, where you can also apply a coupon. No tax is added.</p>
           <DeliveryCheck compact />
           <button type="button" className="btn btn-primary"
             onClick={() => navigate('/login', { state: { from: { pathname: '/checkout' } } })}>

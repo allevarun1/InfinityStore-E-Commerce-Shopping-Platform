@@ -59,7 +59,6 @@ export function Admin() {
   const [loading, setLoading] = useState(true);
 
   const [product, setProduct] = useState(BLANK_PRODUCT);
-  const [category, setCategory] = useState({ name: '', description: '' });
   const [colourFor, setColourFor] = useState(null);
   const [studioPhoto, setStudioPhoto] = useState(null);
   const [studioProductId, setStudioProductId] = useState('');
@@ -108,8 +107,8 @@ export function Admin() {
       dealPrice: product.deal ? numeric(product.dealPrice) : null,
       stockQuantity: numeric(product.stockQuantity),
       costPrice: numeric(product.costPrice),
-      lengthMeters: numeric(product.lengthMeters),
-      gstPercent: numeric(product.gstPercent),
+      // Removed from the form: cleared so old values no longer show to shoppers. No GST: the price is final.
+      fabric: null, weave: null, occasion: null, region: null, lengthMeters: null, blouseIncluded: null, gstPercent: null,
       status: !product.id && publish ? 'PUBLISHED' : 'DRAFT',
     };
     ApiService.saveProduct(payload)
@@ -149,12 +148,14 @@ export function Admin() {
       .catch(err => toast.error(err.response?.data?.message || 'Could not add the colour'));
   };
 
-  const saveCategory = (e) => {
-    e.preventDefault();
-    ApiService.saveCategory(category)
-      .then(() => { toast.success('Category saved'); setCategory({ name: '', description: '' }); load(); })
-      .catch(() => toast.error('Failed to save category'));
-  };
+  /** Creates a category from inside the saree form and resolves with it, so the form can select it straight away. */
+  const createCategory = (name) => ApiService.saveCategory({ name: name.trim(), description: '' })
+    .then((cat) => {
+      toast.success(`Category "${cat.name}" created`);
+      setCategories(list => [...list.filter(c => c.id !== cat.id), cat].sort((a, b) => a.name.localeCompare(b.name)));
+      return cat;
+    })
+    .catch((err) => { toast.error(err.response?.data?.message || 'Could not create the category'); throw err; });
 
   const toggleStock = (p) => {
     ApiService.markStock(p.id, p.stockQuantity === 0)
@@ -268,7 +269,7 @@ export function Admin() {
 
         {currentTab === 'management' && (
           <AdminProductEditor product={product} setProduct={setProduct} categories={categories} onSave={saveProduct}
-            onNew={() => setProduct(BLANK_PRODUCT)} category={category} setCategory={setCategory} onSaveCategory={saveCategory}
+            onNew={() => setProduct(BLANK_PRODUCT)} onCreateCategory={createCategory}
             onStudio={openStudio} />
         )}
 

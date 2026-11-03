@@ -37,7 +37,7 @@ export function OrderTotals({ order }) {
       {Number(order.discountAmount) > 0 && <div className="save"><dt>Sale savings</dt><dd>−{inr(order.discountAmount)}</dd></div>}
       {Number(order.offerDiscountAmount) > 0 && <div className="save"><dt>{order.offerLabel}</dt><dd>−{inr(order.offerDiscountAmount)}</dd></div>}
       {Number(order.couponDiscountAmount) > 0 && <div className="save"><dt>Coupon {order.couponCode}</dt><dd>−{inr(order.couponDiscountAmount)}</dd></div>}
-      {order.taxAmount != null && <div><dt>GST</dt><dd>{inr(order.taxAmount)}</dd></div>}
+      {Number(order.taxAmount) > 0 && <div><dt>GST</dt><dd>{inr(order.taxAmount)}</dd></div>}
       {order.shippingAmount != null && <div><dt>Shipping</dt><dd>{Number(order.shippingAmount) === 0 ? 'Free' : inr(order.shippingAmount)}</dd></div>}
       <div className="grand"><dt>{order.paymentMethod === 'COD' && order.paymentStatus !== 'PAID' ? 'Pay on delivery' : 'Total'}</dt><dd>{inr(order.totalPrice)}</dd></div>
     </dl>

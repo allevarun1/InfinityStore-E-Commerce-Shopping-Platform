@@ -91,7 +91,7 @@ public class StoreController {
     @Autowired
     private com.example.ecommerce.service.StorePolicy policy;
 
-    @Value("${app.pricing.default-gst-percent:18}")
+    @Value("${app.pricing.default-gst-percent:0}")
     private BigDecimal defaultGstPercent;
 
 

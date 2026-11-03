@@ -58,12 +58,11 @@ export function AdminInsights({ onOpenProduct, onStartDraft }) {
 
       <div className="stats">
         <Stat label="Orders" value={dash.orders} hint={dash.pendingOrders > 0 ? `${dash.pendingOrders} waiting to be confirmed` : 'None waiting'} />
-        <Stat label="Net sales" value={inr(dash.netSales)} hint="before GST and shipping" />
-        <Stat label="Average order" value={inr(dash.averageOrderValue)} hint="including GST and shipping" />
+        <Stat label="Net sales" value={inr(dash.netSales)} hint="before delivery charges" />
+        <Stat label="Average order" value={inr(dash.averageOrderValue)} hint="including delivery" />
         <Stat label="Gross profit" value={dash.grossProfit == null ? 'Not available' : inr(dash.grossProfit)}
           hint={dash.costCoveragePercent == null ? 'add product costs to see profit' : `on ${dash.costCoveragePercent}% of sales with a known cost`} />
         <Stat label="Units sold" value={dash.units} />
-        <Stat label="GST collected" value={inr(dash.gstCollected)} hint="owed to the tax authority, not income" />
       </div>
 
       <section aria-labelledby="sales-chart">

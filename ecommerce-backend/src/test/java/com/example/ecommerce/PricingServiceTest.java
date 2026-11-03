@@ -73,10 +73,17 @@ class PricingServiceTest {
     }
 
     @Test
-    void perProductTaxRateOverridesDefault() {
+    void oneStoreWideRateIsUsedAndOldPerSareeRatesAreIgnored() {
         PriceQuote q = pricing.quote(List.of(item(product("2000.00", null, false, "5"), 1)));
-        assertEquals(new BigDecimal("100.00"), q.tax());
-        assertEquals(new BigDecimal("2100.00"), q.total());
+        assertEquals(new BigDecimal("360.00"), q.tax());
+    }
+
+    @Test
+    void byDefaultThePriceEnteredIsTheFinalPriceWithNoGst() {
+        PricingService noGst = new PricingService(BigDecimal.ZERO, new BigDecimal("999"), new BigDecimal("49"), "INR");
+        PriceQuote q = noGst.quote(List.of(item(product("2000.00", null, false, "18"), 1)));
+        assertEquals(0, q.tax().signum());
+        assertEquals(new BigDecimal("2000.00"), q.total());
     }
 
     @Test

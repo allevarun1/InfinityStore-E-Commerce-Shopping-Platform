@@ -50,7 +50,7 @@ export function AdminCoupons() {
       <AdminOffers />
       <h2>Coupons</h2>
       <p style={{ color: 'var(--text-muted)' }}>
-        Codes are applied after sale prices and before GST. The newsletter sign-up advertises the code set in <code>WELCOME_CODE</code> (default WELCOME10).
+        Codes are applied after sale prices. The newsletter sign-up advertises the code set in <code>WELCOME_CODE</code> (default WELCOME10).
       </p>
 
       <form onSubmit={create} className="form-card" style={{ maxWidth: 640, display: 'grid', gap: 12 }}>
