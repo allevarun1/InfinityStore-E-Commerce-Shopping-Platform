@@ -1,0 +1,44 @@
+# Phase B: MySQL 8.4 LTS on this server instead of Aiven (MySQL 8.0 reached end of life in April 2026).
+# Turned on by migrate-db.sh, which copies the data across and checks every table before switching.
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: rekha
+      MYSQL_USER: shop
+      MYSQL_PASSWORD: ${LOCAL_DB_PASSWORD:?set LOCAL_DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${LOCAL_DB_ROOT_PASSWORD:?set LOCAL_DB_ROOT_PASSWORD in .env}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=1G
+      - --max-connections=100
+      - --skip-name-resolve
+    # No ports published: only the API (same Docker network) can reach it.
+    volumes:
+      - dbdata:/var/lib/mysql
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysqladmin ping -h 127.0.0.1 -uroot --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  api:
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://db:3306/rekha?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
+      DB_USERNAME: shop
+      DB_PASSWORD: ${LOCAL_DB_PASSWORD}
+
+volumes:
+  dbdata:

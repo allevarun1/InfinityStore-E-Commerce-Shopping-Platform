@@ -1,5 +1,9 @@
 # Hosting options and what they cost
 
+**Current setup (November 2026):** storefront on **Cloudflare Pages** (https://rekha-shopping-mall.pages.dev), API on
+**Render** free (moving to Oracle Cloud Always Free: `docs/DEPLOY_ORACLE.md`), MySQL on **Aiven** free, photos and
+videos on **Cloudflare R2**. The Vercel and Railway notes below are the options that were considered, not what runs.
+
 Prices change often. Check each provider's pricing page before committing; the points below are about
 *how the pieces fit*, which does not change.
 

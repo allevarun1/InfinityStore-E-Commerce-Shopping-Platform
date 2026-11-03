@@ -25,7 +25,13 @@ target/
 
 # OS files
 Thumbs.db
-.DS_Store!.env.example
+.DS_Store
+
+# Example settings files are meant to be committed (the .env.* rule above would hide them)
+!.env.example
+
+# Server backups and settings (deploy/oracle)
+deploy/oracle/backups/
 
 __pycache__/
 *.pyc

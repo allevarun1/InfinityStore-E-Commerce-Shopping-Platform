@@ -1,0 +1,46 @@
+# Deploys the API to the Oracle server after every push to main whose CI run passed (like Render's auto-deploy).
+# Does nothing until it is switched on: repository variable ORACLE_DEPLOY=true plus the secrets below.
+#
+# Secrets (Settings > Secrets and variables > Actions):
+#   ORACLE_HOST         the server's public IP
+#   ORACLE_SSH_KEY      private half of a key made ONLY for deploys (ssh-keygen -t ed25519 -f rekha-deploy -N "")
+#   ORACLE_KNOWN_HOSTS  output of: ssh-keyscan -t ed25519 <IP>   (stops a fake server from receiving the deploy)
+# On the server, the public half goes in ~/.ssh/authorized_keys LOCKED to the deploy script, so this key can do
+# nothing else even if it leaked:
+#   command="/opt/rekha/app/deploy/oracle/deploy.sh",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ssh-ed25519 AAAA... github-deploy
+name: Deploy API to Oracle
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-oracle
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: >-
+      vars.ORACLE_DEPLOY == 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Deploy over SSH
+        env:
+          SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.ORACLE_KNOWN_HOSTS }}
+          HOST: ${{ secrets.ORACLE_HOST }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # The server runs deploy.sh whatever command is sent (forced command), and prints its log here.
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 "ubuntu@$HOST"

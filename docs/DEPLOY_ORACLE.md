@@ -1,82 +1,173 @@
-# Deploying the backend on Oracle Cloud Always Free
+# Moving the API from Render to Oracle Cloud Always Free
 
-Researched October 2026 against Oracle's own page
-(<https://docs.oracle.com/en-us/iaas/Content/FreeTier/resourceref.htm>). Re-check it before you sign up: free tiers change.
+Plan written 2026-11-03, after checking Oracle's Always Free page, 2026 reports on the free-tier cut, the MySQL 8.0
+end of life, Aiven's free plan, and this repository's current settings. Re-check Oracle's page on sign-up day:
+<https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm>
 
-## What "free" really means here
+## What moves and what stays
 
-| Item | Always Free allowance (Oracle docs) |
+| Part | Today | After |
+|---|---|---|
+| Shop website | Cloudflare Pages | **Stays** (only `VITE_API_URL` changes) |
+| API (Spring Boot) | Render free (sleeps) | **Oracle VM**, Docker, never sleeps |
+| Database | Aiven free MySQL (1 GB cap, powered off when idle) | Phase A: stays on Aiven. Phase B (a week later): **MySQL 8.4 on the Oracle VM** |
+| Photos and videos | Cloudflare R2 | **Stays** |
+| HTTPS | Render | **Caddy** on the VM, free automatic certificate |
+| Payments | Razorpay | Stays; add the new webhook address |
+
+## Facts checked (November 2026)
+
+- **Free Arm VM: 2 OCPU and 12 GB RAM in total** (Oracle cut it from 4/24 in June 2026; over-limit VMs were shut down
+  after 18 Aug 2026). 200 GB disk, 10 TB traffic out per month, 20 GB Object Storage (backups).
+- **Idle reclaim:** an Always Free VM can be reclaimed after 7 days with CPU (95th percentile), network and memory all
+  under 20%. A quiet shop looks idle. **Upgrade to Pay As You Go** (still Rs 0 inside the free limits) and set a budget alert.
+- **Card:** Visa or Mastercard **credit** card (or a debit card that works like a credit card) in your own name.
+  RuPay, PIN-debit, prepaid and virtual cards are usually refused. Oracle bills in US dollars; a small verification
+  charge is refunded.
+- **Home region is permanent:** India West (Mumbai) or India South (Hyderabad). Free resources only exist there.
+- **MySQL 8.0 reached end of life in April 2026.** The old kit used `mysql:8.0`; use **`mysql:8.4`** (LTS). 8.4 turns off
+  `mysql_native_password`; the app's driver uses the default `caching_sha2_password`, so this is fine.
+- **Aiven free MySQL: 1 GB storage** (cut from 5 GB in May 2025) and can be powered off when idle (the app's
+  `AivenPowerGuard` switches it back on). This is the main reason to move the database too.
+- Dumping from Aiven needs `--set-gtid-purged=OFF` (Aiven uses GTIDs; otherwise the import fails with ERROR 1840).
+- Oracle blocks outgoing port 25, but order emails use Gmail on **587**: not affected.
+- All images used (`maven:3.9-eclipse-temurin-17`, `eclipse-temurin:17-jre`, `mysql:8.4`, `caddy:2`) have Arm builds.
+
+## The kit: deploy/oracle
+
+| File | What it does |
 |---|---|
-| Arm VM (Ampere A1) | **2 OCPUs and 12 GB RAM in total** (some older guides still say 4 and 24; that is outdated) |
-| Small AMD VMs | 2 x (1/8 OCPU, 1 GB RAM, 50 Mbps). Too weak for this backend |
-| Disk | 200 GB total (boot and block volumes), 5 backups |
-| Traffic out | 10 TB per month |
-| Database | A free MySQL HeatWave system (50 GB) exists, but we run MySQL in Docker on the VM instead: simpler and not tied to availability |
-| Object storage | 20 GB (Always Free only): used for backups |
+| `setup-server.sh` | One-time server setup (safe to re-run): updates + automatic security updates, IST time zone, 4 GB swap, SSH keys-only, fail2ban, opens 80/443 in the VM firewall, Docker from Docker's apt repo, log caps, clones to `/opt/rekha/app`, creates `.env`, schedules the nightly backup |
+| `.env.example` | **Every** setting the app reads, grouped, with the ones that must be copied from Render marked `[RENDER]` |
+| `docker-compose.yml` | API + Caddy (HTTPS). Phase A: database stays on Aiven |
+| `docker-compose.localdb.yml` | Adds MySQL 8.4 LTS for Phase B (turned on by `migrate-db.sh`) |
+| `Caddyfile` | HTTPS for `API_DOMAIN`, certificate fetched and renewed automatically |
+| `deploy.sh` | Pulls `main`; rebuilds and restarts only if the backend or kit changed; waits for HTTPS health; **rolls back automatically** to the previous image if the new one does not come up |
+| `backup.sh` | Nightly dump of whichever database is in use, checked for completeness, 14 days on the server, **copied off the server to Oracle Object Storage** (30 days), optional failure email via healthchecks.io |
+| `migrate-db.sh` | Phase B: Aiven to local MySQL; compares the row count of every table before switching; restarts on Aiven if anything differs |
+| `restore.sh` | Disaster recovery: replace the local database with a backup file |
+| `lib.sh` | Shared helpers; reads `.env` without executing it |
 
-Catches, in order of how much they can hurt:
+Automatic deploys: `.github/workflows/deploy-oracle.yml` runs `deploy.sh` on the server after every push to `main`
+whose CI passed. It is off until the repository variable `ORACLE_DEPLOY=true` and three secrets are set (see the
+file). The deploy key is locked on the server to `deploy.sh` only.
 
-1. **Idle reclaim.** Oracle may reclaim an Always Free VM that is idle for 7 days (95th-percentile CPU under 20% **and**
-   network under 20% **and**, for Arm, memory under 20%). A small store will look idle. Upgrading the account to
-   **Pay As You Go** (a card on file, you still pay nothing while inside the free limits) is the usual way to stay safe;
-   set a budget alert of 1 dollar. Confirm the current rule in the console before relying on it.
-2. **"Out of host capacity".** Creating the Arm VM sometimes fails. Retry later, try another availability domain, or
-   upgrade to Pay As You Go.
-3. **Sign-up can be refused** (card or region checks). There is no documented reason; it is luck and card type.
-4. **Home region is permanent.** Pick **India South (Mumbai)** or **India South (Hyderabad)** for shoppers in India.
-5. **Backups are your job.** A free VM can vanish; keep database dumps off the VM.
-6. The 2026 allowance cut means going above 2 OCPU / 12 GB may be billed. Stay inside it.
+Fixed against the October kit: MySQL 8.0 (end of life) to 8.4; Aiven-first mode; the full settings list (it had 17
+of about 70); `.env.example` was silently git-ignored and never reached the server; no automatic deploy; backups
+only on the VM; no log size cap; Vercel references (the shop is on Cloudflare Pages). The keep-alive job now reads the
+API address from the repository variable `API_URL`.
 
-## Plan (about 1.5 hours)
+Checked on the development PC: script syntax, YAML, and the `.env` reader and database selection against a sample
+`.env`. Not yet run: Docker itself (no Docker on that PC). The first real run is on the VM in Step 5, while Render
+still serves the shop.
 
-1. **Account.** cloud.oracle.com, Always Free sign-up, home region Mumbai.
-2. **VM.** Compute > Create instance > image *Ubuntu 22.04* > shape *VM.Standard.A1.Flex*, 2 OCPU, 12 GB, boot volume 100 GB.
-   Add your SSH public key. Note the public IP.
-3. **Open the ports twice.** (a) VCN security list: allow TCP 80 and 443 from 0.0.0.0/0. (b) On the VM, Oracle's Ubuntu image
-   blocks them with iptables as well:
-   ```bash
-   sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-   sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
-   sudo netfilter-persistent save
-   ```
-4. **Domain with HTTPS.** Vercel serves the storefront over https, so the API must be https too. Point a name at the VM
-   (a real domain `api.yourstore.com`, or a free `yourname.duckdns.org`). Caddy fetches the certificate by itself.
-5. **Install Docker.** `curl -fsSL https://get.docker.com | sudo sh && sudo usermod -aG docker ubuntu`
-6. **Get the code and configure.**
-   ```bash
-   git clone https://github.com/allevarun1/InfinityStore-E-Commerce-Shopping-Platform.git && cd InfinityStore-E-Commerce-Shopping-Platform
-   cp deploy/oracle/.env.example deploy/oracle/.env   # then edit every value
-   ```
-7. **Start.** `cd deploy/oracle && docker compose up -d --build` (the first build takes a few minutes on Arm).
-8. **Check.** `curl https://api.yourstore.com/api/store/info`
-9. **Frontend.** In Vercel set `VITE_API_URL=https://api.yourstore.com/api` and redeploy. In `.env` set
-   `CORS_ORIGINS` and `FRONTEND_URL` to your Vercel URL.
-10. **Backups.** `crontab -e` and add `0 3 * * * /home/ubuntu/InfinityStore-E-Commerce-Shopping-Platform/deploy/oracle/backup.sh`.
-    Download a copy to your own computer weekly until you add Object Storage uploads.
-11. **Updates.** `git pull && docker compose up -d --build`.
+## Settings that differ from the app's built-in defaults
 
-## Moving to a paid host later
+The live shop relies on values set on Render. If they are missing on Oracle the app silently uses its defaults:
+`COD_ENABLED` (default **true**, live: false), `FREE_SHIPPING_THRESHOLD` (default 999, live: 0), `SHIPPING_FEE`
+(default 49, live: 99), `PAYMENT_PROVIDER` (default none, live: razorpay), `SEED_DEMO_CATALOG`. They are pre-filled in
+`.env.example`, but compare every line with Render. A line that is present but **empty** replaces a default with
+nothing: comment it out instead.
 
-Nothing here is Oracle-specific: it is a Docker image, a MySQL database and environment variables. To move, dump the
-database (`backup.sh`), restore it on the new host, set the same variables, and change the DNS record. About an hour.
+## Two traps to avoid on the day
 
-## Measured speed (this repository, October 2026)
+- **Same `JWT_SECRET` as Render.** A new one signs every customer out (sessions last 30 days). Copy it exactly.
+- **Two APIs running at once send duplicate emails.** Render and Oracle both run the schedulers (payment
+  reconcile, cart reminders, daily digest, clean-up). Keep the overlap short and **suspend** the Render service
+  right after the switch (suspend, not delete, so rollback stays one click).
 
-See the table in the chat reply this file came with; the short version: the API answers in 5 to 13 ms per request on a
-12-core development PC and sustains roughly 250 to 900 requests per second at 25 concurrent users. The 2-OCPU Arm VM will be
-several times slower per request but far above what an early-stage store needs.
+## The plan
 
-## When do we outgrow the free tier? (model in tools/capacity_model.py)
+### Step 1. Your part: accounts (30 minutes to 1 day)
+1. Buy a domain, e.g. `rekhashoppingmall.in` or `.com` (about Rs 500-1,200 a year). Put its DNS on Cloudflare (free),
+   where the shop already lives.
+2. Sign up at cloud.oracle.com: home region **Mumbai or Hyderabad**, Visa/Mastercard credit card.
+3. **Upgrade to Pay As You Go** at once, and add a budget alert of US$1.
 
-Run `python tools/capacity_model.py` after changing the assumptions at the top. Headline numbers with the defaults
-(12 API calls per visit, 2% of visits order, Rs 3,500 per order, a 2-OCPU Arm VM assumed ~5x slower than a 12-core PC):
+### Step 2. Your part, with me guiding: the server (15 minutes)
+1. Create instance: image **Canonical Ubuntu 24.04** (aarch64), shape **VM.Standard.A1.Flex, 2 OCPU, 12 GB**,
+   boot volume 100 GB, public IP on. Use an SSH key made on this PC (`ssh-keygen -t ed25519`).
+   "Out of host capacity" means retry later or another availability domain.
+2. Networking > the VCN's security list: allow TCP **80** and **443** from 0.0.0.0/0.
+3. Cloudflare DNS: `api` A record to the VM's IP, **DNS only** (grey cloud) so Caddy can get the certificate.
 
-* **RAM**: about 2.5 GB used of 12 GB. Never the limit.
-* **Disk**: about 15 GB for the system plus the database. Even 2,000 products with uploaded photos and a million orders
-  use about 55 GB of 200 GB including 14 days of backups. Never the first limit.
-* **Traffic**: 10 TB per month is about 5 million visits even if photos are served by the backend. Not the first limit.
-* **CPU is the first real limit**: roughly 500,000 to 1,000,000 visits a month (or a flash-sale spike of about 35 requests a second).
-* **The bigger risk is the single VM**, not the quota: one machine, one disk, backups on the same box.
+### Step 3. My part: prepare the server (about 30 minutes, over SSH from this PC)
+```bash
+ssh ubuntu@<IP>
+curl -fsSL https://raw.githubusercontent.com/allevarun1/InfinityStore-E-Commerce-Shopping-Platform/main/deploy/oracle/setup-server.sh -o setup.sh
+bash setup.sh        # then log out and back in
+```
 
-Cost once you pass the free limits (A1 compute list price: $0.01 per OCPU-hour and $0.0015 per GB-hour; verify the disk and
-traffic prices on Oracle's price list): going from 2 to 4 OCPU and 12 to 24 GB costs about $28 a month.
+### Step 4. Done: the kit is fixed (see "The kit" above)
+
+### Step 5. Together: start on Oracle while Render keeps serving (about 1 hour)
+1. You fill in `/opt/rekha/app/deploy/oracle/.env` yourself (`nano`), copying from Render (secrets never pass
+   through chat). Same `JWT_SECRET`, same Aiven `DB_URL`, same Razorpay and R2 values.
+2. Start: `/opt/rekha/app/deploy/oracle/deploy.sh --force` (first Arm build about 5-10 minutes). It waits until
+   `https://api.<domain>/api/store/info` answers.
+3. Check sarees, photos from R2, admin sign-in, customer sign-in, Google sign-in, and a Razorpay **test** payment end
+   to end (the order turns Paid only after payment).
+4. Razorpay dashboard > Webhooks: add `https://api.<domain>/api/payments/razorpay/webhook` with the same secret
+   and the same events (payment.authorized, payment.captured, order.paid).
+5. Backups: create the bucket and a Customer secret key in Oracle, fill `BACKUP_S3_*`, run `./backup.sh` once and
+   see the file in the bucket.
+6. Automatic deploys: make a deploy key, add the three GitHub secrets and `ORACLE_DEPLOY=true` (steps in
+   `.github/workflows/deploy-oracle.yml`), then run the workflow once by hand.
+
+### Step 6. Switch (10 minutes, no downtime)
+1. Cloudflare Pages: set `VITE_API_URL=https://api.<domain>/api` and redeploy. Both APIs use the same Aiven
+   database, so nothing is lost while the switch spreads.
+2. **Suspend** the Render service. Point UptimeRobot at `https://api.<domain>/api/store/info` and set the
+   repository variable `API_URL=https://api.<domain>/api` for the keep-alive job.
+3. Watch logs and orders for 24 hours.
+
+Rollback (while the database is still on Aiven): resume Render, set `VITE_API_URL` back, redeploy. About 5 minutes.
+
+### Step 7. A week later: move the database onto the VM (30 minutes, 5-10 minute pause)
+1. Pick a quiet time. Put two new passwords in `.env` (`LOCAL_DB_PASSWORD`, `LOCAL_DB_ROOT_PASSWORD`,
+   from `openssl rand -hex 24`).
+2. `./migrate-db.sh`: starts MySQL 8.4, pauses the API, copies from Aiven, compares **every** table's row count,
+   and only then switches `.env` and restarts. On any difference it restarts on Aiven unchanged.
+3. Test again. Remove `AIVEN_API_TOKEN` from `.env` and run `./deploy.sh --force`.
+4. The nightly backup now dumps the local database. Test a restore once a month (`restore.sh` on a copy).
+5. Keep Aiven for two weeks as a fallback, then delete it and Render.
+
+### Step 8. Optional, same week: the shop on your own domain
+`www.<domain>` on Cloudflare Pages; add it to `CORS_ORIGINS` and `FRONTEND_URL`, Google sign-in's authorised
+origins, Firebase's authorised domains and the Razorpay website details (helps KYC).
+
+## Time
+
+| When | What | Who | Time |
+|---|---|---|---|
+| Day 1 | Domain, Oracle sign-up, Pay As You Go | You | 30 min (+ waiting for Oracle) |
+| Done | Fix the kit | Me | done |
+| Day 1-2 | Create the VM, open ports, DNS | You, guided | 15 min |
+| Day 1-2 | Harden server, start app, full tests | Me (you paste secrets) | 1.5-2 h |
+| Day 1-2 | Switch, suspend Render | Together | 10 min |
+| Day 8 | Move database to the VM | Me | 30 min |
+| Day 22 | Delete Render and Aiven | You | 5 min |
+
+About half a day of real work, spread over 1-2 days, plus the database move a week later.
+
+## Monthly cost
+
+| Item | Per month |
+|---|---|
+| Oracle VM, disk, traffic, backups (inside free limits, Pay As You Go) | Rs 0 |
+| Cloudflare Pages, Cloudflare DNS, R2 (first 10 GB) | Rs 0 |
+| MySQL 8.4 on the VM | Rs 0 |
+| Gmail order emails, UptimeRobot, GitHub | Rs 0 |
+| Domain | about Rs 50-100 |
+| **Total fixed** | **about Rs 50-100** |
+| Razorpay | no monthly fee; about 2% per payment plus GST on the fee |
+
+Beyond the free limits, extra Arm capacity is about US$0.013 per OCPU-hour and US$0.002 per GB-hour
+(roughly US$28 a month to double to 4 OCPU / 24 GB). Not needed for a long time.
+
+## Risks that remain
+
+- One server: if it fails, the shop is down until restored. Off-server backups and UptimeRobot alerts cover this.
+- Oracle can change the free tier again (it did in 2026). The setup is plain Docker + MySQL, so moving to any other
+  host takes about an hour.
+- Sign-up can be refused for no stated reason; then the fallback is Render's paid plan (US$7 a month, no sleep).

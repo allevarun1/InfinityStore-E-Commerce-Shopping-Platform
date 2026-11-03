@@ -1,5 +1,7 @@
-# HTTPS certificate is fetched and renewed automatically for $API_DOMAIN.
+# HTTPS in front of the API. The certificate for $API_DOMAIN is fetched and renewed automatically.
+# Caddy sends X-Forwarded-For; the API trusts it from the private Docker network only, so rate limits see real shopper IPs.
 {$API_DOMAIN} {
 	encode zstd gzip
+	header -Server
 	reverse_proxy api:8080
 }
