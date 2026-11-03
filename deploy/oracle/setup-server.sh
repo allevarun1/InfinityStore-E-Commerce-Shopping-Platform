@@ -23,7 +23,7 @@ main() {
   echo "iptables-persistent iptables-persistent/autosave_v6 boolean true" | sudo debconf-set-selections
   sudo apt-get update -q
   sudo apt-get -y -q -o Dpkg::Options::=--force-confold upgrade
-  sudo apt-get -y -q install git curl ca-certificates gzip unattended-upgrades fail2ban iptables-persistent
+  sudo apt-get -y -q install git curl ca-certificates gzip cron nano util-linux unattended-upgrades fail2ban iptables-persistent
   printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' \
     | sudo tee /etc/apt/apt.conf.d/20auto-upgrades > /dev/null
 
