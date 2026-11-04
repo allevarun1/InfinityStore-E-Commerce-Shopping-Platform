@@ -68,6 +68,9 @@ public class ApiExceptionHandler {
             errors.put(fieldName, error.getDefaultMessage());
         });
         response.put("errors", errors);
+        // Show the shopper the reason ("Please enter a valid 10-digit mobile number"), not just "Validation failed".
+        ex.getBindingResult().getFieldErrors().stream().findFirst()
+                .map(FieldError::getDefaultMessage).ifPresent(m -> response.put("message", m));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

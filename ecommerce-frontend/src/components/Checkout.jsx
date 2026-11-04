@@ -48,14 +48,19 @@ function getJson(url, ms = 6000) {
  * "Use my current location": the phone's GPS position, turned into street, area, city, state and PIN by
  * OpenStreetMap, with BigDataCloud as a backup for anything OpenStreetMap leaves out. Both are free and need no key.
  */
+const position = (opts) => new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, opts));
+
 function locate() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) { reject(new Error('Location is not available on this device')); return; }
-    navigator.geolocation.getCurrentPosition(resolve, (err) => reject(new Error(err.code === 1
+  if (!navigator.geolocation || !window.isSecureContext) {
+    return Promise.reject(new Error('Location is not available on this device. Please type the address.'));
+  }
+  return position({ enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 })
+    // GPS often times out indoors: try once more with the quicker Wi-Fi / mobile-network position.
+    .catch(err => (err.code === 1 ? Promise.reject(err) : position({ enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 })))
+    .catch(err => Promise.reject(new Error(err.code === 1
       ? 'Location permission is off. Allow location for this site in your browser settings, or type the address.'
-      : 'Could not get your location. Turn on GPS and try again, or type the address.')),
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
-  }).then(async ({ coords }) => {
+      : 'Could not get your location. Turn on GPS and try again, or type the address.')))
+    .then(async ({ coords }) => {
     const { latitude: lat, longitude: lon } = coords;
     const [osm, bdc] = await Promise.allSettled([
       getJson(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&accept-language=en&lat=${lat}&lon=${lon}`),
@@ -138,7 +143,8 @@ export function Checkout() {
   }, [toast, currentUser]);
 
   const set = (key) => (e) => {
-    const value = key === 'phone' || key === 'pincode' ? e.target.value.replace(/\D/g, '') : e.target.value;
+    let value = key === 'phone' || key === 'pincode' ? e.target.value.replace(/\D/g, '') : e.target.value;
+    if (key === 'phone' && value.length > 10) value = value.replace(/^(91|0)/, '').slice(-10);
     setAddr(a => ({ ...a, [key]: value }));
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }));
   };
@@ -227,9 +233,18 @@ export function Checkout() {
     if (composeAddress(addr).length > 500) e.line2 = 'Address is too long';
     setErrors(e);
     const first = Object.keys(e)[0];
-    if (first && chosen) setChosen(null); // show the form so the problem can be fixed
-    if (first) document.getElementById(`ck-${first}`)?.focus();
-    return !first;
+    if (!first) return true;
+    if (chosen) setChosen(null); // show the form so the problem can be fixed
+    const names = { fullName: 'name', phone: 'mobile number', line1: 'house no. and street', line2: 'address',
+      pincode: 'PIN code', city: 'city', state: 'state' };
+    toast.error(`Please fill your ${Object.keys(e).map(k => names[k]).join(', ')} before paying`);
+    // After the form has rendered (it may have been hidden behind a saved address).
+    setTimeout(() => {
+      const el = document.getElementById(`ck-${first}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el?.focus({ preventScroll: true });
+    }, 50);
+    return false;
   };
 
   const placeOrder = (e) => {
@@ -350,7 +365,7 @@ export function Checkout() {
             </button>
             <div className="ck-fields">
               {field('fullName', 'Full name', { input: { autoComplete: 'name', maxLength: 80 } })}
-              {field('phone', 'Mobile number', { input: { autoComplete: 'tel-national', inputMode: 'numeric', maxLength: 10, placeholder: '10-digit mobile' } })}
+              {field('phone', 'Mobile number', { input: { autoComplete: 'tel-national', inputMode: 'numeric', maxLength: 16, placeholder: '10-digit mobile' } })}
               {field('line1', 'House no., building, street', { wide: true, input: { autoComplete: 'address-line1', maxLength: 160 } })}
               {field('line2', 'Area, landmark', { wide: true, optional: true, input: { autoComplete: 'address-line2', maxLength: 160 } })}
               {field('pincode', 'PIN code', { input: { autoComplete: 'postal-code', inputMode: 'numeric', maxLength: 6 } })}

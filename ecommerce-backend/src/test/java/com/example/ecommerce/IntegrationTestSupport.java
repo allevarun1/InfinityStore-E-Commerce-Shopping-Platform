@@ -55,7 +55,7 @@ abstract class IntegrationTestSupport {
 
     protected OrderRequest request(String method) {
         OrderRequest r = new OrderRequest();
-        r.setShippingAddress("12 Test Street, Bengaluru");
+        r.setShippingAddress("12 Test Street, Bengaluru, Karnataka - 560001");
         r.setPhoneNumber("9876543210");
         r.setPaymentMethod(method);
         return r;

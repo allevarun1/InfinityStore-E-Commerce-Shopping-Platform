@@ -9,12 +9,14 @@ import jakarta.validation.constraints.Size;
  * collected by the payment provider's hosted fields, never by this backend.
  */
 public class OrderRequest {
-    @NotBlank
-    @Size(min = 10, max = 500)
+    /** Name, house and street, then "City, State - PIN": a 6-digit PIN code is required for delivery. */
+    @NotBlank(message = "Please enter your delivery address")
+    @Size(min = 15, max = 500, message = "Please enter your full delivery address")
+    @Pattern(regexp = "(?s).*\\b[1-9][0-9]{5}\\b.*", message = "Please enter a valid 6-digit PIN code")
     private String shippingAddress;
 
-    @NotBlank
-    @Pattern(regexp = "^[0-9]{10}$", message = "Phone number must be exactly 10 digits")
+    @NotBlank(message = "Please enter your mobile number")
+    @Pattern(regexp = "^[6-9][0-9]{9}$", message = "Please enter a valid 10-digit mobile number")
     private String phoneNumber;
 
     /** COD or ONLINE (legacy CARD and UPI are treated as ONLINE). */
