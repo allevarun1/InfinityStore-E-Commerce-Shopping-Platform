@@ -180,5 +180,10 @@ export const ApiService = {
   updateDeliveryStatus: (id, status) => api.put(`/admin/orders/${id}/delivery-status`, { status }).then(res => res.data),
   updatePaymentStatus: (id, status) => api.put(`/admin/orders/${id}/payment-status`, { status }).then(res => res.data),
   resendWhatsapp: (id) => api.post(`/admin/orders/${id}/whatsapp-resend`).then(res => res.data),
+  pushKey: () => api.get('/store/push-key', { params: { t: Date.now() } }).then(res => res.data.publicKey),
+  pushSubscribe: (sub) => api.post('/admin/push/devices', sub).then(res => res.data),
+  pushUnsubscribe: (endpoint) => api.post('/admin/push/devices/remove', { endpoint }).then(res => res.data),
+  pushTest: (endpoint) => api.post('/admin/push/test', { endpoint }).then(res => res.data),
+  adminPushDevices: () => api.get('/admin/push/devices').then(res => res.data.devices),
   markStock: (productId, inStock) => api.put(`/products/${productId}/stock?inStock=${inStock}`).then(res => res.data)
 };

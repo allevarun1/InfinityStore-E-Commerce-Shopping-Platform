@@ -29,6 +29,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Modifying
     @Transactional
+    @Query("update Order o set o.pushPaidAt = :at where o.id = :id and o.pushPaidAt is null")
+    int claimPushPaid(@Param("id") Long id, @Param("at") LocalDateTime at);
+
+    @Modifying
+    @Transactional
     @Query("update Order o set o.whatsappOwnerAt = null where o.id = :id")
     int releaseWhatsappOwner(@Param("id") Long id);
 

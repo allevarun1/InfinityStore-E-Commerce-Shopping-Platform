@@ -104,6 +104,10 @@ public class Order {
     @Column(name = "wa_error", length = 300)
     private String whatsappError;
 
+    /** When the "new paid order" phone notifications went out (once per order). */
+    @Column(name = "push_paid_at")
+    private LocalDateTime pushPaidAt;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> orderItems = new ArrayList<>();
 
@@ -245,4 +249,5 @@ public class Order {
     public void setWhatsappCustomerAt(LocalDateTime v) { this.whatsappCustomerAt = v; }
     public String getWhatsappError() { return whatsappError; }
     public void setWhatsappError(String v) { this.whatsappError = v; }
+    public LocalDateTime getPushPaidAt() { return pushPaidAt; }
 }

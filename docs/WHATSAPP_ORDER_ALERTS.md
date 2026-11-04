@@ -1,6 +1,24 @@
-# Order alerts on the phone (WhatsApp + email)
+# Order alerts on the phone
 
-Status: **built** (2026-11-04). It stays switched off until the settings below are added on Render.
+## In use: app-style notifications (free, no setup)
+
+The owner gets a phone notification, like an app's, the moment a customer pays:
+"New paid order ₹4,499 · Priya Sharma · Kanchipuram Silk Saree · Hyderabad · pack and ship".
+It stays until tapped and opens Admin → Orders. Customers get no notifications; the owner sends them the
+WhatsApp confirmation by hand with the **Thank and confirm** button on each order (free).
+
+To turn it on: on the phone, open the shop in Chrome, sign in as admin, go to **Orders** and tap
+**Turn on notifications** → **Allow**, then **Send a test**. Do it once on each phone. On iPhone, first
+**Share → Add to Home Screen** and open the shop from that icon (Apple's rule for website notifications).
+
+How it works: browser Web Push (`service/push/WebPush.java`, `PushService`, `public/sw.js`). The signing key is made
+once and kept in the database (`app_settings`); devices are in `push_devices`. Tests: `WebPushTest`,
+`PushNotificationIntegrationTest`.
+
+## Optional, not set up: automatic WhatsApp + email
+
+Built 2026-11-04 but switched off; the owner chose the free notifications above and manual WhatsApp instead.
+The customer WhatsApp message is off by default (`WHATSAPP_NOTIFY_CUSTOMER=false`).
 
 ## What happens
 

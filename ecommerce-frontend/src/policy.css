@@ -7,3 +7,17 @@
   border-radius: var(--r-md); background: var(--paper); cursor: pointer; font-size: 0.92rem; line-height: 1.4; }
 .policy-accept.need { border-color: var(--danger); background: var(--danger-50); }
 .policy-accept input { width: 20px; height: 20px; margin-top: 1px; flex: none; accent-color: var(--maroon); }
+
+/* Owner's new-order phone alerts card (admin pages) */
+.notify-card { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin: 12px 0 18px; padding: 14px 18px;
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--shadow-1); }
+.notify-card.on { border-color: var(--success); background: linear-gradient(0deg, var(--success-50), var(--paper) 75%); }
+.notify-card > .bi { font-size: 1.6rem; color: var(--maroon); flex: none; }
+.notify-card.on > .bi { color: var(--success); }
+.notify-text { flex: 1 1 240px; min-width: 0; }
+.notify-text h3 { margin: 0 0 4px; font-size: 1.02rem; font-family: var(--font-body); font-weight: 700; }
+.notify-text h3 .chip-status { margin-left: 6px; vertical-align: middle; }
+.notify-text p { margin: 0 0 2px; color: var(--ink-2); font-size: 0.92rem; line-height: 1.45; }
+.notify-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 560px) { .notify-actions, .notify-actions .btn { width: 100%; } }
+.notify-card .chip-status { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: var(--success-50); color: var(--success); }

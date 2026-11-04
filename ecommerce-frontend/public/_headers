@@ -13,5 +13,8 @@
   Cache-Control: public, max-age=604800
 /index.html
   Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
 /brand/*
   Cache-Control: public, max-age=2592000

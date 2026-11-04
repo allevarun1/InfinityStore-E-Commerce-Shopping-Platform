@@ -8,6 +8,7 @@ import '../admin2.css';
 import '../admin3.css';
 import { AdminCoupons } from './AdminCoupons';
 import { AdminAttempts } from './AdminAttempts';
+import { NotifyCard } from './NotifyCard';
 import { splitOrders } from '../lib/orderBuckets';
 import { AdminAutopilot } from './AdminAutopilot';
 import { AdminLeads } from './AdminLeads';
@@ -267,6 +268,7 @@ export function Admin() {
 
         {currentTab === 'autopilot' && (
           <>
+            <NotifyCard className="dash-notify" />
             <AdminDashboard orders={placedOrders} products={products} onNavigate={go} onShare={openShare} />
             <AdminAutopilot onNavigate={go} />
           </>
@@ -307,6 +309,7 @@ export function Admin() {
         {currentTab === 'orders' && (
           <div className="tab-content">
             <h2>Customer orders</h2>
+            <NotifyCard />
             <div className="ord-views" role="tablist" aria-label="Orders or unpaid attempts">
               <button type="button" role="tab" aria-selected={orderView === 'orders'} className={orderView === 'orders' ? 'on' : ''} onClick={() => setOrderView('orders')}>
                 <i className="bi bi-bag-check" aria-hidden="true"></i> Paid orders <small>{placedOrders.length}</small>

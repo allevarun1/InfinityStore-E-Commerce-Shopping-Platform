@@ -64,6 +64,9 @@ public class OrderService {
     private WhatsAppOrderService whatsAppOrders;
 
     @Autowired
+    private com.example.ecommerce.service.push.PushService push;
+
+    @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
@@ -230,6 +233,7 @@ public class OrderService {
             if (awaitingPayment(saved)) return;
             whatsAppOrders.orderPaid(saved.getId());
             whatsAppOrders.emailOwner(saved.getId());
+            push.orderPaid(saved.getId());
             mailService.sendOrderPlaced(owner.getEmail(), saved);
             if ("PAID".equals(saved.getPaymentStatus()) && !saved.isTestPayment()) {
                 mailService.sendPaymentSuccess(owner.getEmail(), saved);
@@ -297,6 +301,7 @@ public class OrderService {
         if ("PAID".equals(next)) {
             afterCommit(() -> {
                 whatsAppOrders.orderPaid(saved.getId()); // sends only what has not gone out yet
+                push.orderPaid(saved.getId());
                 mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved);
             });
         }
@@ -376,6 +381,7 @@ public class OrderService {
             afterCommit(() -> {
                 whatsAppOrders.orderPaid(saved.getId());
                 whatsAppOrders.emailOwner(saved.getId());
+                push.orderPaid(saved.getId());
                 mailService.sendOrderPlaced(saved.getUser().getEmail(), saved);
                 if (!saved.isTestPayment()) mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved);
             });
