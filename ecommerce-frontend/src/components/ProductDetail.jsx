@@ -17,7 +17,7 @@ import { NotifyMe } from './NotifyMe';
 import { ColourSwatches } from './ColourSwatches';
 import { WatchButton } from './Videos';
 import { DeliveryCheck, OfferStrip, PriceBreakup, DemandLine } from './Shopper';
-import { freeShippingFrom, codOffered } from '../lib/policy';
+import { freeShippingFrom, codOffered, NO_RETURNS_SHORT } from '../lib/policy';
 
 // Search engines that run JavaScript read this to show price and availability in results.
 function setProductMeta(p) {
@@ -183,7 +183,7 @@ export function ProductDetail() {
             <small>Final price, no tax added. Delivery is shown before you pay.</small>
           </div>
 
-          {info?.welcomeOffer && (
+          {info?.welcomeOffer && (!info.welcomeOffer.productIds?.length || info.welcomeOffer.productIds.includes(product.id)) && (
             <div className="offer-chip">
               <i className="bi bi-tag" aria-hidden="true"></i>
               <span>New here? <strong>{info.welcomeOffer.summary}</strong> with code <code>{info.welcomeOffer.code}</code></span>
@@ -192,6 +192,8 @@ export function ProductDetail() {
           )}
 
           <p className={`stock-line ${stockClass}`}><span className="dot" aria-hidden="true"></span>{stockText}</p>
+
+          <p className="policy-note"><i className="bi bi-info-circle" aria-hidden="true"></i><span>{NO_RETURNS_SHORT} <Link to="/shipping#returns">Details</Link></span></p>
 
           {isAdmin() ? (
             <Link className="btn btn-primary" to={`/admin?editId=${product.id}`}>Manage in admin</Link>
@@ -263,14 +265,14 @@ export function ProductDetail() {
               </div>
             </details>
             <details>
-              <summary>Shipping &amp; returns</summary>
+              <summary>Shipping &amp; no-returns policy</summary>
               <div className="acc-body">
                 <ul>
                   {info && (freeShippingFrom(info)
                     ? <li>Free shipping above {inrCompact(freeShippingFrom(info))}; otherwise {inrCompact(info.shippingFee)}.</li>
                     : <li>Delivery {inrCompact(info.shippingFee)} per order.</li>)}
                   {codOffered(info) && <li>Cash on delivery available.</li>}
-                  <li>Returns are accepted for damaged or incorrect products. <Link to="/shipping">Read the full policy</Link>.</li>
+                  <li>{NO_RETURNS_SHORT} <Link to="/shipping#returns">Read the full policy</Link>.</li>
                 </ul>
               </div>
             </details>

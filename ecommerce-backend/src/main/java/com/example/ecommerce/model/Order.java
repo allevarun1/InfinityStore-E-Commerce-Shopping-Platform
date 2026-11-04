@@ -93,6 +93,17 @@ public class Order {
     @Column(name = "tracking_number")
     private String trackingNumber;
 
+    /** When the paid-order WhatsApp alert reached the shop owner / the customer; null = not sent (yet). */
+    @Column(name = "wa_owner_at")
+    private LocalDateTime whatsappOwnerAt;
+
+    @Column(name = "wa_customer_at")
+    private LocalDateTime whatsappCustomerAt;
+
+    /** Last WhatsApp send problem, shown in admin with a Resend button. */
+    @Column(name = "wa_error", length = 300)
+    private String whatsappError;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> orderItems = new ArrayList<>();
 
@@ -228,4 +239,10 @@ public class Order {
     public void setOfferLabel(String offerLabel) { this.offerLabel = offerLabel; }
     public BigDecimal getOfferDiscountAmount() { return offerDiscountAmount; }
     public void setOfferDiscountAmount(BigDecimal offerDiscountAmount) { this.offerDiscountAmount = offerDiscountAmount; }
+    public LocalDateTime getWhatsappOwnerAt() { return whatsappOwnerAt; }
+    public void setWhatsappOwnerAt(LocalDateTime v) { this.whatsappOwnerAt = v; }
+    public LocalDateTime getWhatsappCustomerAt() { return whatsappCustomerAt; }
+    public void setWhatsappCustomerAt(LocalDateTime v) { this.whatsappCustomerAt = v; }
+    public String getWhatsappError() { return whatsappError; }
+    public void setWhatsappError(String v) { this.whatsappError = v; }
 }

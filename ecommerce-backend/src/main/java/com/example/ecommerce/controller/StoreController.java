@@ -55,7 +55,8 @@ public class StoreController {
     }
 
     /** What a new subscriber gets; shown only while the underlying coupon is usable. */
-    public record Offer(String code, String summary) {
+    /** productIds: the sarees the code works on; empty = all. */
+    public record Offer(String code, String summary, java.util.List<Long> productIds) {
     }
 
     public record SubscribeRequest(@NotBlank @Email @Size(max = 120) String email, @Size(max = 40) String source) {
@@ -147,7 +148,7 @@ public class StoreController {
         if (welcomeCode == null || welcomeCode.isBlank()) {
             return null;
         }
-        return couponService.publicOffer(welcomeCode).map(c -> new Offer(c.getCode(), summarize(c))).orElse(null);
+        return couponService.publicOffer(welcomeCode).map(c -> new Offer(c.getCode(), summarize(c), c.getProductIds().stream().sorted().toList())).orElse(null);
     }
 
     private static String summarize(Coupon c) {
@@ -156,7 +157,8 @@ public class StoreController {
                 : "Rs. " + c.getFlatOff().stripTrailingZeros().toPlainString() + " off";
         String min = c.getMinSubtotal() != null && c.getMinSubtotal().signum() > 0
                 ? " on orders of Rs. " + c.getMinSubtotal().setScale(0, java.math.RoundingMode.CEILING) + " or more" : "";
-        return off + min + (c.isFirstOrderOnly() ? " (first order only)" : "");
+        String on = c.getProductIds().isEmpty() ? "" : " on selected sarees";
+        return off + on + min + (c.isFirstOrderOnly() ? " (first order only)" : "");
     }
 
     private static String digitsOnly(String v) {

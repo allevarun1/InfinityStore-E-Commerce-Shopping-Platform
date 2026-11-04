@@ -3,8 +3,13 @@ package com.example.ecommerce.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
-/** A discount code. Exactly one of percentOff / flatOff is set. Applied after deal prices, before GST. */
+/**
+ * A discount code. Exactly one of percentOff / flatOff is set. Applied after deal prices, before GST.
+ * With productIds set it only discounts those sarees; the rest of the basket pays full price.
+ */
 @Entity
 @EntityListeners(com.example.ecommerce.service.CatalogCache.Listener.class)
 @Table(name = "coupons", uniqueConstraints = @UniqueConstraint(columnNames = "code"))
@@ -55,6 +60,12 @@ public class Coupon {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    /** The sarees this code works on. Empty = every saree in the shop. */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "coupon_products", joinColumns = @JoinColumn(name = "coupon_id"))
+    @Column(name = "product_id", nullable = false)
+    private Set<Long> productIds = new HashSet<>();
+
     public Long getId() { return id; }
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }
@@ -81,4 +92,8 @@ public class Coupon {
     public int getUsedCount() { return usedCount; }
     public void setUsedCount(int usedCount) { this.usedCount = usedCount; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public Set<Long> getProductIds() { return productIds; }
+    public void setProductIds(Set<Long> productIds) { this.productIds = productIds == null ? new HashSet<>() : new HashSet<>(productIds); }
+    /** True when the code works on this saree. */
+    public boolean appliesTo(Long productId) { return productIds.isEmpty() || productIds.contains(productId); }
 }

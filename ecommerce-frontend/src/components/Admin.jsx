@@ -7,6 +7,8 @@ import { Loader } from './Loader';
 import '../admin2.css';
 import '../admin3.css';
 import { AdminCoupons } from './AdminCoupons';
+import { AdminAttempts } from './AdminAttempts';
+import { splitOrders } from '../lib/orderBuckets';
 import { AdminAutopilot } from './AdminAutopilot';
 import { AdminLeads } from './AdminLeads';
 import { AdminCatalogue } from './AdminCatalogue';
@@ -63,6 +65,7 @@ export function Admin() {
   const [studioPhoto, setStudioPhoto] = useState(null);
   const [studioProductId, setStudioProductId] = useState('');
   const [orderFilter, setOrderFilter] = useState('ALL');
+  const [orderView, setOrderView] = useState('orders'); // 'orders' (paid) | 'attempts' (did not pay)
   const [orderQ, setOrderQ] = useState('');
   const [share, setShare] = useState(null);          // { products, template } while the WhatsApp share sheet is open
   const [justPublished, setJustPublished] = useState(null);
@@ -209,16 +212,18 @@ export function Admin() {
     toast.success(mode === 'cover' ? 'New cover photo is in the editor. Press Save changes to keep it.' : 'Photo added to the gallery. Press Save changes to keep it.');
   };
 
-  const shownOrders = useMemo(() => orders.filter(o => {
+  // Only paid orders (or cash on delivery) are real orders; unpaid checkout attempts live in their own view.
+  const { placed: placedOrders, attempts } = useMemo(() => splitOrders(orders), [orders]);
+  const shownOrders = useMemo(() => placedOrders.filter(o => {
     if (orderFilter !== 'ALL' && o.status !== orderFilter) return false;
     const q = orderQ.trim().toLowerCase();
     if (!q) return true;
     return `${o.trackingNumber} ${o.user?.username || ''} ${o.user?.firstName || ''} ${o.user?.lastName || ''} ${o.phoneNumber || ''}`.toLowerCase().includes(q);
-  }), [orders, orderFilter, orderQ]);
+  }), [placedOrders, orderFilter, orderQ]);
 
   if (loading && products.length === 0) return <Loader message="Loading admin board..." />;
 
-  const counts = { products: products.length, orders: orders.filter(o => o.status === 'PENDING').length, users: users.length };
+  const counts = { products: products.length, orders: placedOrders.filter(o => o.status === 'PENDING').length, users: users.length };
 
   return (
     <section className="adm admin-panel-container">
@@ -262,7 +267,7 @@ export function Admin() {
 
         {currentTab === 'autopilot' && (
           <>
-            <AdminDashboard orders={orders} products={products} onNavigate={go} onShare={openShare} />
+            <AdminDashboard orders={placedOrders} products={products} onNavigate={go} onShare={openShare} />
             <AdminAutopilot onNavigate={go} />
           </>
         )}
@@ -302,11 +307,21 @@ export function Admin() {
         {currentTab === 'orders' && (
           <div className="tab-content">
             <h2>Customer orders</h2>
+            <div className="ord-views" role="tablist" aria-label="Orders or unpaid attempts">
+              <button type="button" role="tab" aria-selected={orderView === 'orders'} className={orderView === 'orders' ? 'on' : ''} onClick={() => setOrderView('orders')}>
+                <i className="bi bi-bag-check" aria-hidden="true"></i> Paid orders <small>{placedOrders.length}</small>
+              </button>
+              <button type="button" role="tab" aria-selected={orderView === 'attempts'} className={orderView === 'attempts' ? 'on' : ''} onClick={() => setOrderView('attempts')}>
+                <i className="bi bi-x-circle" aria-hidden="true"></i> Did not pay <small>{attempts.filter(o => !o.testPayment).length}</small>
+              </button>
+            </div>
+            {orderView === 'attempts' ? <AdminAttempts attempts={attempts} placed={placedOrders} /> : (<>
+            <p className="admin-hint">Only orders the customer has paid for. Pack and ship these.</p>
             <div className="toolbar">
               <div className="chips" role="group" aria-label="Show orders">
                 {ORDER_FILTERS.map(([k, l]) => (
                   <button key={k} type="button" className={orderFilter === k ? 'on' : ''} aria-pressed={orderFilter === k} onClick={() => setOrderFilter(k)}>
-                    {l} <small>{k === 'ALL' ? orders.length : orders.filter(o => o.status === k).length}</small>
+                    {l} <small>{k === 'ALL' ? placedOrders.length : placedOrders.filter(o => o.status === k).length}</small>
                   </button>
                 ))}
               </div>
@@ -331,6 +346,17 @@ export function Admin() {
                     <p><i className="bi bi-geo-alt" aria-hidden="true"></i> {order.shippingAddress}</p>
                     {order.paymentMethod === 'ONLINE' && order.paymentStatus === 'PENDING' && order.status !== 'CANCELLED' && (
                       <p className="ord-unpaid" role="note"><i className="bi bi-hourglass-split" aria-hidden="true"></i> <strong>Awaiting payment: do not pack or ship.</strong> It is cancelled automatically if not paid within 45 minutes.</p>
+                    )}
+                    {order.whatsapp && (order.whatsapp.owner !== 'OFF' || order.whatsapp.customer !== 'OFF') && (
+                      <p className={`ord-wa-status ${order.whatsapp.error ? 'bad' : ''}`}>
+                        <i className="bi bi-whatsapp" aria-hidden="true"></i>
+                        <span>WhatsApp: {[['owner', 'you'], ['customer', 'customer']].filter(([k]) => order.whatsapp[k] !== 'OFF')
+                          .map(([k, who]) => `${who} ${order.whatsapp[k] === 'SENT' ? '✓ sent' : 'not sent yet'}`).join(' · ')}
+                          {order.whatsapp.error && <small>{order.whatsapp.error}</small>}</span>
+                        {(order.whatsapp.owner === 'WAITING' || order.whatsapp.customer === 'WAITING') && (
+                          <button type="button" className="btn btn-outline sm" onClick={() => ApiService.resendWhatsapp(order.id).then(r => { toast.success(r.message); setTimeout(load, 8000); }).catch(err => toast.error(err.response?.data?.message || 'Could not resend'))}>Resend</button>
+                        )}
+                      </p>
                     )}
                     <p><i className="bi bi-credit-card" aria-hidden="true"></i> {order.paymentMethod} ({order.paymentStatus}){order.couponCode && <> · coupon {order.couponCode} (−{inr(order.couponDiscountAmount || 0, { decimals: 0 })})</>}</p>
                   </div>
@@ -371,6 +397,7 @@ export function Admin() {
                 </footer>
               </article>
             ))}
+            </>)}
           </div>
         )}
       </div>

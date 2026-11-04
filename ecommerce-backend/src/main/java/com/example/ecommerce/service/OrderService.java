@@ -61,6 +61,9 @@ public class OrderService {
     private EntityManager em;
 
     @Autowired
+    private WhatsAppOrderService whatsAppOrders;
+
+    @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
@@ -112,8 +115,9 @@ public class OrderService {
         if (couponCode == null || couponCode.isBlank()) {
             return new Priced(base, null);
         }
-        CouponService.Applied applied = couponService.evaluate(user, couponCode, base.taxableAmount(), lock);
-        return new Priced(pricingService.quote(items, applied.discount(), applied.coupon().getCode()), applied);
+        CouponService.Applied applied = couponService.evaluate(user, couponCode, base, lock);
+        return new Priced(pricingService.quote(items, applied.discount(), applied.coupon().getCode(),
+                applied.coupon().getProductIds()), applied);
     }
 
     public Order placeOrder(User user, OrderRequest request, String idempotencyKey) {
@@ -224,6 +228,8 @@ public class OrderService {
         afterCommit(() -> {
             // An online order is only a real order once it is paid: its confirmation goes out from markPaid.
             if (awaitingPayment(saved)) return;
+            whatsAppOrders.orderPaid(saved.getId());
+            whatsAppOrders.emailOwner(saved.getId());
             mailService.sendOrderPlaced(owner.getEmail(), saved);
             if ("PAID".equals(saved.getPaymentStatus()) && !saved.isTestPayment()) {
                 mailService.sendPaymentSuccess(owner.getEmail(), saved);
@@ -289,7 +295,10 @@ public class OrderService {
         Order saved = orderRepository.save(order);
         auditService.record("PAYMENT_STATUS_CHANGED", "ORDER", saved.getId(), current + " -> " + next + refundNote);
         if ("PAID".equals(next)) {
-            afterCommit(() -> mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved));
+            afterCommit(() -> {
+                whatsAppOrders.orderPaid(saved.getId()); // sends only what has not gone out yet
+                mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved);
+            });
         }
         return saved;
     }
@@ -365,6 +374,8 @@ public class OrderService {
         auditService.record("PAYMENT_CAPTURED", "ORDER", saved.getId(), note);
         if ("PAID".equals(saved.getPaymentStatus())) {
             afterCommit(() -> {
+                whatsAppOrders.orderPaid(saved.getId());
+                whatsAppOrders.emailOwner(saved.getId());
                 mailService.sendOrderPlaced(saved.getUser().getEmail(), saved);
                 if (!saved.isTestPayment()) mailService.sendPaymentSuccess(saved.getUser().getEmail(), saved);
             });

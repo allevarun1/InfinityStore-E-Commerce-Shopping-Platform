@@ -31,7 +31,13 @@ public record OrderResponse(
         String couponCode,
         BigDecimal couponDiscountAmount,
         String offerLabel,
-        BigDecimal offerDiscountAmount) {
+        BigDecimal offerDiscountAmount,
+        /* admin only: whether the WhatsApp order messages went out */
+        WhatsApp whatsapp) {
+
+    /** SENT, WAITING or OFF for the owner alert and the customer confirmation, plus the last problem if any. */
+    public record WhatsApp(String owner, String customer, String error) {
+    }
 
     public record Item(Long id, ProductRef product, int quantity, BigDecimal price, BigDecimal taxPercent) {
     }
@@ -44,22 +50,26 @@ public record OrderResponse(
     }
 
     public static OrderResponse forCustomer(Order order, List<String> nextStatuses) {
-        return build(order, nextStatuses, null);
+        return build(order, nextStatuses, null, null);
     }
 
     public static OrderResponse forAdmin(Order order, List<String> nextStatuses) {
-        var u = order.getUser();
-        return build(order, nextStatuses,
-                new Customer(u.getId(), u.getUsername(), u.getEmail(), u.getFirstName(), u.getLastName()));
+        return forAdmin(order, nextStatuses, null);
     }
 
-    private static OrderResponse build(Order o, List<String> next, Customer customer) {
+    public static OrderResponse forAdmin(Order order, List<String> nextStatuses, WhatsApp whatsapp) {
+        var u = order.getUser();
+        return build(order, nextStatuses,
+                new Customer(u.getId(), u.getUsername(), u.getEmail(), u.getFirstName(), u.getLastName()), whatsapp);
+    }
+
+    private static OrderResponse build(Order o, List<String> next, Customer customer, WhatsApp whatsapp) {
         List<Item> items = o.getOrderItems().stream().map(OrderResponse::item).toList();
         return new OrderResponse(o.getId(), o.getTrackingNumber(), o.getOrderDate(), o.getStatus(),
                 o.getPaymentMethod(), o.getPaymentStatus(), o.isTestPayment(), o.getShippingAddress(),
                 o.getPhoneNumber(), o.getCurrency(), o.getPricingVersion(), o.getSubtotalAmount(),
                 o.getDiscountAmount(), o.getTaxAmount(), o.getShippingAmount(), o.getTotalPrice(), items, next,
-                customer, o.getCouponCode(), o.getCouponDiscountAmount(), o.getOfferLabel(), o.getOfferDiscountAmount());
+                customer, o.getCouponCode(), o.getCouponDiscountAmount(), o.getOfferLabel(), o.getOfferDiscountAmount(), whatsapp);
     }
 
     private static Item item(OrderItem i) {

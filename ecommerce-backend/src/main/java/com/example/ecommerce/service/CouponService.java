@@ -1,9 +1,12 @@
 package com.example.ecommerce.service;
 
+import com.example.ecommerce.dto.PriceQuote;
 import com.example.ecommerce.model.Coupon;
+import com.example.ecommerce.model.Product;
 import com.example.ecommerce.model.User;
 import com.example.ecommerce.repository.CouponRepository;
 import com.example.ecommerce.repository.OrderRepository;
+import com.example.ecommerce.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,9 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -29,6 +35,9 @@ public class CouponService {
     @Autowired
     private AuditService audit;
 
+    @Autowired
+    private ProductRepository products;
+
     public static String normalize(String code) {
         return code == null ? "" : code.trim().toUpperCase(Locale.ROOT);
     }
@@ -37,10 +46,43 @@ public class CouponService {
     }
 
     /**
-     * Validates the code for this customer and basket and returns the discount in rupees.
+     * Validates the code for this customer and basket and returns the discount in rupees. A code limited to some
+     * sarees only counts those sarees (their share of the basket after sale prices and multi-buy offers).
      * Pass lock=true when the redemption is about to be recorded (order placement).
      */
-    public Applied evaluate(User user, String rawCode, BigDecimal discountedSubtotal, boolean lock) {
+    public Applied evaluate(User user, String rawCode, PriceQuote basket, boolean lock) {
+        BigDecimal all = BigDecimal.ZERO;
+        for (PriceQuote.Line l : basket.lines()) {
+            all = all.add(l.lineNet());
+        }
+        String code = normalize(rawCode);
+        Coupon peek = code.isEmpty() ? null : coupons.findByCodeIgnoreCase(code).orElse(null);
+        if (peek == null || peek.getProductIds().isEmpty() || all.signum() == 0) {
+            return evaluate(user, rawCode, basket.taxableAmount(), lock);
+        }
+        BigDecimal eligible = BigDecimal.ZERO;
+        for (PriceQuote.Line l : basket.lines()) {
+            if (peek.appliesTo(l.productId())) {
+                eligible = eligible.add(l.lineNet());
+            }
+        }
+        if (eligible.signum() == 0) {
+            throw new BusinessException("This code only works on " + names(peek.getProductIds()) + ". Add one to your bag to use it");
+        }
+        BigDecimal share = basket.taxableAmount().multiply(eligible).divide(all, 2, RoundingMode.HALF_UP);
+        // Minimum order, percentage and the Rs. 1 floor are all measured on the chosen sarees only.
+        return evaluate(user, rawCode, share, lock);
+    }
+
+    /** "Kanchi Silk and Mysore Crepe", or "3 selected sarees" when the list is long. */
+    private String names(Collection<Long> ids) {
+        List<String> n = products.findAllById(ids).stream().map(Product::getName).toList();
+        if (n.isEmpty()) return "selected sarees";
+        if (n.size() > 2) return n.size() + " selected sarees";
+        return String.join(" and ", n);
+    }
+
+    private Applied evaluate(User user, String rawCode, BigDecimal discountedSubtotal, boolean lock) {
         String code = normalize(rawCode);
         if (code.isEmpty()) {
             throw new BusinessException("Enter a coupon code");
@@ -128,9 +170,32 @@ public class CouponService {
         if (coupons.findByCodeIgnoreCase(c.getCode()).isPresent()) {
             throw new BusinessException("A coupon with this code already exists");
         }
+        c.setProductIds(checkedProducts(c.getProductIds()));
         Coupon saved = coupons.save(c);
         audit.record("COUPON_CREATED", "COUPON", saved.getId(), saved.getCode());
         return saved;
+    }
+
+    /** Changes which sarees the code works on. An empty list means every saree. */
+    public Coupon setProducts(Long id, Collection<Long> productIds) {
+        Coupon c = coupons.findById(id).orElseThrow(() -> new BusinessException("Coupon not found"));
+        c.setProductIds(checkedProducts(productIds));
+        audit.record("COUPON_PRODUCTS_CHANGED", "COUPON", id, c.getCode() + " products=" + (c.getProductIds().isEmpty() ? "all" : c.getProductIds()));
+        Coupon saved = coupons.save(c);
+        CatalogCache.invalidate(); // the store's welcome-offer text mentions whether the code is for selected sarees
+        return saved;
+    }
+
+    private Set<Long> checkedProducts(Collection<Long> ids) {
+        Set<Long> wanted = ids == null ? new HashSet<>() : new HashSet<>(ids);
+        wanted.remove(null);
+        if (wanted.size() > 500) {
+            throw new BusinessException("Pick at most 500 sarees");
+        }
+        if (!wanted.isEmpty() && products.findAllById(wanted).size() != wanted.size()) {
+            throw new BusinessException("One of the chosen sarees no longer exists. Reload the page and pick again");
+        }
+        return wanted;
     }
 
     public Coupon setActive(Long id, boolean active) {

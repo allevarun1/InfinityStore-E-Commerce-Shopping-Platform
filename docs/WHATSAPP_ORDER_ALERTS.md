@@ -1,58 +1,108 @@
-# Plan: automatic WhatsApp message when an order is paid
+# Order alerts on the phone (WhatsApp + email)
 
-Status: **planned, not built yet** (agreed 2026-11-03, to do later).
+Status: **built** (2026-11-04). It stays switched off until the settings below are added on Render.
 
-## What it does
+## What happens
 
-When a customer pays with Razorpay and the payment is confirmed, the order turns **Paid** and a WhatsApp
-message goes out automatically within a few seconds:
+When an order is **paid** (Razorpay confirms the payment) or a cash-on-delivery order is placed:
 
-- **To the owner:** "New paid order #1042: customer, phone, items, amount paid, Razorpay payment id, delivery address."
-- **To the customer (optional):** "Hi Priya, your order #1042 for Rs 7,497 is confirmed..." with a link to track it.
-- Later, the same way: "Shipped" and "Delivered" messages.
+| Who | How | What it says |
+|---|---|---|
+| Shop owner | WhatsApp to every number in `ORDER_ALERT_WHATSAPP` | New paid order: order no., customer, phone, sarees, amount, delivery address |
+| Shop owner | Email to `ORDER_ALERT_EMAIL` (the Gmail app on the phone notifies) | The same details plus a link to Admin → Orders |
+| Customer | WhatsApp to the phone number they gave at checkout | Order confirmed: order no., sarees, amount, where to track it |
 
-## Rules
+Rules:
 
-- Sends **only after payment is confirmed**: the hook sits in `OrderService.markPaid` (reached from checkout,
-  the Razorpay webhook and the reconcile job). Unpaid or failed payments never send anything.
-- Sends **once per order**, even though Razorpay often reports the same payment two or three times
-  (a "WhatsApp sent at" mark on the order).
-- **Never blocks or undoes an order:** sent after the database commit, separately. If WhatsApp is down the order
-  still stands, the send is retried a few times, and admin shows "WhatsApp not sent" with a **Resend** button.
-- Cash on delivery (if switched on): sends when the order is placed.
-- With the settings left empty the feature is off and nothing changes.
+- **Only paid orders.** Nothing is sent when someone opens the payment window and leaves, when a payment fails,
+  or when an order is cancelled before paying.
+- **Once per order.** Razorpay often reports the same payment two or three times; each person still gets one message.
+- **Never blocks an order.** Messages go out a second after the order is saved, on their own. If WhatsApp is down,
+  the order still stands; it retries 3 times (2 s, 10 s, 30 s). Admin → Orders shows
+  "WhatsApp: you ✓ sent · customer ✓ sent", or the problem and a **Resend** button.
+- Test-mode orders say "TEST" before the order number.
 
-## What the owner sets up (needs the owner's own login)
+## Setting it up (owner, about 30 minutes plus Meta's approval)
 
-1. Meta Business account (business.facebook.com) and a WhatsApp app (developers.facebook.com).
-2. A **sending** phone number not used in the normal WhatsApp app (a new SIM is easiest). It cannot be the same
-   number that receives the alerts.
-3. Two message templates, category **Utility**, submitted for Meta approval (minutes to a day). Claude writes the text:
-   `new_order_alert` (owner) and `order_confirmed` (customer). Template values cannot contain line breaks,
-   so items are joined with commas.
-4. A permanent access token (Meta Business settings, System user) and the Phone number ID.
-5. On Render: `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` (already read by the site for login codes),
-   plus new `ORDER_ALERT_WHATSAPP` (number or numbers that get the alerts) and on/off switches for owner and customer messages.
+You need your own logins for these; Claude never types passwords or codes.
 
-Cost: Meta charges per message; order updates in India are roughly 12-15 paise each (check Meta's current rate card).
-About Rs 25-30 a month for 100 orders with 2 messages each.
+### 1. Meta WhatsApp sender (one time)
 
-Free stop-gap for owner alerts only: unofficial services such as CallMeBot (less reliable, cannot message customers).
+1. Go to **business.facebook.com** and create a Business account (or use an existing one).
+2. Go to **developers.facebook.com → My Apps → Create app → Business** and add **WhatsApp**.
+3. Add a **sending number**. It must be a number **not** used in the normal WhatsApp app (a new SIM is easiest),
+   and it must be different from the owner number that receives the alerts.
+4. In **Business settings → System users**, create a system user, give it the app with *full control*,
+   and **Generate token** with `whatsapp_business_messaging` and `whatsapp_business_management`, expiry **Never**.
+   That is `WHATSAPP_TOKEN`.
+5. On the app's **WhatsApp → API Setup** page, copy the **Phone number ID**. That is `WHATSAPP_PHONE_NUMBER_ID`.
 
-## What gets built (about half a day)
+### 2. Two message templates (WhatsApp Manager → Message templates → Create)
 
-1. `WhatsAppOrderService`: builds the message from the order, sends through the same Meta Cloud API client as
-   `WhatsAppOtpService`.
-2. Hook in `markPaid`, after-commit and async, once per order.
-3. Order fields: WhatsApp sent / failed + last error; admin status label and **Resend** button.
-4. Settings in `application.properties` / Render env.
-5. Tests: sends once on payment, never on an unpaid order, a WhatsApp error does not break checkout.
-6. The two template texts ready to paste into Meta.
+Category **Utility**, language **English**. Copy the names and texts exactly; `{{1}}`… are filled in by the shop.
 
-Testing: Meta's free test number plus Razorpay test mode; place a test order and see it arrive, then switch to the real number.
+**Name:** `new_order_alert`
 
-## Questions to settle before building
+```
+New paid order {{1}}
+Customer: {{2}}
+Phone: {{3}}
+Sarees: {{4}}
+Amount: {{5}}
+Deliver to: {{6}}
+Please pack and ship it from the admin page.
+```
 
-1. Who gets it: owner, customer, or both (recommended: both)?
-2. Which number or numbers get the owner alerts?
-3. Is WhatsApp already set up for login codes (are `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` in Render)?
+Sample values for Meta's review: `INF-20261104-AB12CD`, `Priya Sharma`, `+91 9876543210`,
+`Kanchipuram Silk Saree`, `Rs. 4499 paid online`, `12 MG Road, Hyderabad, Telangana 500001`.
+
+**Name:** `order_confirmed`
+
+```
+Hi {{1}}, thank you for shopping with Rekha Shopping Mall!
+Your order {{2}} is confirmed.
+Sarees: {{3}}
+Amount: {{4}}
+We will message you when it ships. Track it here: {{5}}
+Please note: all sales are final, no returns or refunds.
+```
+
+Sample values: `Priya`, `INF-20261104-AB12CD`, `Kanchipuram Silk Saree`, `Rs. 4499 paid online`,
+`https://rekha-shopping-mall.pages.dev/orders`.
+
+Approval takes a few minutes to a day. Messages only go out once both are **Active**.
+
+### 3. Owner email (optional, free, works without WhatsApp)
+
+1. On the Gmail account that will send the emails, turn on 2-Step Verification, then create an **App password**
+   (myaccount.google.com → Security → App passwords).
+2. `MAIL_USERNAME` = that Gmail address, `MAIL_PASSWORD` = the 16-letter app password.
+3. `ORDER_ALERT_EMAIL` = the email address that should receive new-order alerts (can be the same Gmail).
+
+### 4. Add the settings on Render
+
+Render → `rekha-shopping-mall-api` → **Environment** → add, then **Save, rebuild and deploy**:
+
+| Key | Value |
+|---|---|
+| `WHATSAPP_TOKEN` | from step 1.4 |
+| `WHATSAPP_PHONE_NUMBER_ID` | from step 1.5 |
+| `ORDER_ALERT_WHATSAPP` | owner number(s), e.g. `9876543210` or `9876543210, 9123456789` |
+| `ORDER_ALERT_EMAIL` | owner email (optional) |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | for the email (optional) |
+
+Optional switches: `WHATSAPP_NOTIFY_OWNER=false` or `WHATSAPP_NOTIFY_CUSTOMER=false` to stop one of the two;
+`WHATSAPP_OWNER_TEMPLATE` / `WHATSAPP_CUSTOMER_TEMPLATE` if you named the templates differently.
+
+## Cost
+
+Meta charges per message; utility messages in India are roughly 12-15 paise each (check Meta's current rate card).
+About Rs. 25-30 a month for 100 orders with 2 messages each. The email is free.
+
+## Code
+
+- `WhatsAppOrderService`: builds and sends the messages, once per order (`wa_owner_at`, `wa_customer_at`, `wa_error` on `orders`).
+- Called from `OrderService` after the order is saved: `markPaid` (checkout, Razorpay webhook, reconcile job),
+  cash-on-delivery placement, and an admin marking an order paid.
+- `POST /api/admin/orders/{id}/whatsapp-resend` for the Resend button.
+- Tests: `WhatsAppOrderAlertIntegrationTest`.

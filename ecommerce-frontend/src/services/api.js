@@ -133,6 +133,8 @@ export const ApiService = {
   adminCoupons: () => api.get('/admin/coupons').then(res => res.data),
   createCoupon: (payload) => api.post('/admin/coupons', payload).then(res => res.data),
   setCouponActive: (id, value) => api.put(`/admin/coupons/${id}/active`, null, { params: { value } }).then(res => res.data),
+  setCouponProducts: (id, productIds) => api.put(`/admin/coupons/${id}/products`, { productIds }).then(res => res.data),
+  welcomeOfferStatus: () => api.get('/admin/coupons/welcome').then(res => res.data),
   paymentOptions: () => api.get('/orders/payment-options').then(res => res.data),
   checkout: (payload, idempotencyKey) => api.post('/orders/checkout', payload, {
     headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
@@ -177,5 +179,6 @@ export const ApiService = {
   deleteUser: (id) => api.delete(`/admin/users/${id}`).then(res => res.data),
   updateDeliveryStatus: (id, status) => api.put(`/admin/orders/${id}/delivery-status`, { status }).then(res => res.data),
   updatePaymentStatus: (id, status) => api.put(`/admin/orders/${id}/payment-status`, { status }).then(res => res.data),
+  resendWhatsapp: (id) => api.post(`/admin/orders/${id}/whatsapp-resend`).then(res => res.data),
   markStock: (productId, inStock) => api.put(`/products/${productId}/stock?inStock=${inStock}`).then(res => res.data)
 };

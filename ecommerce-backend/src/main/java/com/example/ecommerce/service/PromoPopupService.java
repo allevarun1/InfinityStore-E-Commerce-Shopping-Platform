@@ -36,6 +36,10 @@ public class PromoPopupService {
         LocalDateTime now = LocalDateTime.now();
         return popups.findByActiveTrueOrderByUpdatedAtDescIdDesc().stream()
                 .filter(p -> (p.getStartsAt() == null || !p.getStartsAt().isAfter(now)) && (p.getEndsAt() == null || p.getEndsAt().isAfter(now)))
+                // A pop-up whose code is paused (e.g. the welcome offer switched off), expired or used up stays hidden.
+                .filter(p -> p.getCouponCode() == null || coupons.findByCodeIgnoreCase(p.getCouponCode())
+                        .filter(c -> c.isActive() && (c.getExpiresAt() == null || c.getExpiresAt().isAfter(now))
+                                && (c.getUsageLimit() == null || c.getUsedCount() < c.getUsageLimit())).isPresent())
                 .findFirst().map(PromoPopupService::toLive);
     }
 

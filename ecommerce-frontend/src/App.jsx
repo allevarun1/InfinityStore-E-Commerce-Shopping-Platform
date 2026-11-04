@@ -47,6 +47,7 @@ import './brand.css';
 import './alive.css';
 import './banner.css';
 import './home2.css';
+import './policy.css';
 import './icons/bi-subset.css';
 
 // Rarely-first pages load on demand, so the home page ships a much smaller script.

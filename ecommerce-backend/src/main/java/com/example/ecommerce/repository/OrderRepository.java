@@ -3,6 +3,9 @@ package com.example.ecommerce.repository;
 import com.example.ecommerce.model.Order;
 import com.example.ecommerce.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Repository;
 
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +16,32 @@ import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
+    /** Claims the owner / customer WhatsApp alert for this order; 1 = this caller sends it, 0 = already sent. */
+    @Modifying
+    @Transactional
+    @Query("update Order o set o.whatsappOwnerAt = :at where o.id = :id and o.whatsappOwnerAt is null")
+    int claimWhatsappOwner(@Param("id") Long id, @Param("at") LocalDateTime at);
+
+    @Modifying
+    @Transactional
+    @Query("update Order o set o.whatsappCustomerAt = :at where o.id = :id and o.whatsappCustomerAt is null")
+    int claimWhatsappCustomer(@Param("id") Long id, @Param("at") LocalDateTime at);
+
+    @Modifying
+    @Transactional
+    @Query("update Order o set o.whatsappOwnerAt = null where o.id = :id")
+    int releaseWhatsappOwner(@Param("id") Long id);
+
+    @Modifying
+    @Transactional
+    @Query("update Order o set o.whatsappCustomerAt = null where o.id = :id")
+    int releaseWhatsappCustomer(@Param("id") Long id);
+
+    @Modifying
+    @Transactional
+    @Query("update Order o set o.whatsappError = :error where o.id = :id")
+    int setWhatsappError(@Param("id") Long id, @Param("error") String error);
+
     List<Order> findByUserOrderByOrderDateDesc(User user);
 
     List<Order> findAllByOrderByOrderDateDesc();

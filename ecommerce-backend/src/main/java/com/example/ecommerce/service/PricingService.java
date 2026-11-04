@@ -65,11 +65,26 @@ public class PricingService {
      * spread across lines in proportion to their value so GST is charged on what the customer pays.
      */
     public PriceQuote quote(List<CartItem> items, BigDecimal couponDiscount, String couponCode) {
+        return quote(items, couponDiscount, couponCode, null);
+    }
+
+    /** As above, for a coupon that only covers some sarees: its discount is spread over those lines only. */
+    public PriceQuote quote(List<CartItem> items, BigDecimal couponDiscount, String couponCode, java.util.Set<Long> couponProducts) {
         BigDecimal couponOnly = couponDiscount == null ? BigDecimal.ZERO : couponDiscount;
+        java.util.function.Predicate<CartItem> covered = it -> couponProducts == null || couponProducts.isEmpty()
+                || couponProducts.contains(it.getProduct().getId());
         BigDecimal netTotal = BigDecimal.ZERO;
+        BigDecimal coveredTotal = BigDecimal.ZERO;
+        int lastCovered = -1;
         int itemCount = 0;
-        for (CartItem item : items) {
-            netTotal = netTotal.add(money(activePrice(item.getProduct())).multiply(BigDecimal.valueOf(item.getQuantity())));
+        for (int i = 0; i < items.size(); i++) {
+            CartItem item = items.get(i);
+            BigDecimal net = money(activePrice(item.getProduct())).multiply(BigDecimal.valueOf(item.getQuantity()));
+            netTotal = netTotal.add(net);
+            if (covered.test(item)) {
+                coveredTotal = coveredTotal.add(net);
+                lastCovered = i;
+            }
             itemCount += item.getQuantity();
         }
         // Multi-buy tier first (percentage of the sale-price total), then the coupon on what is left.
@@ -82,9 +97,10 @@ public class PricingService {
                 offerLabel = tier.get().label();
             }
         }
-        // The offer and coupon are spread across lines together so GST is charged on what the customer pays.
+        // The offer (all lines) and the coupon (covered lines) are spread so GST is charged on what the customer pays.
         BigDecimal coupon = offer.add(couponOnly);
-        BigDecimal couponLeft = coupon;
+        BigDecimal offerLeft = offer;
+        BigDecimal couponLeft = couponOnly;
         List<PriceQuote.Line> lines = new ArrayList<>();
         BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal discount = BigDecimal.ZERO;
@@ -99,10 +115,17 @@ public class PricingService {
             BigDecimal taxPercent = taxPercentFor(product);
             BigDecimal lineNet = unit.multiply(qty);
             BigDecimal share = BigDecimal.ZERO;
-            if (coupon.signum() > 0 && netTotal.signum() > 0) {
-                share = idx == items.size() - 1 ? couponLeft
-                        : coupon.multiply(lineNet).divide(netTotal, 2, RoundingMode.HALF_UP).min(couponLeft);
-                couponLeft = couponLeft.subtract(share);
+            if (offer.signum() > 0 && netTotal.signum() > 0) {
+                BigDecimal part = idx == items.size() - 1 ? offerLeft
+                        : offer.multiply(lineNet).divide(netTotal, 2, RoundingMode.HALF_UP).min(offerLeft);
+                offerLeft = offerLeft.subtract(part);
+                share = share.add(part);
+            }
+            if (couponOnly.signum() > 0 && coveredTotal.signum() > 0 && covered.test(item)) {
+                BigDecimal part = idx == lastCovered ? couponLeft
+                        : couponOnly.multiply(lineNet).divide(coveredTotal, 2, RoundingMode.HALF_UP).min(couponLeft);
+                couponLeft = couponLeft.subtract(part);
+                share = share.add(part);
             }
             BigDecimal lineTax = lineNet.subtract(share).multiply(taxPercent).divide(HUNDRED, 2, RoundingMode.HALF_UP);
 

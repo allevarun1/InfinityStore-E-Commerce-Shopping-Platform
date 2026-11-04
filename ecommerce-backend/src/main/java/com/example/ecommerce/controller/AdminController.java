@@ -26,6 +26,9 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
     @Autowired
+    private com.example.ecommerce.service.WhatsAppOrderService whatsAppOrders;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -65,7 +68,23 @@ public class AdminController {
         return ResponseEntity.ok(view(orderService.updatePaymentStatus(id, request.getStatus())));
     }
 
+    /** Sends the paid-order WhatsApp messages that have not gone out yet (after fixing a number or template). */
+    @PostMapping("/orders/{id}/whatsapp-resend")
+    public ResponseEntity<MessageResponse> resendWhatsapp(@PathVariable Long id) {
+        Order order = orderService.getOrderById(id);
+        if (!whatsAppOrders.enabled()) {
+            throw new BusinessException("WhatsApp is not set up yet. Add WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID on the server first.");
+        }
+        boolean real = "PAID".equals(order.getPaymentStatus()) || ("COD".equals(order.getPaymentMethod()) && !"CANCELLED".equals(order.getStatus()));
+        if (!real) {
+            throw new BusinessException("Only paid orders get WhatsApp messages");
+        }
+        whatsAppOrders.orderPaid(id);
+        return ResponseEntity.ok(new MessageResponse("Sending now. Refresh in a minute to see the result."));
+    }
+
     private OrderResponse view(Order order) {
-        return OrderResponse.forAdmin(order, orderService.nextStatuses(order));
+        var s = whatsAppOrders.status(order);
+        return OrderResponse.forAdmin(order, orderService.nextStatuses(order), new OrderResponse.WhatsApp(s.owner(), s.customer(), s.error()));
     }
 }

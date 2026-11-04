@@ -40,6 +40,16 @@ services:
         sync: false
       - key: WHATSAPP_PHONE_NUMBER_ID
         sync: false
+      # Paid-order alerts on the phone: the owner's WhatsApp number(s), comma separated, and an email that also gets
+      # each new paid order (the email needs MAIL_USERNAME / MAIL_PASSWORD). See docs/WHATSAPP_ORDER_ALERTS.md.
+      - key: ORDER_ALERT_WHATSAPP
+        sync: false
+      - key: ORDER_ALERT_EMAIL
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
       # Photos and videos uploaded in admin go to Cloudflare R2 (10 GB free) so the 1 GB database stays small.
       - key: R2_ACCOUNT_ID
         sync: false

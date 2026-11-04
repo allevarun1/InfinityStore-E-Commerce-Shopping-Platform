@@ -1,0 +1,78 @@
+/* Coupons admin: welcome-offer switch, saree picker, coupon cards. */
+
+.coupons-admin .chip-status { margin-left: 8px; vertical-align: middle; }
+
+/* ---- welcome offer switch */
+.welcome-switch { display: flex; gap: 20px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  margin: 16px 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--paper); }
+.welcome-switch.on { border-color: var(--success); background: linear-gradient(0deg, var(--success-50), var(--paper) 70%); }
+.welcome-switch h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.welcome-switch p { margin: 0 0 4px; max-width: 62ch; }
+.ws-toggle { display: inline-flex; align-items: center; gap: 12px; padding: 6px 16px 6px 6px; border: 1px solid var(--line);
+  border-radius: var(--r-pill); background: var(--paper); color: var(--ink); font-weight: 700; cursor: pointer; min-height: 44px; }
+.ws-toggle::before { content: ''; width: 52px; height: 30px; border-radius: var(--r-pill); background: var(--sand-2); transition: background 0.2s var(--ease); }
+.ws-toggle[aria-checked='true']::before { background: var(--success); }
+.ws-toggle { position: relative; }
+.ws-knob { position: absolute; left: 11px; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; background: #fff;
+  box-shadow: var(--shadow-1); transition: transform 0.2s var(--ease); }
+.ws-toggle[aria-checked='true'] .ws-knob { transform: translateX(22px); }
+.ws-toggle:disabled { opacity: 0.6; cursor: wait; }
+.ws-toggle:focus-visible { outline: 3px solid var(--maroon); outline-offset: 2px; }
+
+/* ---- help */
+.cp-help { margin: 0 0 16px; padding: 12px 16px; border: 1px dashed var(--gold); border-radius: var(--r-md); background: var(--gold-50); }
+.cp-help summary { cursor: pointer; font-weight: 700; color: var(--gold-ink); }
+.cp-help ul { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+
+/* ---- form */
+.cp-form { max-width: 860px; display: grid; gap: 14px; }
+.cp-form h3 { margin: 0; }
+.cp-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.cp-row > .field-group { flex: 1 1 180px; min-width: 0; }
+.cp-scope { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.cp-scope legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+.cp-scope-opt { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: var(--r-md); background: var(--paper); cursor: pointer; }
+.cp-scope-opt.on { border-color: var(--maroon); box-shadow: 0 0 0 1px var(--maroon) inset; background: var(--maroon-50); }
+.cp-scope-opt span { display: grid; gap: 2px; }
+.cp-scope-opt small { color: var(--muted); }
+.cp-scope-opt input { margin-top: 3px; accent-color: var(--maroon); }
+
+/* ---- saree picker */
+.saree-picker { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; background: var(--ivory); }
+.sp-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.sp-bar input { flex: 1 1 200px; min-width: 0; }
+.sp-count { margin: 10px 0; }
+.sp-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+  max-height: 440px; overflow-y: auto; }
+.sp-tile { position: relative; display: grid; gap: 4px; padding: 8px; border: 2px solid transparent; border-radius: var(--r-md);
+  background: var(--paper); box-shadow: var(--shadow-1); cursor: pointer; height: 100%; }
+.sp-tile.on { border-color: var(--maroon); background: var(--maroon-50); }
+.sp-tile input { position: absolute; top: 12px; left: 12px; width: 20px; height: 20px; accent-color: var(--maroon); z-index: 1; }
+.sp-tile:focus-within { outline: 3px solid var(--maroon); outline-offset: 2px; }
+.sp-img { display: grid; place-items: center; aspect-ratio: 4 / 5; border-radius: var(--r-sm); overflow: hidden; background: var(--sand); color: var(--muted); font-size: 1.6rem; }
+.sp-img img { width: 100%; height: 100%; object-fit: cover; }
+.sp-name { font-weight: 600; font-size: 0.9rem; line-height: 1.25; overflow-wrap: anywhere; }
+.sp-price { font-size: 0.85rem; color: var(--muted); }
+.sp-tick { position: absolute; top: 10px; right: 10px; color: var(--maroon); font-size: 1.3rem; background: #fff; border-radius: 50%; }
+
+/* ---- coupon cards */
+.cp-list-title { margin-top: 28px; }
+.cp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.cp-card { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--paper); }
+.cp-card.paused { opacity: 0.75; }
+.cp-card-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.cp-code { font-size: 1.05rem; letter-spacing: 0.04em; }
+.cp-desc { margin-top: 4px; }
+.cp-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.cp-covers { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cp-covers-label { font-weight: 600; font-size: 0.9rem; }
+.cp-edit { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+.cv-all { display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border-radius: var(--r-pill); background: var(--sand); font-size: 0.85rem; }
+.cv-list { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.cv-list li { display: inline-flex; gap: 8px; align-items: center; padding: 4px 10px 4px 4px; border-radius: var(--r-pill);
+  background: var(--maroon-50); font-size: 0.85rem; max-width: 100%; }
+.cv-list img, .cv-list .bi-image { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; display: grid; place-items: center; background: var(--sand); }
+.cv-list span { overflow-wrap: anywhere; }
+.cv-summary li { border-radius: var(--r-md); }
+.cv-codes { display: inline-flex; gap: 4px; flex-wrap: wrap; }

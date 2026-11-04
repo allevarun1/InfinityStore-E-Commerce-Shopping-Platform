@@ -7,6 +7,7 @@ import { Loader } from './Loader';
 import { track } from '../lib/analytics';
 import { payForOrder, PaymentDismissed } from '../lib/razorpay';
 import { inr, imageSrc } from '../lib/format';
+import { NO_RETURNS_SHORT } from '../lib/policy';
 
 const INDIAN_STATES = [
   'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh',
@@ -98,6 +99,10 @@ export function Checkout() {
   const [saved, setSaved] = useState([]);
   const [chosen, setChosen] = useState(null); // id of the saved address in use, or null for the form
   const [locating, setLocating] = useState(false);
+  // Every sale is final, so the customer confirms it before paying.
+  const [agreed, setAgreed] = useState(false);
+  const [agreeNeeded, setAgreeNeeded] = useState(false);
+  const agreeBox = useRef(null);
   // One key per checkout attempt: a double click or retry can never create two orders.
   const idempotencyKey = useRef(newKey());
   const toast = useToast();
@@ -230,6 +235,13 @@ export function Checkout() {
   const placeOrder = (e) => {
     e?.preventDefault();
     if (isSubmitting || !validate()) return;
+    if (!agreed) {
+      setAgreeNeeded(true);
+      agreeBox.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      agreeBox.current?.focus();
+      toast.error('Please tick the box to confirm that all sales are final');
+      return;
+    }
     setIsSubmitting(true);
     const payload = {
       shippingAddress: composeAddress(addr),
@@ -446,12 +458,17 @@ export function Checkout() {
             <div className="grand"><dt>Total payable</dt><dd>{inr(quote.total)}</dd></div>
           </dl>
 
-          <button type="submit" className="btn btn-primary ck-place" disabled={isSubmitting || !canPay}>
+          <label className={`policy-accept ${agreeNeeded && !agreed ? 'need' : ''}`}>
+            <input type="checkbox" ref={agreeBox} checked={agreed} onChange={e => { setAgreed(e.target.checked); setAgreeNeeded(false); }}
+              aria-describedby="ck-final-sale" aria-invalid={agreeNeeded && !agreed} />
+            <span id="ck-final-sale">I understand that <strong>all sales are final</strong>: no returns, no exchanges and no refunds once I pay. <Link to="/shipping#returns" target="_blank">Read the policy</Link></span>
+          </label>
+                    <button type="submit" className="btn btn-primary ck-place" disabled={isSubmitting || !canPay}>
             {isSubmitting ? (paymentMethod === 'ONLINE' ? 'Opening payment…' : 'Placing order…') : `${paymentMethod === 'ONLINE' ? 'Pay' : 'Place order'} · ${inr(quote.total)}`}
           </button>
           <ul className="ck-trust">
             <li><i className="bi bi-shield-check" aria-hidden="true"></i> Prices and stock are confirmed by our server when you order</li>
-            <li><i className="bi bi-arrow-repeat" aria-hidden="true"></i> Returns for damaged or incorrect items — <Link to="/shipping">policy</Link></li>
+            <li><i className="bi bi-info-circle" aria-hidden="true"></i> {NO_RETURNS_SHORT}</li>
           </ul>
         </aside>
 
