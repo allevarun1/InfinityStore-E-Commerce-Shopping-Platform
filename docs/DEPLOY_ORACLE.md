@@ -171,3 +171,34 @@ Beyond the free limits, extra Arm capacity is about US$0.013 per OCPU-hour and U
 - Oracle can change the free tier again (it did in 2026). The setup is plain Docker + MySQL, so moving to any other
   host takes about an hour.
 - Sign-up can be refused for no stated reason; then the fallback is Render's paid plan (US$7 a month, no sleep).
+
+## If the Arm server can't be had (status on 2026-11-04)
+
+Network, ports, SSH key, API key and the retry script (`~/.oci/get_server.py` on the dev PC) are ready. The only
+thing missing is the server itself: Hyderabad (the account's home region, only one zone) has had no free Arm
+capacity, and free-tier accounts are served last. Try the options in this order and stop at the first that works.
+Nothing is lost while trying, because the shop keeps running on Render + Aiven the whole time.
+
+1. **Pay As You Go upgrade** (best). Billing > Upgrade and Manage Payment > add the card > Upgrade. Always Free
+   items stay free; set a US$1 budget alert straight away. Then run the retry script: paid accounts usually get
+   a server within minutes to hours.
+2. **If the upgrade is refused:** first correct the account address to exactly what the card's bank has
+   (it currently mixes Sircilla with "KANCHIPURAM, TAMIL NADU 631604"), then retry. Try a different Visa or
+   Mastercard credit card belonging to the account holder; debit, RuPay and prepaid cards are often refused.
+   If it still fails, open Oracle's support chat (Help ? in the console) and ask why the upgrade fails.
+3. **Stay free and keep retrying.** Run the retry script around the clock (a Windows scheduled task that
+   starts it at boot and keeps the PC from sleeping). Free-tier capacity in a busy region often appears within
+   days, sometimes a couple of weeks. It needs no money but has no time guarantee.
+4. **Temporary: Oracle's free AMD micro server** (VM.Standard.E2.1.Micro, 1 GB memory, usually available).
+   It can run the API only if the Docker image is built by GitHub Actions instead of on the server, the Java
+   heap is capped (about 350 MB) and the 4 GB swap is on, with the database staying on Aiven. It will be slow
+   under load. Use it only as a stop-gap, then move to the Arm server when the retry script gets one.
+5. **A small paid server in India, same kit.** `setup-server.sh` and the Compose files run on any Ubuntu 24.04
+   machine; only the Oracle console steps differ (open 80/443 in the provider's firewall instead). Pick at
+   least 2 GB memory. Rough prices (check on the day): AWS Lightsail Mumbai or DigitalOcean Bangalore, about
+   US$10-12 a month for 2 GB; 4 GB is about US$20-24.
+6. **Stay on Render** and remove the sleep with its paid plan (about US$7 a month), keeping Aiven for the
+   database. Least work; no move at all.
+
+Decision rule: if 1 works, done. If not, start 3 at once (free, runs in the background) and, if the sleeping
+free Render service is hurting sales, cover the wait with 6 (cheapest, no migration) rather than 4 or 5.
