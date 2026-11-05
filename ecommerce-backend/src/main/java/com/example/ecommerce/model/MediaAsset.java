@@ -37,7 +37,7 @@ public class MediaAsset {
     @Column(columnDefinition = "LONGBLOB NULL")
     private byte[] data;
 
-    /** Object key in R2, e.g. media/2026/ab12cd34ef-saree.jpg; null while the bytes are still in data. */
+    /** Object key in R2, e.g. media/ab12cd34ef (the checksum); null while the bytes are still in data. */
     @Column(name = "storage_key", length = 200)
     private String storageKey;
 

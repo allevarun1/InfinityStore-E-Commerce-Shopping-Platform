@@ -18,7 +18,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -85,7 +84,7 @@ public class MediaService {
         a.setChecksum(checksum(bytes));
         if (r2.enabled()) {
             // File goes to R2 first; the database row is only written once the file is safely stored.
-            String key = keyFor(a.getChecksum(), a.getName());
+            String key = keyFor(a.getChecksum());
             try {
                 r2.put(key, bytes, type);
             } catch (RuntimeException e) {
@@ -183,6 +182,8 @@ public class MediaService {
         String key = a.getStorageKey();
         if (key != null && r2.enabled()) {
             afterCommit(() -> {
+                // Files are stored by content, so the same photo uploaded twice shares one R2 copy; keep it while used.
+                if (media.existsByStorageKey(key)) return;
                 try {
                     r2.delete(key);
                 } catch (RuntimeException e) {
@@ -192,9 +193,12 @@ public class MediaService {
         }
     }
 
-    /** Public address of a stored file in R2, or null when its bytes are served from the database. */
+    /**
+     * Public address of a stored file in R2, or null when its bytes are served from the database. R2_PUBLIC_URL is the
+     * storefront, whose /media/{id}/{checksum} function (ecommerce-frontend/functions) reads the file from R2.
+     */
     public String publicUrlOf(MediaAsset a) {
-        return a.getStorageKey() != null && r2.enabled() ? r2.publicUrl(a.getStorageKey()) : null;
+        return a.getStorageKey() != null && r2.enabled() ? r2.publicUrl("media/" + a.getId() + "/" + a.getChecksum()) : null;
     }
 
     /**
@@ -216,7 +220,7 @@ public class MediaService {
             try {
                 tx.executeWithoutResult(s -> media.findById(id).ifPresent(a -> {
                     if (a.getStorageKey() != null || a.getData() == null) return;
-                    String key = keyFor(a.getChecksum(), a.getName());
+                    String key = keyFor(a.getChecksum());
                     r2.put(key, a.getData(), a.getContentType());
                     a.setStorageKey(key);
                     a.setData(null);
@@ -228,9 +232,9 @@ public class MediaService {
         }
     }
 
-    static String keyFor(String checksum, String name) {
-        String safe = name.toLowerCase().replaceAll("[^a-z0-9._-]+", "-").replaceAll("-{2,}", "-");
-        return "media/" + LocalDate.now().getYear() + "/" + checksum + "-" + safe;
+    /** R2 object key: the checksum alone, so the storefront function finds the file from the public link. */
+    static String keyFor(String checksum) {
+        return "media/" + checksum;
     }
 
     private static void afterCommit(Runnable action) {

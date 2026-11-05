@@ -25,8 +25,20 @@ export const LOW_STOCK = 5;
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-/** Uploaded images are served by the API (/api/products/:id/image); bundled ones live with the frontend. */
-export const imageSrc = (url) => (url && url.startsWith('/api/') ? API_BASE.replace(/\/api\/?$/, '') + url : url);
+/** Where uploaded photos and videos load from: the storefront's /media function (R2), e.g. https://x.pages.dev. */
+const MEDIA_BASE = (import.meta.env.VITE_MEDIA_URL || '').replace(/\/+$/, '');
+const LIBRARY_LINK = /^\/api\/media\/(\d{1,12})\/([a-f0-9]{10})$/;
+
+/**
+ * Uploaded images are served by the API (/api/media/:id/:checksum); bundled ones live with the frontend. With
+ * VITE_MEDIA_URL set, library files load from Cloudflare (R2) and never touch the API server.
+ */
+export const imageSrc = (url) => {
+  if (!url || !url.startsWith('/api/')) return url;
+  const m = MEDIA_BASE && LIBRARY_LINK.exec(url);
+  if (m) return `${MEDIA_BASE}/media/${m[1]}/${m[2]}`;
+  return API_BASE.replace(/\/api\/?$/, '') + url;
+};
 
 const LOCAL_PHOTO = /^\/images\/sarees\/(.+)\.jpg$/;
 

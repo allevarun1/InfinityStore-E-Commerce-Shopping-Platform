@@ -63,15 +63,34 @@ class R2MediaIntegrationTest extends IntegrationTestSupport {
 
         MediaAsset stored = media.findById(info.get("id").asLong()).orElseThrow();
         assertNull(stored.getData(), "the file is not kept in the database");
-        assertTrue(stored.getStorageKey().matches("media/\\d{4}/[a-f0-9]{10}-red-silk\\.png"), stored.getStorageKey());
+        assertEquals("media/" + stored.getChecksum(), stored.getStorageKey());
         verify(r2).put(eq(stored.getStorageKey()), eq(PNG), eq("image/png"));
 
         mvc.perform(get(url)).andExpect(status().isFound())
-                .andExpect(header().string("Location", "https://pub-test.r2.dev/" + stored.getStorageKey()))
+                .andExpect(header().string("Location", "https://pub-test.r2.dev/media/" + stored.getId() + "/" + stored.getChecksum()))
                 .andExpect(header().string("Cache-Control", org.hamcrest.Matchers.containsString("immutable")));
 
         mvc.perform(delete("/api/admin/media/" + stored.getId()).header("Authorization", "Bearer " + t)).andExpect(status().isNoContent());
         verify(r2).delete(stored.getStorageKey());
+    }
+
+    @Test
+    void identicalUploadsShareOneR2CopyUntilTheLastIsDeleted() throws Exception {
+        String t = adminToken();
+        long first = upload(t, "a.png"), second = upload(t, "b.png");
+        String key = media.findById(first).orElseThrow().getStorageKey();
+        assertEquals(key, media.findById(second).orElseThrow().getStorageKey());
+
+        mvc.perform(delete("/api/admin/media/" + first).header("Authorization", "Bearer " + t)).andExpect(status().isNoContent());
+        verify(r2, never()).delete(anyString());
+        mvc.perform(delete("/api/admin/media/" + second).header("Authorization", "Bearer " + t)).andExpect(status().isNoContent());
+        verify(r2).delete(key);
+    }
+
+    private long upload(String token, String name) throws Exception {
+        MvcResult r = mvc.perform(multipart("/api/admin/media").file(new MockMultipartFile("file", name, "image/png", PNG))
+                .header("Authorization", "Bearer " + token)).andExpect(status().isOk()).andReturn();
+        return json.readTree(r.getResponse().getContentAsString(StandardCharsets.UTF_8)).get("id").asLong();
     }
 
     @Test

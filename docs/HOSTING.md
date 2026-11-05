@@ -4,6 +4,26 @@
 **Render** free (moving to Oracle Cloud Always Free: `docs/DEPLOY_ORACLE.md`), MySQL on **Aiven** free, photos and
 videos on **Cloudflare R2**. The Vercel and Railway notes below are the options that were considered, not what runs.
 
+## Photos and videos on Cloudflare R2 (one-time setup)
+
+Uploads go to R2 and load from `https://rekha-shopping-mall.pages.dev/media/{id}/{checksum}`, served by the Pages
+Function in `ecommerce-frontend/functions/media/`, so they never pass through the API server. Not using `r2.dev`:
+that address is rate-limited and meant only for testing.
+
+1. Cloudflare > **R2** > Create bucket `rekha-media` (location: Asia-Pacific). Leave public access **off**.
+2. Pages project `rekha-shopping-mall` > Settings > **Bindings** > Add > R2 bucket: variable name `MEDIA`, bucket
+   `rekha-media` (Production). Settings > Variables: add `VITE_MEDIA_URL=https://rekha-shopping-mall.pages.dev`.
+   Retry the latest deployment so both take effect.
+3. R2 > **Manage API tokens** > Create: *Object Read & Write*, only bucket `rekha-media`. Note the Access Key ID,
+   Secret Access Key and the Account ID.
+4. Render API > Environment: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=rekha-media`,
+   `R2_PUBLIC_URL=https://rekha-shopping-mall.pages.dev`. On restart the API moves existing database files to R2 by
+   itself (log: "Moving N uploaded file(s) from the database to R2"); old `/api/media/...` links redirect.
+
+Check: `curl -sI https://rekha-shopping-mall-api.onrender.com/api/media/<id>/<checksum>` answers `302` to
+`.../media/<id>/<checksum>`, which answers `200` with the file. Free limits: 10 GB stored, 10 million reads a month,
+no download fees; Pages Functions 100,000 requests a day (browsers keep each file for a year, so repeat views are free).
+
 Prices change often. Check each provider's pricing page before committing; the points below are about
 *how the pieces fit*, which does not change.
 

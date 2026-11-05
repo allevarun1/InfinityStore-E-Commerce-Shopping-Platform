@@ -22,6 +22,9 @@ public interface MediaAssetRepository extends JpaRepository<MediaAsset, Long> {
 
     List<Meta> findAllByOrderByIdDesc();
 
+    /** True while another file still points at this R2 object (identical uploads share one copy). */
+    boolean existsByStorageKey(String storageKey);
+
     /** Files still kept in the database, to move into R2. */
     @org.springframework.data.jpa.repository.Query("select m.id from MediaAsset m where m.storageKey is null order by m.id")
     List<Long> findIdsStoredInDatabase();
