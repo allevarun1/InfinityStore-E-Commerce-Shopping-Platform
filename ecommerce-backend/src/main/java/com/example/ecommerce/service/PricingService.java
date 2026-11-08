@@ -26,6 +26,13 @@ public class PricingService {
     private final BigDecimal shippingFee;
     private final String currency;
     private MultiBuyService multiBuy;
+    private StorePolicy policy;
+
+    /** Optional so the engine can still be built on its own in unit tests; when present the owner's live delivery charges win. */
+    @Autowired(required = false)
+    public void setPolicy(StorePolicy policy) {
+        this.policy = policy;
+    }
 
     /** Optional so the engine can still be built on its own in unit tests. */
     @Autowired(required = false)
@@ -138,10 +145,12 @@ public class PricingService {
 
         BigDecimal taxable = subtotal.subtract(discount).subtract(coupon);
         // A threshold of 0 (or less) means the shop has no free shipping: every order pays the flat fee.
-        boolean freeOver = freeShippingThreshold != null && freeShippingThreshold.signum() > 0
-                && taxable.compareTo(freeShippingThreshold) > 0;
+        BigDecimal threshold = policy != null ? policy.freeShippingThreshold() : freeShippingThreshold;
+        BigDecimal fee = policy != null ? policy.shippingFee() : shippingFee;
+        boolean freeOver = threshold != null && threshold.signum() > 0
+                && taxable.compareTo(threshold) > 0;
         BigDecimal shipping = (items.isEmpty() || freeOver)
-                ? BigDecimal.ZERO.setScale(2) : money(shippingFee);
+                ? BigDecimal.ZERO.setScale(2) : money(fee);
         BigDecimal total = taxable.add(tax).add(shipping);
         return new PriceQuote(lines, subtotal, discount, taxable, tax, shipping, total, currency,
                 couponOnly.signum() > 0 ? couponCode : null, couponOnly, offer.signum() > 0 ? offerLabel : null, offer);

@@ -7,6 +7,7 @@ import { Loader } from './Loader';
 import '../admin2.css';
 import '../admin3.css';
 import { AdminCoupons } from './AdminCoupons';
+import { AdminDelivery } from './AdminDelivery';
 import { AdminAttempts } from './AdminAttempts';
 import { NotifyCard } from './NotifyCard';
 import { splitOrders } from '../lib/orderBuckets';
@@ -34,7 +35,7 @@ const STATUS_LABEL = { DRAFT: 'Draft', READY_FOR_REVIEW: 'Ready for review', APP
 const NAV = [
   { group: 'Home', items: [['autopilot', 'bi-speedometer2', 'Today']] },
   { group: 'Catalogue', items: [['products', 'bi-box-seam', 'Sarees'], ['management', 'bi-plus-circle', 'Add a saree'], ['studio', 'bi-stars', 'Photo & video studio'], ['media', 'bi-images', 'Media library'], ['catalogue', 'bi-file-earmark-spreadsheet', 'Bulk & feeds']] },
-  { group: 'Sales', items: [['orders', 'bi-receipt', 'Orders'], ['coupons', 'bi-tag', 'Coupons & offers'], ['popups', 'bi-megaphone', 'Offer pop-ups']] },
+  { group: 'Sales', items: [['orders', 'bi-receipt', 'Orders'], ['coupons', 'bi-tag', 'Coupons & offers'], ['popups', 'bi-megaphone', 'Offer pop-ups'], ['delivery', 'bi-truck', 'Delivery charges']] },
   { group: 'Grow', items: [['videos', 'bi-camera-video', 'Videos & quotes'], ['leads', 'bi-person-lines-fill', 'Leads'], ['insights', 'bi-graph-up-arrow', 'Insights']] },
   { group: 'People', items: [['users', 'bi-people', 'Customers']] },
 ];
@@ -42,7 +43,7 @@ const TITLES = Object.fromEntries(NAV.flatMap(g => g.items.map(([k, , l]) => [k,
 
 const ORDER_FILTERS = [['ALL', 'All'], ['PENDING', 'New'], ['CONFIRMED', 'To ship'], ['SHIPPED', 'On the way'], ['DELIVERED', 'Delivered'], ['CANCELLED', 'Cancelled']];
 
-const ADMIN_TABS = ['autopilot', 'catalogue', 'coupons', 'insights', 'leads', 'management', 'media', 'orders', 'popups',
+const ADMIN_TABS = ['autopilot', 'catalogue', 'coupons', 'delivery', 'insights', 'leads', 'management', 'media', 'orders', 'popups',
   'products', 'studio', 'users', 'videos'];
 
 export function Admin() {
@@ -302,6 +303,7 @@ export function Admin() {
         {currentTab === 'users' && <AdminCustomers onDelete={deleteUser} />}
 
         {currentTab === 'coupons' && <AdminCoupons />}
+        {currentTab === 'delivery' && <AdminDelivery />}
         {currentTab === 'leads' && <AdminLeads />}
         {currentTab === 'catalogue' && <AdminCatalogue onDone={load} />}
         {currentTab === 'videos' && (<><AdminVideos products={products} /><AdminTestimonials products={products} /></>)}
