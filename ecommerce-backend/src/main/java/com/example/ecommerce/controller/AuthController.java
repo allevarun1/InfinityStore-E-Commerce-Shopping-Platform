@@ -82,7 +82,7 @@ public class AuthController {
         }
         loginAttempts.recordSuccess(loginRequest.getUsername());
 
-        // Shoppers stay signed in for 30 days and the owner for 14, renewed every time they visit (see /refresh).
+        // Shoppers stay signed in for 30 days and the owner for a year, renewed every time they visit (see /refresh).
         String jwt = jwtUtils.generateJwtToken(authentication, sessionMs(authentication.getAuthorities()));
 
         return ResponseEntity.ok(jwtResponse(jwt, (UserDetailsImpl) authentication.getPrincipal()));
@@ -97,9 +97,12 @@ public class AuthController {
         return ResponseEntity.ok(customerSession(phoneLogins.signIn(phoneVerifier.verify(request.idToken())).user()));
     }
 
-    /** Customers who sign in stay signed in for 30 days; the admin console for 14. Each visit renews the clock. */
+    /**
+ * Customers who sign in stay signed in for 30 days. The owner stays signed in until they sign out themselves: the
+ * token lasts a year and every visit renews it, so in practice it never runs out. A password change still ends it.
+ */
     static final long CUSTOMER_SESSION_MS = 30L * 24 * 60 * 60 * 1000;
-    static final long ADMIN_SESSION_MS = 14L * 24 * 60 * 60 * 1000;
+    static final long ADMIN_SESSION_MS = 365L * 24 * 60 * 60 * 1000;
 
     private static long sessionMs(java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> roles) {
         boolean admin = roles.stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));

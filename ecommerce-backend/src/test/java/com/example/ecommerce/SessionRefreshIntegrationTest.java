@@ -63,12 +63,12 @@ class SessionRefreshIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
-    void adminSessionLastsAboutTwoWeeksAndRenews() throws Exception {
+    void adminStaysSignedInForAYearAndRenews() throws Exception {
         String token = signIn("admin", adminPassword);
-        assertTrue(daysLeft(token) > 13 && daysLeft(token) <= 14, "admin login should last 14 days");
+        assertTrue(daysLeft(token) > 364 && daysLeft(token) <= 365, "admin login should last a year");
         MvcResult r = refresh(token);
         assertEquals(200, r.getResponse().getStatus());
-        assertTrue(daysLeft(json.readTree(r.getResponse().getContentAsString()).get("token").asText()) > 13);
+        assertTrue(daysLeft(json.readTree(r.getResponse().getContentAsString()).get("token").asText()) > 364);
     }
 
     @Test
