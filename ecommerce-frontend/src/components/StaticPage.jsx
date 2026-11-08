@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../contexts/StoreContext';
-import { inrCompact } from '../lib/format';
 import { whatsappLink } from './Growth';
-import { freeShippingFrom, codOffered, NO_RETURNS_POINTS } from '../lib/policy';
+import { codOffered, NO_RETURNS_POINTS } from '../lib/policy';
 
 const PRIVACY = 'Rekha Shopping Mall respects your privacy and is committed to protecting your personal information. When you use our platform, we may collect basic details such as your name, email address, contact information, order history, and usage data to improve your shopping experience. This information is used to process orders, provide customer support, enhance website performance, and ensure account security. If you subscribe to our newsletter we use your email address to send offers and new-arrival updates, and you can unsubscribe at any time. We do not sell or share your personal data with unauthorized third parties. However, limited information may be shared with trusted partners such as payment gateways for secure transactions and delivery services for order fulfillment. We use essential cookies to maintain session data and, only if you accept, analytics and advertising cookies to understand how the store is used and to measure our advertising. By using Rekha Shopping Mall, you agree to the collection and use of your information as described. For any privacy-related concerns, you can contact us using the details on our Contact page.';
 
@@ -14,13 +13,11 @@ function Shipping({ info }) {
     <>
       <h2>Shipping &amp; delivery</h2>
       <ul>
-        {info && (freeShippingFrom(info)
-          ? <li>Free shipping on orders above {inrCompact(freeShippingFrom(info))}; otherwise a flat {inrCompact(info.shippingFee)}.</li>
-          : <li>Delivery is a flat {inrCompact(info.shippingFee)} on every order.</li>)}
+        <li>A delivery charge may apply to your order. The exact delivery charge is shown in your cart and at checkout, before you pay.</li>
         {codOffered(info)
           ? <li>Cash on delivery is available. Pay the courier when your saree arrives.</li>
           : <li>Orders are paid securely online at checkout. We don’t offer cash on delivery.</li>}
-        <li>Delivery times vary by location and courier. The exact total and delivery charge are shown before you pay.</li>
+        <li>Delivery times vary by location and courier.</li>
         <li>Track the progress of every order under <Link to="/orders">Your orders</Link>; we also email you when it is placed.</li>
       </ul>
       <h2 id="returns">No returns, no refunds</h2>
