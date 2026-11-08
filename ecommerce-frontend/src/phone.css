@@ -1,0 +1,47 @@
+/*
+ * Phones: a slim header and search bar, and card pictures sized from the screen height, so two rows of two
+ * sarees (four) fit on screen together on every phone. Loaded last so it wins over the older header rules.
+ */
+@media (max-width: 760px) {
+  :root { --hdr: 87px; --bn: 53px; --tools: 46px; --card-body: 98px; }
+
+  /* Slim header: logo + icons on one row, search below */
+  .site-header .header-inner { padding-top: 4px; padding-bottom: 5px; gap: 3px 8px; }
+  .site-header .rs-mark { height: 28px; }
+  .site-header .rs-mono { height: 28px; }
+  .site-header .rs-name { font-size: 1.12rem; }
+  .site-header .rs-sub { font-size: 0.42rem; letter-spacing: 0.26em; }
+  .site-header .rs-signature .rs-name { font-size: 1.05rem; }
+  .site-header .rs-signature .rs-sub { font-size: 0.42rem; letter-spacing: 0.2em; }
+  .site-header .rs-lockup { gap: 7px; }
+  .header-actions a, .header-actions button { min-height: 34px; padding: 0 8px; }
+  .header-actions i { font-size: 1.1rem; }
+  .header-search { padding-left: 12px; }
+  .header-search input { min-height: 34px; font-size: 16px; } /* 16px stops iPhones zooming in on focus */
+  .header-search button { min-height: 28px; width: 30px; }
+
+  /* Slim bottom tab bar */
+  .bottomnav a { min-height: 48px; gap: 0; }
+  .bottomnav a i { font-size: 1.15rem; }
+  .bottomnav a span { font-size: 0.6rem; }
+
+  /* Filter / sort bar sits right under the header */
+  .mobile-tools { top: var(--hdr); gap: 8px; margin-bottom: 6px; padding: 4px 0; }
+  .mobile-tools .btn, .mobile-tools .sort-control select { min-height: 38px; }
+
+  /* Cards: picture height follows the screen so two rows fit; short text */
+  .pgrid { gap: 10px 8px; }
+  .pcard-media, .skel-media {
+    aspect-ratio: auto;
+    height: clamp(72px, calc((100dvh - var(--hdr) - var(--bn) - var(--tools) - 38px) / 2 - var(--card-body)), 250px);
+  }
+  .pcard-media img { object-position: center 25%; }
+  .pcard-cat { display: none; }
+  .pcard-title { font-size: 0.92rem; -webkit-line-clamp: 1; }
+  .pcard-body { padding-top: 5px; }
+  .pcard .price { flex-wrap: nowrap; gap: 6px; overflow: hidden; white-space: nowrap; }
+  .pcard .price-was { font-size: 0.78rem; }
+  .pcard .price-off { display: none; }
+  .pcard .stock-note { display: none; }
+  .pcard-actions .btn { min-height: 34px; }
+}

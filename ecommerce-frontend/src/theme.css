@@ -489,8 +489,20 @@ select, input, textarea { max-width: 100%; }
   .footer-inner { grid-template-columns: 1fr; }
 }
 
+/* Phones: always two sarees across (never one), compact cards so about four are visible at once on any screen. */
+@media (max-width: 760px) {
+  .pgrid { gap: 14px 10px; }
+  .pcard-body { padding-top: 8px; gap: 2px; }
+  .pcard-cat { font-size: 0.64rem; letter-spacing: 0.1em; }
+  .pcard-title { font-size: 0.98rem; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .price-now { font-size: 0.98rem; }
+  .pcard-actions { padding-top: 6px; }
+  .pcard-actions .btn { min-height: 38px; padding-inline: 8px; font-size: 0.86rem; }
+}
 @media (max-width: 380px) {
-  .pgrid { grid-template-columns: 1fr; }
+  .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 8px; }
+  .pcard-title { font-size: 0.9rem; }
+  .pcard-actions .btn { font-size: 0.8rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

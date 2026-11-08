@@ -48,6 +48,7 @@ import './alive.css';
 import './banner.css';
 import './home2.css';
 import './policy.css';
+import './phone.css';
 import './icons/bi-subset.css';
 
 // Rarely-first pages load on demand, so the home page ships a much smaller script.
@@ -80,7 +81,8 @@ function AnnouncementBar() {
     const t = setInterval(() => setAt(n => n + 1), 3800);
     return () => clearInterval(t);
   }, [lines.length]);
-  if (!info) return null;
+  // Nothing to announce (every offer is off): show no bar at all rather than an empty dark strip.
+  if (!info || lines.length === 0) return null;
   return (
     <div className="announce">
       {lines.map((el, i) => React.cloneElement(el, { className: i === at % lines.length ? 'on' : undefined }))}
