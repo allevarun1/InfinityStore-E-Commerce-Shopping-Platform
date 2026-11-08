@@ -28,6 +28,9 @@ public class PasswordResetService {
     private final SecureRandom random = new SecureRandom();
 
     @Autowired
+    private com.example.ecommerce.security.services.UserDetailsServiceImpl sessionUsers;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -103,6 +106,7 @@ public class PasswordResetService {
             throw new BusinessException(INVALID);
         }
         user.setPassword(encoder.encode(newPassword));
+        sessionUsers.evict(user.getUsername());
         clearToken(user);
         auditService.record("PASSWORD_RESET", "USER", user.getId(), "completed via emailed token");
     }

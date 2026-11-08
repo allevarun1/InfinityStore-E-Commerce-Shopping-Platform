@@ -17,10 +17,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "roles")
     Optional<User> findByUsername(String username);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "roles")
     Optional<User> findByEmail(String email);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "roles")
     Optional<User> findByVerifiedPhone(String verifiedPhone);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "roles")
     Optional<User> findByGoogleSubject(String googleSubject);
 
     Boolean existsByUsername(String username);

@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('CUSTOMER') and !hasRole('ADMIN')")
 public class UserController extends BaseUserController {
     @Autowired
+    private com.example.ecommerce.security.services.UserDetailsServiceImpl sessionUsers;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -59,6 +62,7 @@ public class UserController extends BaseUserController {
         }
         if (passwordChanged) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
+            sessionUsers.evict(user.getUsername());
         }
         return ResponseEntity.ok(UserResponse.from(userRepository.save(user)));
     }

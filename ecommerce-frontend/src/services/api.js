@@ -67,6 +67,9 @@ export const ApiService = {
   searchProducts: (query) => api.get(`/products/search?q=${encodeURIComponent(query)}`).then(res => res.data),
   categories: () => api.get('/categories').then(res => res.data),
   
+  /** Swaps the still-valid token for a fresh one so a returning shopper is never asked to sign in again. */
+  refreshSession: () => api.post('/auth/refresh').then(res => res.data),
+
   cart: () => api.get('/cart').then(res => res.data),
   addToCart: (productId, quantity = 1) => api.post('/cart', { productId, quantity }).then(res => res.data),
   updateCart: (id, quantity) => api.put(`/cart/${id}?quantity=${quantity}`).then(res => res.data),

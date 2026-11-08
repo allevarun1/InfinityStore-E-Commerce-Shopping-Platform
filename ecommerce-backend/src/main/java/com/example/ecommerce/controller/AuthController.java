@@ -82,10 +82,8 @@ public class AuthController {
         }
         loginAttempts.recordSuccess(loginRequest.getUsername());
 
-        // Shoppers stay signed in for 30 days, like the big stores. The admin console keeps the shorter default.
-        boolean admin = authentication.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
-        String jwt = admin ? jwtUtils.generateJwtToken(authentication)
-                : jwtUtils.generateJwtToken(authentication, CUSTOMER_SESSION_MS);
+        // Shoppers stay signed in for 30 days and the owner for 14, renewed every time they visit (see /refresh).
+        String jwt = jwtUtils.generateJwtToken(authentication, sessionMs(authentication.getAuthorities()));
 
         return ResponseEntity.ok(jwtResponse(jwt, (UserDetailsImpl) authentication.getPrincipal()));
     }
@@ -99,8 +97,29 @@ public class AuthController {
         return ResponseEntity.ok(customerSession(phoneLogins.signIn(phoneVerifier.verify(request.idToken())).user()));
     }
 
-    /** Customers who sign in without a password stay signed in on their phone for 30 days. */
+    /** Customers who sign in stay signed in for 30 days; the admin console for 14. Each visit renews the clock. */
     static final long CUSTOMER_SESSION_MS = 30L * 24 * 60 * 60 * 1000;
+    static final long ADMIN_SESSION_MS = 14L * 24 * 60 * 60 * 1000;
+
+    private static long sessionMs(java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> roles) {
+        boolean admin = roles.stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        return admin ? ADMIN_SESSION_MS : CUSTOMER_SESSION_MS;
+    }
+
+    /**
+     * Sliding session: a signed-in browser swaps its still-valid token for a fresh one, so someone who visits at least
+     * once inside the session length is never asked to sign in again.
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<JwtResponse> refresh() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof UserDetailsImpl details)) {
+            return ResponseEntity.status(401).build();
+        }
+        String jwt = jwtUtils.generateJwtToken(
+                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities()), sessionMs(details.getAuthorities()));
+        return ResponseEntity.ok(jwtResponse(jwt, details));
+    }
 
     @Autowired
     GoogleIdTokenVerifier googleVerifier;
@@ -129,7 +148,7 @@ public class AuthController {
 
     private JwtResponse customerSession(UserDetailsImpl details) {
         String jwt = jwtUtils.generateJwtToken(
-                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities()), CUSTOMER_SESSION_MS);
+                new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities()), sessionMs(details.getAuthorities()));
         return jwtResponse(jwt, details);
     }
 

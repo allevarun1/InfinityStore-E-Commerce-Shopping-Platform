@@ -20,6 +20,11 @@ export function loadGoogle() {
   return gsi;
 }
 
+/** Fetches Google's sign-in script in the background so the button is ready the moment the login page opens. */
+export function warmGoogle() {
+  loadGoogle().catch(() => {});
+}
+
 let googleReadyFor = null;
 
 /**
