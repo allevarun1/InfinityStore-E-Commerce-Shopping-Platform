@@ -90,6 +90,18 @@ services:
         value: https://rekhashoppingmall.com,https://www.rekhashoppingmall.com,https://rekha-shopping-mall.pages.dev,https://rekha-shopping-mall.onrender.com
       - key: FRONTEND_URL
         value: https://rekhashoppingmall.com
+      # Shop contact details shown on the Contact page, WhatsApp buttons and emails (public, not secrets).
+      - key: STORE_WHATSAPP
+        value: "916303205837"
+      - key: STORE_SUPPORT_PHONE
+        value: "+91 63032 05837"
+      - key: STORE_SUPPORT_EMAIL
+        value: rekhashoppingmall99@gmail.com
+      # Order and password-reset emails through Resend (free tier). The key is a secret: set it in the Render dashboard.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        value: Rekha Shopping Mall <orders@rekhashoppingmall.com>
       - key: JAVA_TOOL_OPTIONS
         value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1
 
