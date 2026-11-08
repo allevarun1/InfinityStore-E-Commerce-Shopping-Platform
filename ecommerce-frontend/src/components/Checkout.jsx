@@ -5,7 +5,7 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Loader } from './Loader';
 import { track } from '../lib/analytics';
-import { payForOrder, PaymentDismissed } from '../lib/razorpay';
+import { payForOrder, PaymentDismissed, preloadCheckout } from '../lib/razorpay';
 import { inr, imageSrc } from '../lib/format';
 import { NO_RETURNS_SHORT } from '../lib/policy';
 
@@ -95,6 +95,7 @@ export function Checkout() {
   const canPay = options.cashOnDelivery || options.online;
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => { preloadCheckout(); }, []);
   const [errors, setErrors] = useState({});
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState('');

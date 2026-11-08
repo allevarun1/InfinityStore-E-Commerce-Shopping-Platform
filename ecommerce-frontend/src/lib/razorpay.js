@@ -20,6 +20,11 @@ function loadCheckout() {
   return script;
 }
 
+/** Fetches Razorpay's script while the shopper is still on the checkout form, so the window opens at once. */
+export function preloadCheckout() {
+  loadCheckout().catch(() => {});
+}
+
 /** Thrown when the customer closes the payment window without paying. */
 export class PaymentDismissed extends Error {}
 
@@ -28,7 +33,8 @@ export class PaymentDismissed extends Error {}
  * rejects with PaymentDismissed if the customer closes the window, or an Error with a readable message.
  */
 export async function payForOrder(order, prefill = {}) {
-  const [Razorpay, session] = await Promise.all([loadCheckout(), ApiService.payOrder(order.id)]);
+  // Checkout already returns the payment details; only "Pay now" on an older order has to ask for them.
+  const [Razorpay, session] = await Promise.all([loadCheckout(), order.payment || ApiService.payOrder(order.id)]);
   const response = await new Promise((resolve, reject) => {
     const rzp = new Razorpay({
       key: session.keyId,

@@ -33,7 +33,18 @@ public record OrderResponse(
         String offerLabel,
         BigDecimal offerDiscountAmount,
         /* admin only: whether the WhatsApp order messages went out */
-        WhatsApp whatsapp) {
+        WhatsApp whatsapp,
+        /* online orders only: what the storefront needs to open the payment window straight away */
+        @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+        com.example.ecommerce.service.payment.PaymentGateway.CheckoutSession payment) {
+
+    /** The same order with the payment-window details attached, so checkout needs no second round trip. */
+    public OrderResponse withPayment(com.example.ecommerce.service.payment.PaymentGateway.CheckoutSession session) {
+        return new OrderResponse(id, trackingNumber, orderDate, status, paymentMethod, paymentStatus, testPayment,
+                shippingAddress, phoneNumber, currency, pricingVersion, subtotalAmount, discountAmount, taxAmount,
+                shippingAmount, totalPrice, orderItems, nextStatuses, user, couponCode, couponDiscountAmount,
+                offerLabel, offerDiscountAmount, whatsapp, session);
+    }
 
     /** SENT, WAITING or OFF for the owner alert and the customer confirmation, plus the last problem if any. */
     public record WhatsApp(String owner, String customer, String error) {
@@ -69,7 +80,7 @@ public record OrderResponse(
                 o.getPaymentMethod(), o.getPaymentStatus(), o.isTestPayment(), o.getShippingAddress(),
                 o.getPhoneNumber(), o.getCurrency(), o.getPricingVersion(), o.getSubtotalAmount(),
                 o.getDiscountAmount(), o.getTaxAmount(), o.getShippingAmount(), o.getTotalPrice(), items, next,
-                customer, o.getCouponCode(), o.getCouponDiscountAmount(), o.getOfferLabel(), o.getOfferDiscountAmount(), whatsapp);
+                customer, o.getCouponCode(), o.getCouponDiscountAmount(), o.getOfferLabel(), o.getOfferDiscountAmount(), whatsapp, null);
     }
 
     private static Item item(OrderItem i) {

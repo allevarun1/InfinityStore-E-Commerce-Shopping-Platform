@@ -36,6 +36,9 @@ public class OrderController {
                 .orElseThrow(() -> new com.example.ecommerce.service.BusinessException("User not found"));
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.ecommerce.service.payment.PaymentGateway paymentGateway;
+
     private OrderResponse customerView(Order order) {
         return OrderResponse.forCustomer(order, orderService.nextStatuses(order));
     }
@@ -52,7 +55,15 @@ public class OrderController {
             @Valid @RequestBody OrderRequest request,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         User user = getAuthenticatedUser();
-        return ResponseEntity.ok(customerView(orderService.placeOrder(user, request, idempotencyKey)));
+        Order order = orderService.placeOrder(user, request, idempotencyKey);
+        OrderResponse view = customerView(order);
+        // An online order is created on Razorpay inside checkout, so hand the payment-window details back now
+        // instead of making the browser ask again.
+        if ("ONLINE".equals(order.getPaymentMethod()) && "PENDING".equals(order.getPaymentStatus())
+                && order.getPaymentReference() != null && !order.getPaymentReference().isBlank()) {
+            view = view.withPayment(paymentGateway.checkoutSession(order));
+        }
+        return ResponseEntity.ok(view);
     }
 
     @GetMapping("/history")

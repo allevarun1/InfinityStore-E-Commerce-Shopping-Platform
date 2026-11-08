@@ -39,6 +39,8 @@ public class OrderService {
 
     /** An online order not paid within this time is cancelled and its stock goes back on sale. */
     public static final Duration PAYMENT_WINDOW = Duration.ofMinutes(45);
+    /** Unpaid online orders hold stock for the payment window, so one account cannot hold more than this many. */
+    static final int MAX_UNPAID_ONLINE_ORDERS = 3;
 
     // Fulfilment state machine. DELIVERED and CANCELLED are terminal.
     private static final Map<String, Set<String>> ORDER_TRANSITIONS = Map.of(
@@ -149,6 +151,12 @@ public class OrderService {
         }
         if (!online && !policy.codEnabled()) {
             throw new BusinessException("Cash on delivery is not available. Please pay online.");
+        }
+
+        if (online && orderRepository.countByUserAndPaymentMethodAndPaymentStatusAndStatus(owner, "ONLINE", "PENDING", "PENDING")
+                >= MAX_UNPAID_ONLINE_ORDERS) {
+            throw new BusinessException("You already have " + MAX_UNPAID_ONLINE_ORDERS + " unpaid orders waiting for payment. "
+                    + "Please pay for one, or cancel it from Your orders, before placing another.");
         }
 
         // Lock product rows in a stable order (prevents deadlocks) and re-read their latest state.

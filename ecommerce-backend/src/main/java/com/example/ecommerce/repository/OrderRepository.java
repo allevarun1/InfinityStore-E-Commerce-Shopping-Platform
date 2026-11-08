@@ -82,6 +82,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByPaymentReference(String paymentReference);
 
+    /** How many online orders this customer has placed and not yet paid (each one holds stock). */
+    long countByUserAndPaymentMethodAndPaymentStatusAndStatus(com.example.ecommerce.model.User user, String paymentMethod, String paymentStatus, String status);
+
     /** Online orders still waiting for payment that were placed before the cut-off. */
     @Query("select o from Order o where o.paymentMethod = 'ONLINE' and o.paymentStatus = 'PENDING' and o.status = 'PENDING' and o.orderDate < :before")
     List<Order> findUnpaidOnlineBefore(@Param("before") java.time.LocalDateTime before);
