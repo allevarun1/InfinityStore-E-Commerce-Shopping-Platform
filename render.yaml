@@ -87,9 +87,9 @@ services:
       - key: SEED_DEMO_CATALOG
         value: "true"
       - key: CORS_ORIGINS
-        value: https://rekha-shopping-mall.pages.dev,https://rekha-shopping-mall.onrender.com
+        value: https://rekhashoppingmall.com,https://www.rekhashoppingmall.com,https://rekha-shopping-mall.pages.dev,https://rekha-shopping-mall.onrender.com
       - key: FRONTEND_URL
-        value: https://rekha-shopping-mall.pages.dev
+        value: https://rekhashoppingmall.com
       - key: JAVA_TOOL_OPTIONS
         value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1
 
