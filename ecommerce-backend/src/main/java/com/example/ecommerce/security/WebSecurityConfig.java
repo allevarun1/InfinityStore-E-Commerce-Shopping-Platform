@@ -45,6 +45,15 @@ public class WebSecurityConfig {
     @Value("${app.ratelimit.multiplier:1}")
     private int rateLimitMultiplier;
 
+    // Shared secret that Cloudflare adds to every request; empty means the origin lock is off.
+    @Value("${app.origin.secret:}")
+    private String originSecret;
+
+    @Bean
+    public OriginSecretFilter originSecretFilter() {
+        return new OriginSecretFilter(originSecret);
+    }
+
     @Bean
     public RateLimitFilter rateLimitFilter() {
         return new RateLimitFilter(new RateLimiter(), rateLimitMultiplier);
@@ -100,6 +109,7 @@ public class WebSecurityConfig {
             );
 
         http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(originSecretFilter(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(rateLimitFilter(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
