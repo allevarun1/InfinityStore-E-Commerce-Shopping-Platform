@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
+    "test:seo": "node --test seo/seo.test.mjs",
     "preview": "vite preview",
     "start": "serve -s dist -l ${PORT:-4173}"
   },

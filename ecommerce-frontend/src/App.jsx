@@ -178,7 +178,7 @@ function Footer() {
       <div className="footer-inner">
         <div>
           <Link className="brand" to="/" aria-label="Rekha Shopping Mall home"><BrandSignature tone="dark" /></Link>
-          <p>Handwoven silk, cotton, designer and bridal sarees, sourced directly from weavers.</p>
+          <p>Sarees online from Rekha Shopping Mall.</p>
         </div>
         <div>
           <h3>Shop</h3>

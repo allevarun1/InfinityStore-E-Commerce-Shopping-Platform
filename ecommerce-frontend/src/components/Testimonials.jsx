@@ -15,7 +15,11 @@ export function Testimonials() {
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  useEffect(() => { ApiService.testimonials().then(setList).catch(() => setList([])); }, []);
+  // Placeholder quotes (sample: true) are for local demos. A live shop must never show invented customers, so
+  // production builds drop them; the owner's own testimonials are unaffected.
+  useEffect(() => {
+    ApiService.testimonials().then(rows => setList(import.meta.env.PROD ? rows.filter(t => !t.sample) : rows)).catch(() => setList([]));
+  }, []);
   useEffect(() => {
     if (list.length < 2 || paused || reducedMotion()) return undefined;
     const t = setInterval(() => setI(n => (n + 1) % list.length), 6500);

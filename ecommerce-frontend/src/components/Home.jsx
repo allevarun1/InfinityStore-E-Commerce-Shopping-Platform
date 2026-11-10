@@ -11,7 +11,9 @@ import { ReelsStrip } from './Videos';
 import { Testimonials } from './Testimonials';
 import { ProductCard, ProductCardSkeleton } from './ProductCard';
 import { QuickView } from './QuickView';
-import { isOnDeal, activePrice, discountPercent } from '../lib/format';
+import { isOnDeal, activePrice, discountPercent, inrCompact } from '../lib/format';
+import { setHead } from '../lib/head';
+import { HOME_TITLE, homeDescription } from '../../seo/meta.js';
 
 const SORTS = {
   featured: { label: 'Featured', fn: (a, b) => (b.stockQuantity > 0) - (a.stockQuantity > 0) || isOnDeal(b) - isOnDeal(a) || a.id - b.id },
@@ -33,7 +35,12 @@ const PAGE = 12;
 
 export function Home() {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setCategories] = useState([]);
+  // Only categories that actually hold sarees are offered, so no shopper lands on an empty shelf.
+  const categories = useMemo(
+    () => allCategories.filter(c => products.some(p => p.category?.id === c.id)),
+    [allCategories, products],
+  );
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [busyId, setBusyId] = useState(null);
@@ -90,8 +97,8 @@ export function Home() {
   }, [load]);
 
   useEffect(() => {
-    document.title = 'Rekha Shopping Mall — Handwoven Saree Collection';
-  }, []);
+    setHead({ title: HOME_TITLE, description: homeDescription(products), path: '/' });
+  }, [products]);
 
   // Arriving at /#products: the sections above the grid (carousel, banners, films, occasions) appear only after the
   // sarees load and keep growing as their pictures and videos arrive, which pushed the grid off screen. Keep the grid
@@ -149,7 +156,7 @@ export function Home() {
 
   const tickerItems = useMemo(() => {
     const names = categories.map(c => c.name.replace(/ Sarees$/i, ''));
-    const lead = ['Handwoven by weavers'];
+    const lead = [];
     const seen = new Set();
     return [...lead, ...names].filter(t => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()));
   }, [categories]);
@@ -179,7 +186,7 @@ export function Home() {
         <BannerScene />
         <div className="hero-inner">
           <div className="hb-copy">
-            <span className="eyebrow hb-eyebrow"><Lotus />Handwoven saree destination</span>
+            <span className="eyebrow hb-eyebrow"><Lotus />Sarees online</span>
             <h1 id="hero-title" className="hb-title">
               <span className="sr-only">Tradition meets trend.</span>
               <span className="hb-l1" aria-hidden="true"><span className="word" style={{ '--i': 0 }}>Tradition</span></span>
@@ -198,7 +205,9 @@ export function Home() {
               </p>
             )}
             <p className="hb-lede">
-              Kanchipuram silks, Bengal handlooms, Kerala kasavu and designer drapes, sourced directly from weavers.
+              {products.length > 0
+                ? `${products.length} sarees to choose from, starting at ${inrCompact(Math.min(...products.map(activePrice)))}.`
+                : 'Sarees, chosen with care and delivered to your door.'}
             </p>
             <div className="hero-ctas">
               <a className="btn btn-light" href="#products">Explore the collection</a>

@@ -37,7 +37,7 @@ export function Spotlight({ products }) {
   }, [paused, reduce, slides.length]);
 
   if (!slides.length) {
-    return <img {...imageSet("/images/sarees/hero-sarees.jpg", HERO_SIZES)} alt="A selection of folded handwoven silk sarees" width="900" height="1125" fetchPriority="high" />;
+    return <img {...imageSet("/images/sarees/hero-sarees.jpg", HERO_SIZES)} alt="A selection of folded sarees" width="900" height="1125" fetchPriority="high" />;
   }
   return (
     <div className="spot" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
@@ -66,7 +66,7 @@ const TAGLINES = [
   [/silk/i, 'Grace in every drape'], [/cotton|handloom/i, 'Easy elegance, every day'], [/designer/i, 'Statement pieces'],
   [/bridal|wedding/i, 'For the day you will remember'], [/kasavu|kerala/i, 'Gold on ivory'], [/banarasi/i, 'Woven in Varanasi'],
 ];
-const tagline = (name) => TAGLINES.find(([re]) => re.test(name))?.[1] || 'Handpicked from weavers';
+const tagline = (name) => TAGLINES.find(([re]) => re.test(name))?.[1] || 'Explore the range';
 
 /** A section heading in the brand-board style: a script word above a spaced capital title. */
 export function ScriptHead({ id, script, title, sub }) {
@@ -206,8 +206,8 @@ export function StyleBand() {
       <div className="band-inner">
         <h2 id="band-title"><span className="sh-script">Your style,</span> our priority</h2>
         <ul>
-          <li><i className="bi bi-gem" aria-hidden="true"></i>Handpicked from weavers</li>
-          <li><i className="bi bi-stars" aria-hidden="true"></i>New drapes every week</li>
+          <li><i className="bi bi-gem" aria-hidden="true"></i>Chosen with care</li>
+          <li><i className="bi bi-stars" aria-hidden="true"></i>Secure online payment</li>
           <li><i className="bi bi-flower1" aria-hidden="true"></i>Traditional and modern</li>
         </ul>
         <a className="band-cta" href="#products">Shop now <i className="bi bi-arrow-right" aria-hidden="true"></i></a>

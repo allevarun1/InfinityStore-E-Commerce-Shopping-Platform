@@ -1,7 +1,7 @@
 {
-  "name": "Rekha Shopping Mall — Handwoven Sarees",
+  "name": "Rekha Shopping Mall",
   "short_name": "Rekha Shopping Mall",
-  "description": "Handwoven silk, cotton, designer and bridal sarees, delivered across India.",
+  "description": "Shop sarees online at Rekha Shopping Mall.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

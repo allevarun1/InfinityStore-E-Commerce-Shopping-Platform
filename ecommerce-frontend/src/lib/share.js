@@ -81,7 +81,7 @@ export function collectionMessage(list, heading = `✨ New this week at ${STORE}
 export function captionFor(p, key = 'new') {
   const tag = tagFor(key, p);
   const cat = (p.category?.name || 'saree').replace(/\s+/g, '');
-  return `${tag ? `${tag.charAt(0)}${tag.slice(1).toLowerCase()} · ` : ''}${p.name}\n${details(p)}\n${isOnDeal(p) ? `${money(p.dealPrice)} (was ${money(p.price)})` : money(p.price)}\n\nShop: ${productLink(p, 'instagram').replace('utm_source=whatsapp', 'utm_source=instagram')}\n\n#saree #${cat} #handloom #sareelove #RekhaShoppingMall`;
+  return `${tag ? `${tag.charAt(0)}${tag.slice(1).toLowerCase()} · ` : ''}${p.name}\n${details(p)}\n${isOnDeal(p) ? `${money(p.dealPrice)} (was ${money(p.price)})` : money(p.price)}\n\nShop: ${productLink(p, 'instagram').replace('utm_source=whatsapp', 'utm_source=instagram')}\n\n#saree #${cat} #sareelove #RekhaShoppingMall`;
 }
 
 // ---------- order updates ----------

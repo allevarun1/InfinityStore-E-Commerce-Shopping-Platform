@@ -13,7 +13,7 @@ export function AuthShell({ children }) {
         <img src="/images/sarees/hero-sarees.jpg" alt="" width="900" height="1125" />
         <div className="auth-art-copy">
           <BrandSignature tone="dark" />
-          <p className="auth-quote">Handwoven drapes, chosen with care and delivered to your door.</p>
+          <p className="auth-quote">Sarees, chosen with care and delivered to your door.</p>
           <ul>
             {freeShippingFrom(info) && <li><i className="bi bi-truck"></i> Free shipping above {inrCompact(freeShippingFrom(info))}</li>}
             {codOffered(info) && <li><i className="bi bi-cash-coin"></i> Cash on delivery</li>}

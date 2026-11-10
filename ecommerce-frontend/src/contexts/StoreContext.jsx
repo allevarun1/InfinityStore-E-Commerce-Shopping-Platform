@@ -25,7 +25,10 @@ export function StoreProvider({ children }) {
 
   useEffect(() => {
     ApiService.storeInfo().then((i) => { setInfo(i); configure(i); }).catch(() => setInfo(null));
-    ApiService.categories().then(setCategories).catch(() => setCategories([]));
+    // Only categories that hold at least one published saree are offered: no empty shelves in the menu.
+    Promise.all([ApiService.categories(), ApiService.products()])
+      .then(([cats, items]) => setCategories(cats.filter(c => items.some(p => p.category?.id === c.id))))
+      .catch(() => ApiService.categories().then(setCategories).catch(() => setCategories([])));
     ApiService.offers().then(setOffers).catch(() => setOffers([]));
     ApiService.storeVideos().then(setVideos).catch(() => setVideos([]));
   }, []);

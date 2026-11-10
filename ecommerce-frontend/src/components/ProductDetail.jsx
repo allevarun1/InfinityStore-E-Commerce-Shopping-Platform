@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ApiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,13 +18,16 @@ import { ColourSwatches } from './ColourSwatches';
 import { WatchButton } from './Videos';
 import { DeliveryCheck, OfferStrip, PriceBreakup, DemandLine } from './Shopper';
 import { freeShippingFrom, codOffered, NO_RETURNS_SHORT } from '../lib/policy';
+import { setHead } from '../lib/head';
+import { SITE_URL, productTitle, productDescription, productJsonLd, jsonForScript } from '../../seo/meta.js';
 
-// Search engines that run JavaScript read this to show price and availability in results.
-function setProductMeta(p) {
-  const price = activePrice(p);
-  const description = (p.description || '').replace(/\s+/g, ' ').trim().slice(0, 300);
-  let meta = document.querySelector('meta[name="description"]');
-  if (meta && description) meta.setAttribute('content', description);
+// Keeps the tab title, description, share card and structured data right when a shopper moves between pages
+// without a reload. On a first page load the server (functions/_middleware.js) has already written all of this.
+function setProductHead(p, info) {
+  const path = `/products/${p.id}`;
+  const abs = (u) => new URL(imageSrc(u), window.location.origin).href;
+  const images = [p.imageUrl, ...(p.gallery || [])].filter(Boolean).map(abs);
+  setHead({ title: productTitle(p), description: productDescription(p), path, image: images[0], imageAlt: p.name, type: 'product' });
   let tag = document.getElementById('product-jsonld');
   if (!tag) {
     tag = document.createElement('script');
@@ -32,20 +35,7 @@ function setProductMeta(p) {
     tag.type = 'application/ld+json';
     document.head.appendChild(tag);
   }
-  tag.textContent = JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: p.name,
-    description,
-    image: p.imageUrl ? new URL(imageSrc(p.imageUrl), window.location.origin).href : undefined,
-    offers: {
-      '@type': 'Offer',
-      priceCurrency: 'INR',
-      price: price.toFixed(2),
-      availability: p.stockQuantity > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-      url: window.location.href,
-    },
-  });
+  tag.textContent = jsonForScript(productJsonLd(p, { url: SITE_URL + path, images, info }));
 }
 
 export function ProductDetail() {
@@ -56,6 +46,8 @@ export function ProductDetail() {
   const [busy, setBusy] = useState(false);
   const { isAdmin } = useAuth();
   const { info, showAdded } = useStore();
+  const infoRef = useRef(info);
+  infoRef.current = info;
   const { isWished, toggle: toggleWish } = useWishlist();
   const cartActions = useCartActions();
   const toast = useToast();
@@ -70,13 +62,17 @@ export function ProductDetail() {
       .then(p => {
         setProduct(p);
         setStatus('ready');
-        document.title = `${p.name} | Rekha Shopping Mall`;
-        setProductMeta(p);
+        // First load: the server already wrote this product's head. Later navigations write it here.
+        if (document.documentElement.dataset.seoProduct === String(p.id)) delete document.documentElement.dataset.seoProduct;
+        else { delete document.documentElement.dataset.seoProduct; setProductHead(p, infoRef.current); }
         rememberViewed(p.id);
         track.viewItem(p);
       })
       .catch(err => setStatus(err.response?.status === 404 ? 'missing' : 'error'));
-    return () => document.getElementById('product-jsonld')?.remove();
+    return () => {
+      document.getElementById('product-jsonld')?.remove();
+      document.head.querySelector('link[rel="canonical"]')?.remove();
+    };
   }, [id]);
 
   if (status === 'missing') {

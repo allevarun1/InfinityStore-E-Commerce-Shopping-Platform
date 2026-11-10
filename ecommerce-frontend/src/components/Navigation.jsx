@@ -50,7 +50,7 @@ export function SearchBox() {
     <form className="header-search" role="search" onSubmit={submit} ref={box}>
       <i className="bi bi-search" aria-hidden="true"></i>
       <input
-        type="search" value={term} autoComplete="off" placeholder="Search silk, kasavu, bridal…" aria-label="Search sarees"
+        type="search" value={term} autoComplete="off" placeholder="Search sarees…" aria-label="Search sarees"
         role="combobox" aria-expanded={showList} aria-controls={listId} aria-autocomplete="list"
         aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
         onFocus={() => { loadProducts().then(setAll); setOpen(true); }}

@@ -61,7 +61,7 @@ export function Newsletter() {
       .finally(() => setBusy(false));
   };
 
-  const pitch = info?.welcomeOffer ? `Get ${info.welcomeOffer.summary}.` : 'Be first to know about new weaves and festive offers.';
+  const pitch = info?.welcomeOffer ? `Get ${info.welcomeOffer.summary}.` : 'Be first to know about new arrivals and festive offers.';
 
   return (
     <section className="newsletter" aria-labelledby="nl-title">

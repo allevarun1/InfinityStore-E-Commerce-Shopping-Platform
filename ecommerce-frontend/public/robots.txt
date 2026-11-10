@@ -7,3 +7,5 @@ Disallow: /orders
 Disallow: /profile
 Disallow: /wishlist
 Disallow: /reset-password
+
+Sitemap: https://rekhashoppingmall.com/sitemap.xml

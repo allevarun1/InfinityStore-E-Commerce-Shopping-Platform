@@ -35,6 +35,7 @@ jobs:
           cache-dependency-path: ecommerce-frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm run test:seo
       - run: npm run build
       # Reports known vulnerabilities in production dependencies. Non-blocking until the
       # existing advisories are cleared; make it blocking afterwards.

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useStore } from '../contexts/StoreContext';
 import { whatsappLink } from './Growth';
 import { codOffered, NO_RETURNS_POINTS } from '../lib/policy';
+import { setHead } from '../lib/head';
+import { INFO_PAGES } from '../../seo/meta.js';
 
 const PRIVACY = 'Rekha Shopping Mall respects your privacy and is committed to protecting your personal information. When you use our platform, we may collect basic details such as your name, email address, contact information, order history, and usage data to improve your shopping experience. This information is used to process orders, provide customer support, enhance website performance, and ensure account security. If you subscribe to our newsletter we use your email address to send offers and new-arrival updates, and you can unsubscribe at any time. We do not sell or share your personal data with unauthorized third parties. However, limited information may be shared with trusted partners such as payment gateways for secure transactions and delivery services for order fulfillment. We use essential cookies to maintain session data and, only if you accept, analytics and advertising cookies to understand how the store is used and to measure our advertising. By using Rekha Shopping Mall, you agree to the collection and use of your information as described. For any privacy-related concerns, you can contact us using the details on our Contact page.';
 
@@ -56,7 +58,9 @@ const TITLES = {
 export function StaticPage({ page }) {
   const { info } = useStore();
   const title = TITLES[page] || 'Rekha Shopping Mall';
-  useEffect(() => { document.title = `${title} | Rekha Shopping Mall`; }, [title]);
+  useEffect(() => {
+    setHead({ title: `${title} | Rekha Shopping Mall`, description: INFO_PAGES[`/${page}`]?.description, path: `/${page}` });
+  }, [title, page]);
 
   return (
     <section className="panel static-page">
