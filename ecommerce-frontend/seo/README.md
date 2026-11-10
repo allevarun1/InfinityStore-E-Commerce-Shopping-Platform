@@ -79,7 +79,7 @@ node seo/check.mjs http://127.0.0.1:8788
 2. In Pages, under **Preview**, set `VITE_API_URL` (and `NODE_VERSION=20`). Redeploy the preview if it built before you did.
 3. Run `node seo/check.mjs https://<preview-url>`. It checks every product, the status codes, the sitemap, `robots.txt`, security headers, and that the preview is noindex.
 4. If product pages return 503, read `X-SEO-Upstream`. A `403` means the origin lock refused the function: add `ORIGIN_SECRET` as a **Secret** under Preview, redeploy the preview, and re-run the check.
-5. Do one test-mode Razorpay payment on the preview (the payment code is unchanged; this is a smoke test).
+5. **A preview cannot exercise the app itself.** The API only allows the real site's origins (`CORS_ORIGINS` on Render), so a preview's React app cannot load products or take a payment, and `check.mjs` therefore verifies only the server-delivered layer (which reads the API from Cloudflare, not from a browser). To smoke-test checkout before merging, the owner would have to add the preview origin to `CORS_ORIGINS` (a production setting; deliberately not done). Otherwise do one test-mode Razorpay payment on production right after the merge; no payment code changed in this release.
 6. After approval, merge to `main`. Run `node seo/check.mjs https://rekhashoppingmall.com`.
 7. In Google Search Console, submit `https://rekhashoppingmall.com/sitemap.xml`. Keep `/api/store/sitemap.xml` until the new one reads successfully.
 
