@@ -42,4 +42,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("select p from Product p where p.deal = true and " + PUBLIC)
     List<Product> findPublicDeals();
+
+    // ---- Photos still stored inline as data: URLs (from before the media library), deleted ones included
+    @Query("select p.id from Product p where p.imageUrl like 'data:%' or p.galleryJson like '%\"data:%'")
+    List<Long> findIdsWithInlinePhotos();
 }

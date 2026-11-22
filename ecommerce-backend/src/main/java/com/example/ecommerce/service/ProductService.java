@@ -36,6 +36,7 @@ public class ProductService {
     @Autowired private ReviewRepository reviewRepository;
     @Autowired private AuditService auditService;
     @Autowired private DemandSignals demandSignals;
+    @Autowired private MediaService mediaService;
 
     // ---------------------------------------------------------------- shopper reads (published only)
 
@@ -110,6 +111,7 @@ public class ProductService {
         product.setStatus(ProductStatus.DRAFT);
         product.setSource(source(request.getSource()));
         apply(product, request, category);
+        moveInlinePhotos(product);
         product = productRepository.save(product);
         auditService.record("PRODUCT_CREATED", "Product", product.getId(), product.getSource() + " draft");
 
@@ -134,6 +136,7 @@ public class ProductService {
                 ? product.getImageUrl() : null;
         apply(product, request, category);
         if (keepImage != null) product.setImageUrl(keepImage);
+        moveInlinePhotos(product);
         if (product.isPublished()) {
             List<String> issues = readinessIssues(product);
             if (!issues.isEmpty()) {
@@ -251,6 +254,15 @@ public class ProductService {
         product.setCostPrice(r.getCostPrice());
         product.setSupplierName(blankToNull(r.getSupplierName()));
         product.setGalleryRaw(resolveGallery(product.getGalleryRaw(), r.getGallery()));
+    }
+
+    /** With R2 set up, photos uploaded as data: URLs are stored in R2 and the saree keeps only the short link. */
+    private void moveInlinePhotos(Product product) {
+        product.setImageUrl(mediaService.toLibraryLink(product.getImageUrl(), "saree.jpg"));
+        List<String> gallery = new ArrayList<>();
+        int i = 0;
+        for (String g : product.getGalleryRaw()) gallery.add(mediaService.toLibraryLink(g, "saree-" + (++i) + ".jpg"));
+        product.setGalleryRaw(gallery);
     }
 
     /**

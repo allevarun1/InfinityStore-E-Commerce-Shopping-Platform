@@ -209,6 +209,52 @@ public class MediaService {
     @EventListener(ApplicationReadyEvent.class)
     public void moveDatabaseFilesToR2OnStartup() {
         moveDatabaseFilesToR2();
+        moveProductPhotosToR2();
+    }
+
+    private static final Pattern INLINE_PHOTO = Pattern.compile("(?s)^data:image/(?:png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=]+)$");
+
+    /**
+     * A saree photo sent as a data: URL becomes a library file in R2 and its /api/media link is returned, so photos
+     * load from Cloudflare instead of passing through the API. Anything else, or any value while R2 is off, is
+     * returned unchanged.
+     */
+    public String toLibraryLink(String value, String name) {
+        if (value == null || !r2.enabled()) return value;
+        var m = INLINE_PHOTO.matcher(value);
+        if (!m.matches()) return value;
+        return store(name, java.util.Base64.getDecoder().decode(m.group(1))).url();
+    }
+
+    /**
+     * Saree photos saved before the media library existed sit inside the product rows as data: URLs. Each is moved
+     * to R2 once and the row keeps only the short /api/media link, which also shrinks cart, order and catalogue
+     * replies that used to carry the whole photo.
+     */
+    public void moveProductPhotosToR2() {
+        if (!r2.enabled()) return;
+        List<Long> ids = products.findIdsWithInlinePhotos();
+        if (ids.isEmpty()) return;
+        log.info("Moving the photos of {} saree(s) from the database to R2", ids.size());
+        int moved = 0;
+        for (Long id : ids) {
+            try {
+                tx.executeWithoutResult(s -> products.findById(id).ifPresent(p -> {
+                    String label = "saree-" + p.getId();
+                    p.setImageUrl(toLibraryLink(p.getImageUrl(), label + ".jpg"));
+                    List<String> gallery = new java.util.ArrayList<>();
+                    int i = 0;
+                    for (String g : p.getGalleryRaw()) gallery.add(toLibraryLink(g, label + "-" + (++i) + ".jpg"));
+                    p.setGalleryRaw(gallery);
+                    products.save(p);
+                }));
+                moved++;
+            } catch (RuntimeException e) {
+                log.warn("Could not move the photos of saree {} to R2 yet: {}", id, e.getMessage());
+            }
+        }
+        CatalogCache.invalidate();
+        log.info("Moved the photos of {} of {} saree(s) to R2", moved, ids.size());
     }
 
     public void moveDatabaseFilesToR2() {
