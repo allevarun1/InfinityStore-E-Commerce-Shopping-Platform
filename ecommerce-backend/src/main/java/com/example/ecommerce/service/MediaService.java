@@ -66,8 +66,17 @@ public class MediaService {
                 .filter(a -> a.getChecksum().equals(m.group(2)) && (kind == null || a.getKind() == kind)).isPresent();
     }
 
+    /** Card-sized copy of a photo, kept beside it in R2 so grids and carts download a few KB instead of the full photo. */
+    public static final int MAX_THUMB_BYTES = 300 * 1024;
+    static final String THUMB_SUFFIX = "-w640";
+
     @Transactional
     public Info store(String originalName, byte[] bytes) {
+        return store(originalName, bytes, null);
+    }
+
+    @Transactional
+    public Info store(String originalName, byte[] bytes, byte[] thumb) {
         if (bytes == null || bytes.length < 12) throw new BusinessException("That file is empty");
         String type = sniff(bytes);
         if (type == null) throw new BusinessException("Use a JPEG, PNG, WebP or GIF photo, or an MP4 or WebM video");
@@ -91,6 +100,15 @@ public class MediaService {
                 throw new BusinessException("The file could not be saved right now. Please try again.");
             }
             a.setStorageKey(key);
+            // The small copy is optional: a missing or rejected one only means the full photo is served instead.
+            String thumbType = kind == MediaAsset.Kind.IMAGE && thumb != null && thumb.length >= 12 && thumb.length <= MAX_THUMB_BYTES ? sniff(thumb) : null;
+            if (thumbType != null && thumbType.startsWith("image/")) {
+                try {
+                    r2.put(key + THUMB_SUFFIX, thumb, thumbType);
+                } catch (RuntimeException e) {
+                    log.warn("Could not store the small copy of {}: {}", key, e.getMessage());
+                }
+            }
         } else {
             a.setData(bytes);
         }
@@ -186,6 +204,7 @@ public class MediaService {
                 if (media.existsByStorageKey(key)) return;
                 try {
                     r2.delete(key);
+                    r2.delete(key + THUMB_SUFFIX); // a 404 for a photo that never had one is fine
                 } catch (RuntimeException e) {
                     log.warn("Could not remove {} from R2: {}", key, e.getMessage());
                 }

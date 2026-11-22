@@ -182,7 +182,7 @@ export async function enhance(src, options = {}) {
   const growth = Math.max(TARGET.w / iw, TARGET.h / ih);
   unsharp(img.data, out.width, out.height, o.sharpen * (growth > 1.6 ? 1.25 : 1), growth > 1.6 ? 2 : 1);
   g.putImageData(img, 0, 0);
-  const blob = await toBlob(out, 0.9);
+  const blob = await toBlob(out, 0.84);
   return {
     blob,
     url: URL.createObjectURL(blob),
@@ -208,17 +208,40 @@ const toDataUrl = async (c) => {
   }
 };
 
-/** A photo straight from a phone, made upload-friendly: right way up and at most 2000px on the long side. */
-export async function shrinkForUpload(file) {
-  const img = await loadImage(file);
+/**
+ * Storage sizes: the full photo is at most 1600px on the long side (zoom on a saree page stays sharp: a 4:5 photo
+ * that size is 1280px wide, about 3x a phone screen) at WebP quality 0.82, which is visually the same as 0.92 at
+ * roughly 40% fewer bytes. The small copy is 640px for grids and carts.
+ */
+export const FULL_MAX = 1600;
+export const THUMB_MAX = 640;
+
+async function drawn(img, max) {
   const { w, h } = sizeOf(img);
-  const s = Math.min(1, 2000 / Math.max(w, h));
-  const c = canvas(w * s, h * s);
+  const s = Math.min(1, max / Math.max(w, h));
+  const c = canvas(Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s)));
   const g = c.getContext('2d');
   g.imageSmoothingQuality = 'high';
   g.drawImage(img, 0, 0, c.width, c.height);
-  const blob = await toBlob(c, 0.92);
+  return c;
+}
+
+/** A photo straight from a phone, made upload-friendly: right way up and at most 1600px on the long side. */
+export async function shrinkForUpload(file) {
+  const blob = await toBlob(await drawn(await loadImage(file), FULL_MAX), 0.82);
   return new File([blob], file.name.replace(/\.[^.]+$/, '') + (blob.type === 'image/webp' ? '.webp' : '.jpg'), { type: blob.type });
+}
+
+/** The small copy stored beside a photo. Null when it would not be smaller, so the full photo is used instead. */
+export async function makeThumb(file) {
+  try {
+    const img = await loadImage(file);
+    if (Math.max(...Object.values(sizeOf(img))) <= THUMB_MAX) return null; // already card-sized
+    const blob = await toBlob(await drawn(img, THUMB_MAX), 0.8);
+    return blob && blob.size < file.size * 0.8 ? blob : null;
+  } catch {
+    return null;
+  }
 }
 
 export const kb = (bytes) => (bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);

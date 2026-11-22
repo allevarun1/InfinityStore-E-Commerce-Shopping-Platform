@@ -25,13 +25,19 @@ export async function onRequest({ request, env, params }) {
   if (!env.MEDIA) return fallback();
 
   const wantsRange = request.headers.has('range');
-  let obj;
-  try {
-    obj = await env.MEDIA.get(`media/${sum}`, { range: request.headers, onlyIf: request.headers });
-  } catch {
-    // A malformed Range header: answer with the whole file.
-    obj = await env.MEDIA.get(`media/${sum}`);
-  }
+  // ?w=640 asks for the card-sized copy stored beside a photo (media/{sum}-w640). Photos uploaded before that existed
+  // have none, so the full photo is served: the page looks the same, it just downloads more.
+  const wantsThumb = new URL(request.url).searchParams.get('w') === '640';
+  const read = async (key) => {
+    try {
+      return await env.MEDIA.get(key, { range: request.headers, onlyIf: request.headers });
+    } catch {
+      // A malformed Range header: answer with the whole file.
+      return env.MEDIA.get(key);
+    }
+  };
+  let obj = wantsThumb ? await read(`media/${sum}-w640`) : null;
+  if (obj === null) obj = await read(`media/${sum}`);
   if (obj === null) return fallback();
 
   const headers = new Headers();

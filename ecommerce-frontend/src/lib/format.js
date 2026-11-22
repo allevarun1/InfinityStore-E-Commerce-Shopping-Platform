@@ -33,12 +33,15 @@ const LIBRARY_LINK = /^\/api\/media\/(\d{1,12})\/([a-f0-9]{10})$/;
  * Uploaded images are served by the API (/api/media/:id/:checksum); bundled ones live with the frontend. With
  * VITE_MEDIA_URL set, library files load from Cloudflare (R2) and never touch the API server.
  */
-export const imageSrc = (url) => {
+export const imageSrc = (url, { thumb = false } = {}) => {
   if (!url || !url.startsWith('/api/')) return url;
   const m = MEDIA_BASE && LIBRARY_LINK.exec(url);
-  if (m) return `${MEDIA_BASE}/media/${m[1]}/${m[2]}`;
+  if (m) return `${MEDIA_BASE}/media/${m[1]}/${m[2]}${thumb ? '?w=640' : ''}`;
   return API_BASE.replace(/\/api\/?$/, '') + url;
 };
+
+/** Library photo URLs are served from R2 with a card-sized copy; anything else has no such copy. */
+const hasThumb = (url) => Boolean(MEDIA_BASE && LIBRARY_LINK.test(url || ''));
 
 const LOCAL_PHOTO = /^\/images\/sarees\/(.+)\.jpg$/;
 
@@ -48,6 +51,8 @@ const LOCAL_PHOTO = /^\/images\/sarees\/(.+)\.jpg$/;
  */
 export const imageSet = (url, sizes) => {
   const m = LOCAL_PHOTO.exec(url || '');
+  // Uploaded photos: phones and card grids take the 640px copy, big screens and zoom the full photo (up to 1600px).
+  if (!m && hasThumb(url)) return { src: imageSrc(url), srcSet: `${imageSrc(url, { thumb: true })} 640w, ${imageSrc(url)} 1600w`, sizes };
   if (!m) return { src: imageSrc(url) };
   const base = `/images/sarees/${m[1]}`;
   return { src: url, srcSet: `${base}-400.webp 400w, ${base}-800.webp 800w`, sizes };

@@ -20,8 +20,9 @@ public class MediaController {
     @Autowired private MediaService media;
 
     @PostMapping(value = "/api/admin/media", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public MediaService.Info upload(@RequestParam("file") MultipartFile file) throws IOException {
-        return media.store(file.getOriginalFilename(), file.getBytes());
+    public MediaService.Info upload(@RequestParam("file") MultipartFile file,
+                                    @RequestParam(value = "thumb", required = false) MultipartFile thumb) throws IOException {
+        return media.store(file.getOriginalFilename(), file.getBytes(), thumb == null || thumb.isEmpty() ? null : thumb.getBytes());
     }
 
     @GetMapping("/api/admin/media")

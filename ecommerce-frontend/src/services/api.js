@@ -108,9 +108,15 @@ export const ApiService = {
   setPopupActive: (id, value) => api.put(`/admin/popups/${id}/active`, null, { params: { value } }).then(res => res.data),
   deletePopup: (id) => api.delete(`/admin/popups/${id}`).then(res => res.data),
   adminMedia: () => api.get('/admin/media').then(res => res.data),
-  uploadMedia: (file, onProgress) => {
+  uploadMedia: async (file, onProgress) => {
     const body = new FormData();
     body.append('file', file, file.name);
+    // Every photo goes up with a small copy for grids and carts (the server ignores it when files are not in R2).
+    if (file.type?.startsWith('image/')) {
+      const { makeThumb } = await import('../lib/imageTools');
+      const thumb = await makeThumb(file);
+      if (thumb) body.append('thumb', thumb, 'thumb');
+    }
     return api.post('/admin/media', body, { onUploadProgress: (e) => onProgress?.(e.total ? e.loaded / e.total : 0) }).then(res => res.data);
   },
   deleteMedia: (id) => api.delete(`/admin/media/${id}`).then(res => res.data),

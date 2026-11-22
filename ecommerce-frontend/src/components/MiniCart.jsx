@@ -80,7 +80,7 @@ export function MiniCart() {
         </header>
 
         <div className="drawer-item">
-          <img src={imageSrc(product.imageUrl)} alt="" width="72" height="96" />
+          <img src={imageSrc(product.imageUrl, { thumb: true })} alt="" width="72" height="96" />
           <div>
             <strong>{product.name}</strong>
             <span>Qty {quantity} · {inr(activePrice(product) * quantity)}</span>
@@ -112,7 +112,7 @@ export function MiniCart() {
               {suggestions.map(p => (
                 <li key={p.id}>
                   <Link to={`/products/${p.id}`} onClick={closeAdded}>
-                    <img src={imageSrc(p.imageUrl)} alt="" loading="lazy" width="72" height="96" />
+                    <img src={imageSrc(p.imageUrl, { thumb: true })} alt="" loading="lazy" width="72" height="96" />
                     <span>{p.name}</span>
                     <b>{inrCompact(activePrice(p))}</b>
                   </Link>
