@@ -19,7 +19,9 @@ jobs:
           API_URL: ${{ vars.API_URL || 'https://api.rekhashoppingmall.com/api' }}
         run: |
           for attempt in 1 2 3; do
-            count=$(curl -s --max-time 90 "$API_URL/products" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" || echo "")
+            code=$(curl -s --max-time 90 -A "keep-shop-awake/1.0 (GitHub Actions)" -o /tmp/products.json -w '%{http_code}' "$API_URL/products" || echo "000")
+            count=$(python3 -c "import json; print(len(json.load(open('/tmp/products.json'))))" 2>/dev/null || echo "")
+            if [ -z "$count" ]; then echo "HTTP $code from $API_URL/products, reply starts: $(head -c 200 /tmp/products.json 2>/dev/null | tr '\n' ' ')"; fi
             if [ -n "$count" ]; then
               echo "Shop is up: $count sarees"
               if [ "$count" = "0" ]; then echo "::warning::The shop returned 0 sarees"; fi
