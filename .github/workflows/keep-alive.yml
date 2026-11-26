@@ -16,7 +16,7 @@ jobs:
       - name: Load sarees from the live API (wakes the server and touches the database)
         env:
           # Repository variable API_URL (e.g. https://api.<domain>/api) once the API moves to Oracle.
-          API_URL: ${{ vars.API_URL || 'https://rekha-shopping-mall-api.onrender.com/api' }}
+          API_URL: ${{ vars.API_URL || 'https://api.rekhashoppingmall.com/api' }}
         run: |
           for attempt in 1 2 3; do
             count=$(curl -s --max-time 90 "$API_URL/products" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" || echo "")

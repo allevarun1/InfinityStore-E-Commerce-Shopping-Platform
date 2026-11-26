@@ -8,7 +8,10 @@ const ID = /^\d{1,12}$/;
 const SUM = /^[a-f0-9]{10}$/;
 const DEFAULT_API = 'https://rekha-shopping-mall-api.onrender.com';
 
-export async function onRequest({ request, env, params }) {
+const CACHE_MAX_BYTES = 25 * 1024 * 1024; // photos and short clips; very large videos stream from R2 each time
+
+export async function onRequest(context) {
+  const { request, env, params } = context;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   }
@@ -24,7 +27,16 @@ export async function onRequest({ request, env, params }) {
   };
   if (!env.MEDIA) return fallback();
 
+  // A Pages Function's reply is not kept by Cloudflare's edge on its own, so every view would run this function and
+  // read R2 again (the free plan allows 100,000 function calls a day). Whole-file GETs are kept in the edge cache.
   const wantsRange = request.headers.has('range');
+  const cacheable = request.method === 'GET' && !wantsRange && !request.headers.has('if-none-match') && !request.headers.has('if-modified-since');
+  const cache = typeof caches !== 'undefined' ? caches.default : null;
+  const cacheKey = new Request(request.url, { method: 'GET' });
+  if (cacheable && cache) {
+    const hit = await cache.match(cacheKey);
+    if (hit) return hit;
+  }
   // ?w=640 asks for the card-sized copy stored beside a photo (media/{sum}-w640). Photos uploaded before that existed
   // have none, so the full photo is served: the page looks the same, it just downloads more.
   const wantsThumb = new URL(request.url).searchParams.get('w') === '640';
@@ -64,5 +76,9 @@ export async function onRequest({ request, env, params }) {
   } else {
     headers.set('Content-Length', String(obj.size));
   }
-  return new Response(request.method === 'HEAD' ? null : obj.body, { status, headers });
+  const response = new Response(request.method === 'HEAD' ? null : obj.body, { status, headers });
+  if (cacheable && cache && status === 200 && obj.size <= CACHE_MAX_BYTES) {
+    context.waitUntil(cache.put(cacheKey, response.clone()));
+  }
+  return response;
 }
