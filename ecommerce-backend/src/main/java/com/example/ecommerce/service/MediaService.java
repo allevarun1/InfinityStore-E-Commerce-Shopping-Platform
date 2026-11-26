@@ -117,6 +117,25 @@ public class MediaService {
         return info(saved);
     }
 
+    /**
+     * Adds the card-sized copy to a photo that was stored before copies existed (the admin library makes them in the
+     * owner's browser). Only photos kept in R2 can have one; the copy is checked like any upload.
+     */
+    @Transactional(readOnly = true)
+    public void attachThumb(Long id, byte[] thumb) {
+        MediaAsset a = media.findById(id).orElseThrow(() -> new BusinessException("That file was not found"));
+        if (a.getKind() != MediaAsset.Kind.IMAGE || a.getStorageKey() == null || !r2.enabled()) {
+            throw new BusinessException("Only photos stored in R2 get a card-sized copy");
+        }
+        String type = thumb == null || thumb.length < 12 || thumb.length > MAX_THUMB_BYTES ? null : sniff(thumb);
+        if (type == null || !type.startsWith("image/")) throw new BusinessException("That copy is not a small photo");
+        try {
+            r2.put(a.getStorageKey() + THUMB_SUFFIX, thumb, type);
+        } catch (RuntimeException e) {
+            throw new BusinessException("The copy could not be saved right now. Please try again.");
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<Info> list() {
         java.util.Map<String, String> uses = uses();

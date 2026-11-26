@@ -75,6 +75,24 @@ class R2MediaIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void anOlderPhotoCanGetItsCardSizedCopyLater() throws Exception {
+        String t = adminToken();
+        long id = upload(t, "old.png");
+        MediaAsset stored = media.findById(id).orElseThrow();
+
+        mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, "/api/admin/media/" + id + "/thumb")
+                .file(new MockMultipartFile("thumb", "thumb", "image/png", PNG)).header("Authorization", "Bearer " + t))
+                .andExpect(status().isNoContent());
+        verify(r2).put(eq(stored.getStorageKey() + "-w640"), eq(PNG), eq("image/png"));
+
+        mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, "/api/admin/media/" + id + "/thumb")
+                .file(new MockMultipartFile("thumb", "thumb", "text/html", "<script>alert(1)</script>".getBytes())).header("Authorization", "Bearer " + t))
+                .andExpect(status().is4xxClientError());
+        mvc.perform(multipart(org.springframework.http.HttpMethod.PUT, "/api/admin/media/" + id + "/thumb")
+                .file(new MockMultipartFile("thumb", "thumb", "image/png", PNG))).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void identicalUploadsShareOneR2CopyUntilTheLastIsDeleted() throws Exception {
         String t = adminToken();
         long first = upload(t, "a.png"), second = upload(t, "b.png");

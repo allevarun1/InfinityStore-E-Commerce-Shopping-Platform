@@ -37,6 +37,9 @@ class AudienceIntegrationTest extends IntegrationTestSupport {
     @Autowired WishlistItemRepository wishlist;
     @Autowired OrderService orderService;
 
+    // The test database is shared by every test class, so leads and wishlists left by a class that ran earlier (the
+    // order differs between machines) would otherwise rank among these people. Start clean as well as finish clean.
+    @org.junit.jupiter.api.BeforeEach
     @AfterEach
     void clean() {
         stockRequests.deleteAll();

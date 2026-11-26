@@ -48,15 +48,27 @@ public class ProductController {
 
     // ------------------------------------------------------------ public
 
+    /**
+     * Public catalogue replies may be kept briefly by Cloudflare (cache rule on api.rekhashoppingmall.com) and the
+     * browser, so a rush of shoppers is answered at the edge and the small server only sees one request a minute.
+     * Stale copies are served while a fresh one loads, and if the server is waking up or down.
+     */
+    static <T> ResponseEntity<T> catalog(T body) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.SECONDS).cachePublic().sMaxAge(60, TimeUnit.SECONDS)
+                        .staleWhileRevalidate(5, TimeUnit.MINUTES).staleIfError(1, TimeUnit.HOURS))
+                .body(body);
+    }
+
     @GetMapping("/products")
     public ResponseEntity<List<ProductView>> getAllProducts() {
-        return ResponseEntity.ok(cache.get("products", () -> productService.views(productService.getAllProducts())));
+        return catalog(cache.get("products", () -> productService.views(productService.getAllProducts())));
     }
 
     @GetMapping("/products/{id}")
     public ResponseEntity<ProductView> getProductById(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(cache.get("product:" + id, () -> productService.view(productService.getProductById(id))));
+            return catalog(cache.get("product:" + id, () -> productService.view(productService.getProductById(id))));
         } catch (BusinessException e) {
             return ResponseEntity.notFound().build();
         }
@@ -64,7 +76,7 @@ public class ProductController {
 
     @GetMapping("/products/category/{categoryId}")
     public ResponseEntity<List<ProductView>> getProductsByCategory(@PathVariable Long categoryId) {
-        return ResponseEntity.ok(cache.get("category-products:" + categoryId,
+        return catalog(cache.get("category-products:" + categoryId,
                 () -> productService.views(productService.getProductsByCategory(categoryId))));
     }
 
@@ -75,7 +87,7 @@ public class ProductController {
 
     @GetMapping("/products/deals")
     public ResponseEntity<List<ProductView>> getDeals() {
-        return ResponseEntity.ok(cache.get("deals", () -> productService.views(productService.getDeals())));
+        return catalog(cache.get("deals", () -> productService.views(productService.getDeals())));
     }
 
     /** Serves an uploaded (inline) image as a cacheable file. The v parameter changes whenever the image does. */

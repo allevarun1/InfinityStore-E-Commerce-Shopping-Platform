@@ -49,13 +49,15 @@ export async function onRequest(context) {
     }
   };
   let obj = wantsThumb ? await read(`media/${sum}-w640`) : null;
+  // The full photo standing in for a missing card-sized copy must not be kept for a year: the copy may be added later.
+  const standIn = wantsThumb && obj === null;
   if (obj === null) obj = await read(`media/${sum}`);
   if (obj === null) return fallback();
 
   const headers = new Headers();
   obj.writeHttpMetadata(headers);
   headers.set('ETag', obj.httpEtag);
-  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  headers.set('Cache-Control', standIn ? 'public, max-age=600' : 'public, max-age=31536000, immutable');
   headers.set('Accept-Ranges', 'bytes');
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Content-Disposition', 'inline');
@@ -77,7 +79,7 @@ export async function onRequest(context) {
     headers.set('Content-Length', String(obj.size));
   }
   const response = new Response(request.method === 'HEAD' ? null : obj.body, { status, headers });
-  if (cacheable && cache && status === 200 && obj.size <= CACHE_MAX_BYTES) {
+  if (cacheable && cache && !standIn && status === 200 && obj.size <= CACHE_MAX_BYTES) {
     context.waitUntil(cache.put(cacheKey, response.clone()));
   }
   return response;

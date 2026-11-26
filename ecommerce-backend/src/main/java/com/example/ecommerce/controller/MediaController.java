@@ -28,6 +28,13 @@ public class MediaController {
     @GetMapping("/api/admin/media")
     public List<MediaService.Info> list() { return media.list(); }
 
+    /** Card-sized copy for a photo uploaded before copies existed. */
+    @PutMapping(value = "/api/admin/media/{id}/thumb", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> attachThumb(@PathVariable Long id, @RequestParam("thumb") MultipartFile thumb) throws IOException {
+        media.attachThumb(id, thumb.getBytes());
+        return ResponseEntity.noContent().build();
+    }
+
     /** Removes every photo and video nothing on the shop uses (files from the last hour are kept). */
     @DeleteMapping("/api/admin/media/unused")
     public MediaService.Cleanup deleteUnused() { return media.deleteUnused(); }

@@ -79,6 +79,29 @@ export function AdminMedia({ onStudio }) {
     }
   };
 
+  // Photos uploaded before card-sized copies existed: make each one's copy here, in this browser (nothing is re-uploaded in full).
+  const [fill, setFill] = useState(null);
+  const makeCopies = async () => {
+    const list = (items || []).filter(a => a.kind === 'IMAGE');
+    let made = 0;
+    setFill({ done: 0, total: list.length });
+    for (const [i, a] of list.entries()) {
+      try {
+        const [fullHead, thumbHead] = await Promise.all([fetch(imageSrc(a.url), { method: 'HEAD' }), fetch(imageSrc(a.url, { thumb: true }), { method: 'HEAD' })]);
+        const hasCopy = fullHead.ok && thumbHead.ok && fullHead.headers.get('content-length') !== thumbHead.headers.get('content-length');
+        if (!hasCopy && fullHead.ok) {
+          const blob = await (await fetch(imageSrc(a.url))).blob();
+          const { makeThumb } = await import('../lib/imageTools');
+          const thumb = await makeThumb(new File([blob], a.name, { type: blob.type }));
+          if (thumb) { await ApiService.attachMediaThumb(a.id, thumb); made += 1; }
+        }
+      } catch { /* leave this one; running it again retries */ }
+      setFill({ done: i + 1, total: list.length });
+    }
+    setFill(null);
+    toast.success(made ? `Made card-sized copies for ${made} photo(s). Shoppers download less on every page.` : 'Every photo already has its card-sized copy.');
+  };
+
   const copy = (a) => navigator.clipboard?.writeText(imageSrc(a.url)).then(() => toast.success('Link copied'), () => toast.error('Copy did not work'));
   const shown = useMemo(() => (items || []).filter(a => (filter === 'ALL' || a.kind === filter || (filter === 'UNUSED' && !a.usedBy)) && a.name.toLowerCase().includes(q.toLowerCase())), [items, filter, q]);
   const photos = (items || []).filter(a => a.kind === 'IMAGE').length;
@@ -118,6 +141,9 @@ export function AdminMedia({ onStudio }) {
       {items && items.length > 0 && (
         <div className="media-space" role="status">
           <span><i className="bi bi-hdd" aria-hidden="true"></i> Library uses <strong>{kb(totalBytes)}</strong></span>
+          {photos > 0 && (fill
+            ? <span aria-live="polite"><span className="spin" aria-hidden="true"></span> Card-sized copies {fill.done}/{fill.total} (keep this tab open)</span>
+            : <button type="button" className="btn btn-outline" onClick={makeCopies}><i className="bi bi-images" aria-hidden="true"></i> Make card-sized copies</button>)}
           {unused.length > 0 && (sure === 'UNUSED'
             ? <span className="media-space-confirm">Delete {unused.length} unused file(s), {kb(unusedBytes)}?
                 <button type="button" className="danger-btn" disabled={cleaning} onClick={removeUnused}>{cleaning ? 'Removing…' : 'Yes, remove'}</button>
